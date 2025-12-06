@@ -3,22 +3,19 @@ public class User {
     private String user_name;  
     private String user_call;   
 
-    // ====== 돈 / 티켓 / 라운드 관련 ======
     private int roulatte_money = 10000;  
     private double interest = 0.1;  
     private int ticket = 3;
     private int deadline = 1;
-    private int round = 1;               // 라운드
-    private int deadline_money = 75;     // 납입해야 할 금액
-    private int total_money = 30;        // 총 금액(규칙에 맞게 사용)
+    private int round = 1;               
+    private int deadline_money = 75;
+    private int total_money = 30;
 
-    // ====== 추가 변수 ======
-    private int round_spin_left = 7;     // 라운드당 스핀 남은 횟수
-    private int item_max = 6;           // 최대 유물 개수
+    private int round_spin_left = 7;
+    private int item_max = 6;
 
     public User() { }
 
-    // ---- 유저 기본 정보 ----
     public String getUser_name() {
         return user_name;
     }
@@ -35,7 +32,6 @@ public class User {
         this.user_call = user_call;
     }
 
-    // ---- 돈 / 티켓 / 라운드 ----
     public int getRoulatte_money() {
         return roulatte_money;
     }
@@ -107,7 +103,6 @@ public class User {
         if (this.total_money < 0) this.total_money = 0;
     }
 
-    // ---- 라운드 스핀 / 유물 ----
     public int getRound_spin_left() {
         return round_spin_left;
     }

@@ -62,8 +62,12 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int TARGET_HEIGHT = 512;
     private static final int TOTAL_WIDTH = TOTAL_WIDTH_UNADJUSTED; 
     private static final int TOTAL_HEIGHT = TARGET_HEIGHT; 
+    private static final int SPINS_PER_ROUND = 7;
+    private static final int ROUNDS_PER_DEADLINE = 3;
     
     private User user;
+    private RoundManager roundManager;
+    private SaveManagerCsv saveManager;
     
     private JLabel moneyLabel;
     private JLabel interestLabel;
@@ -72,6 +76,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private JLabel roundLabel;
     private JLabel deadlineMoneyLabel;
     private JLabel totalMoneyLabel;
+    private JLabel spinLeftLabel;
 
     private Thread gameThread;
     private BufferedImage bufferImage;
@@ -80,7 +85,25 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private Random random = new Random();
     
     public SlotMachinePanel() {
-        user = new User();
+        saveManager = new SaveManagerCsv();
+
+        User loaded = saveManager.load();
+        if (loaded != null) {
+            user = loaded;
+        } else {
+            user = new User();
+        }
+        roundManager = new RoundManager(user);
+        
+        if (user.getRound() <= 0) {
+        	user.setRound(1);
+        }
+        if (user.getRound_spin_left() <= 0) {
+        	user.setRound_spin_left(SPINS_PER_ROUND);
+        }
+        if (user.getDeadline() <= 0) {
+        	user.setDeadline(ROUNDS_PER_DEADLINE);
+        }
         setLayout(null); 
         setPreferredSize(new Dimension(TOTAL_WIDTH, TOTAL_HEIGHT)); 
         setBackground(Color.DARK_GRAY);
@@ -157,7 +180,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         add(leverButton); 
         setComponentZOrder(leverButton, 0); 
         
-        JPanel southContainer = new JPanel(new GridLayout(1, 7, 5, 0)); 
+        JPanel southContainer = new JPanel(new GridLayout(1, 8, 5, 0)); 
         southContainer.setBackground(Color.BLACK); 
         southContainer.setBounds(0, TOTAL_HEIGHT - SOUTH_PANEL_HEIGHT, TOTAL_WIDTH, SOUTH_PANEL_HEIGHT); 
         
@@ -173,12 +196,14 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         roundLabel = createStatusLabel(statusFont);
         deadlineMoneyLabel = createStatusLabel(statusFont);
         totalMoneyLabel = createStatusLabel(statusFont);
+        spinLeftLabel = createStatusLabel(statusFont);
         
         southContainer.add(moneyLabel);
         southContainer.add(interestLabel);
         southContainer.add(ticketLabel);
         southContainer.add(deadlineLabel);
         southContainer.add(roundLabel);
+        southContainer.add(spinLeftLabel);
         southContainer.add(deadlineMoneyLabel);
         southContainer.add(totalMoneyLabel);
         
@@ -220,12 +245,15 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private void updateStatusBar() {
         int interestRatePct = (int)(user.getInterest() * 100); 
         int calculatedInterestAmount = (int)(user.getTotal_money() * user.getInterest()); 
+        int roundLeft = ROUNDS_PER_DEADLINE - user.getRound() + 1;
+        if (roundLeft < 0) roundLeft = 0;
 
         moneyLabel.setText("금액: " + user.getRoulatte_money());
         interestLabel.setText("이자: " + interestRatePct + "% (" + calculatedInterestAmount + ")");
         ticketLabel.setText("티켓: " + user.getTicket());
         deadlineLabel.setText("기한: " + user.getDeadline());
-        roundLabel.setText("라운드: " + user.getRound());
+        roundLabel.setText("라운드: " + roundLeft + "/" + ROUNDS_PER_DEADLINE);
+        spinLeftLabel.setText("남은 스핀:" + user.getRound_spin_left() + "/" + SPINS_PER_ROUND);
         deadlineMoneyLabel.setText("목표: " + user.getDeadline_money());
         totalMoneyLabel.setText("납입: " + user.getTotal_money());
     }
@@ -265,11 +293,35 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     }
     
     private void handleSpinButtonClick() {
+        if (user.getRound_spin_left() <= 0) {
+            JOptionPane.showMessageDialog(this,
+                    "이번 라운드의 기회을 모두 사용했습니다.");
+            return;
+        }
+
         for (int i = 0; i < NUM_REELS; i++) { 
             reels[i].randomizeSymbols(); 
         }
         user.setRoulatte_money(user.getRoulatte_money() - 100); 
-        user.setRound(user.getRound() + 1);
+        user.setRound_spin_left(user.getRound_spin_left() - 1);
+        
+        if (user.getRound_spin_left() <= 0) {
+
+            if (user.getRound() < ROUNDS_PER_DEADLINE) {
+
+                user.setRound(user.getRound() + 1);          
+                user.setRound_spin_left(SPINS_PER_ROUND);    
+
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "기한 " + user.getDeadline() + "의 3라운드를 모두 사용했습니다.");
+
+                user.setDeadline(user.getDeadline() + 1);  
+
+                user.setRound(1);
+                user.setRound_spin_left(SPINS_PER_ROUND);
+            }
+        }
         updateStatusBar(); 
     }
 
@@ -533,4 +585,12 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             return shape.contains(x, y);
         }
     }
+
+    public void saveOnExit() {
+        if (saveManager != null && user != null) {
+            saveManager.save(user);
+        }
+    }
+
+	
 }
