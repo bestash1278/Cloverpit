@@ -500,6 +500,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         roulette.checkResults(results);
         soundManager.stopSpinSound();
         isSpinning = false;
+        user.setRoulatte_money(user.getRoulatte_money() + roulette.roulette_money);
+        roulette.roulette_money = 0;
     }
     
     /**
