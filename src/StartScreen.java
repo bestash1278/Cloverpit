@@ -151,7 +151,7 @@ public class StartScreen extends JPanel {
                     }
                 }
                 
-                User newUser = new User(userId);
+                User newUser = new User(userid);
                 idDialog.dispose();
                 startGame(newUser);
             }

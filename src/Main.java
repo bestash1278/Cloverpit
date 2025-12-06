@@ -64,7 +64,7 @@ public class Main {
      * 사용자 데이터를 CSV 파일에 저장하고 종료 화면으로 전환
      */
     public static void exitGame() {
-        if (currentUser != null && currentUser.getUserId() != null && !currentUser.getUserId().isEmpty()) {
+        if (currentUser != null && currentUser.getUser_name() != null && !currentUser.getUser_name().isEmpty()) {
             currentUser.saveToCSV();
         }
         

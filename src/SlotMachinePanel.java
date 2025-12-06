@@ -3,23 +3,23 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.Random;
 
-/**
- * 게임 메인 패널
- * 룰렛 게임 로직, 레버 애니메이션, 스핀 처리, 상태 표시를 담당
- */
 public class SlotMachinePanel extends JPanel implements Runnable {
     
-    private Roulette roulette;
-    private JLabel[][] slots;
-    private boolean isSpinning = false;
-    private Timer spinTimer;
-    private int spinCount = 0;
-    private static final int MAX_SPIN_COUNT = 30;
+    private static final String[] SYMBOLS = {"Circle", "Star", "Triangle", "Square", "Diamond", "Hexagon", "Cross"};
     
-    private static final int START_X = 100;
-    private static final int START_Y_SLOT = 120; 
+    private static final int NUM_REELS = 5; 
+    private static final int VISIBLE_SYMBOLS = 3; 
+    private static final int START_X = 50;
+    private static final int START_Y_SLOT = 80; 
+    private static final int REEL_WIDTH = 120; 
+    private static final int SYMBOL_HEIGHT = 100;
+    private static final int REEL_SPACING = 20; 
+    private static final int REEL_HEIGHT = VISIBLE_SYMBOLS * SYMBOL_HEIGHT; 
     
     private LeverHeadButton leverButton; 
     private RectangularButton payButton;
@@ -36,41 +36,38 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final Color COLOR_RELIC_SHOP = new Color(100, 200, 200); 
     private static final Color COLOR_PHONE = new Color(180, 100, 255); 
 
-    private static final int MENU_BUTTON_WIDTH = 150; 
-    private static final int MENU_BUTTON_HEIGHT = 60; 
-    private static final int NORTH_PANEL_HEIGHT = 100; 
-    private static final int EAST_PANEL_WIDTH = 200; 
+    private static final int MENU_BUTTON_WIDTH = 100; 
+    private static final int MENU_BUTTON_HEIGHT = 50; 
+    private static final int NORTH_PANEL_HEIGHT = 70; 
+    private static final int EAST_PANEL_WIDTH = 150; 
     
-    private static final int LEVER_HEAD_SIZE = 60; 
-    private static final int LEVER_BAR_THICKNESS = 18; 
+    private static final int LEVER_HEAD_SIZE = 40; 
+    private static final int LEVER_BAR_THICKNESS = 12; 
 
-    private static final int TARGET_WIDTH = 1600;
-    private static final int TARGET_HEIGHT = 900;
+    private static final int SLOT_TOTAL_WIDTH = REEL_WIDTH * NUM_REELS + REEL_SPACING * (NUM_REELS - 1) + START_X * 2; 
+    private static final int LEVER_CENTER_X = SLOT_TOTAL_WIDTH + EAST_PANEL_WIDTH / 2;
     
-    private static final int SLOT_SIZE = 120;
-    private static final int SLOT_SPACING = 15;
-    private static final int BOARD_PADDING = 20;
-    private static final int ROULETTE_COLS = 5;
-    private static final int ROULETTE_ROWS = 3;
-    private static final int BOARD_WIDTH = ROULETTE_COLS * SLOT_SIZE + (ROULETTE_COLS - 1) * SLOT_SPACING + BOARD_PADDING * 2;
-    private static final int LEVER_CENTER_X = START_X + BOARD_WIDTH + 50 + EAST_PANEL_WIDTH / 2;
-    
-    private static final int BOARD_HEIGHT = ROULETTE_ROWS * SLOT_SIZE + (ROULETTE_ROWS - 1) * SLOT_SPACING + BOARD_PADDING * 2 + 30;
     private static final int BUTTON_Y_TOP_TARGET = START_Y_SLOT; 
-    private static final int BAR_BASE_Y = START_Y_SLOT + BOARD_HEIGHT / 2;
+    private static final int BAR_BASE_Y = START_Y_SLOT + REEL_HEIGHT / 2; 
     private static final int TRAVEL_TO_MID = BAR_BASE_Y - (BUTTON_Y_TOP_TARGET + LEVER_HEAD_SIZE / 2);
-    private static final int LEVER_MOVEMENT_DISTANCE = TRAVEL_TO_MID * 2;
+    private static final int LEVER_MOVEMENT_DISTANCE = TRAVEL_TO_MID * 2; 
     
     private float leverPosition = 0.0f; 
     private Timer leverAnimator;
+    private boolean isSpinning = false; 
     private boolean isAnimating = false; 
 
-    private static final int SOUTH_PANEL_HEIGHT = 60;
-    
-    private static final int TOTAL_WIDTH = TARGET_WIDTH;
+    private static final int SOUTH_PANEL_HEIGHT = 40; 
+    private static final int TOTAL_WIDTH_UNADJUSTED = SLOT_TOTAL_WIDTH + EAST_PANEL_WIDTH; 
+    private static final int TARGET_HEIGHT = 512;
+    private static final int TOTAL_WIDTH = TOTAL_WIDTH_UNADJUSTED; 
     private static final int TOTAL_HEIGHT = TARGET_HEIGHT; 
+    private static final int SPINS_PER_ROUND = 7;
+    private static final int ROUNDS_PER_DEADLINE = 3;
     
     private User user;
+    private RoundManager roundManager;
+    private SaveManagerCsv saveManager;
     
     private JLabel moneyLabel;
     private JLabel interestLabel;
@@ -79,25 +76,42 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private JLabel roundLabel;
     private JLabel deadlineMoneyLabel;
     private JLabel totalMoneyLabel;
+    private JLabel spinLeftLabel;
 
     private Thread gameThread;
     private BufferedImage bufferImage;
     private Graphics bufferG;
-    private SoundManager soundManager;
+    private Reel[] reels; 
+    private Random random = new Random();
     
     public SlotMachinePanel() {
-        this(new User());
-    }
-    
-    public SlotMachinePanel(User user) {
-        this.user = user;
-        this.soundManager = new SoundManager();
-        roulette = new Roulette();
+        saveManager = new SaveManagerCsv();
+
+        User loaded = saveManager.load();
+        if (loaded != null) {
+            user = loaded;
+        } else {
+            user = new User();
+        }
+        roundManager = new RoundManager(user);
+        
+        if (user.getRound() <= 0) {
+        	user.setRound(1);
+        }
+        if (user.getRound_spin_left() <= 0) {
+        	user.setRound_spin_left(SPINS_PER_ROUND);
+        }
+        if (user.getDeadline() <= 0) {
+        	user.setDeadline(ROUNDS_PER_DEADLINE);
+        }
         setLayout(null); 
         setPreferredSize(new Dimension(TOTAL_WIDTH, TOTAL_HEIGHT)); 
         setBackground(Color.DARK_GRAY);
         
-        initializeRouletteBoard();
+        reels = new Reel[NUM_REELS];
+        for (int i = 0; i < NUM_REELS; i++) {
+            reels[i] = new Reel();
+        }
         
         JPanel northContainer = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10)); 
         northContainer.setBackground(Color.DARK_GRAY.darker()); 
@@ -108,7 +122,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         patternButton = createMenuButton("패턴", "패턴 버튼 화면", COLOR_PATTERN);
         relicOwnedButton = createMenuButton("소지 유물", "소지 유물 버튼 화면", COLOR_RELIC_OWNED);
         relicShopButton = createMenuButton("유물 상점", "유물 상점 버튼 화면", COLOR_RELIC_SHOP);
-        phoneButton = createMenuButton("종료", "종료", COLOR_PHONE);
+        phoneButton = createMenuButton("전화", "전화 버튼 화면", COLOR_PHONE);
         
         northContainer.add(payButton);
         northContainer.add(symbolButton);
@@ -124,37 +138,16 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             public void actionPerformed(ActionEvent e) {
                 if (isAnimating) {
                     float step = 0.1f; 
+                    boolean targetDown = leverButton.getModel().isPressed() || isSpinning; 
                     
-                    if (!isSpinning) {
-                        if (leverPosition < 0.9f) {
-                            leverPosition = Math.min(0.9f, leverPosition + step);
-                        } else {
-                            isAnimating = false;
-                            leverAnimator.stop();
-                            
-                            Runnable startRoulette = new Runnable() {
-                                @Override
-                                public void run() {
-                                    SwingUtilities.invokeLater(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            handleSpinButtonClick();
-                                        }
-                                    });
-                                }
-                            };
-                            
-                            if (soundManager.isLeverSoundPlaying()) {
-                                soundManager.setLeverSoundFinishedCallback(startRoulette);
-                            } else {
-                                startRoulette.run();
-                            }
-                            return;
-                        }
+                    if (targetDown) {
+                        leverPosition = Math.min(1.0f, leverPosition + step);
                     } else {
-                        if (leverPosition > 0.0f) {
-                            leverPosition = Math.max(0.0f, leverPosition - step);
-                        } else {
+                        leverPosition = Math.max(0.0f, leverPosition - step);
+                    }
+                    
+                    if ((targetDown && leverPosition == 1.0f) || (!targetDown && leverPosition == 0.0f)) {
+                        if (leverPosition == 0.0f) {
                             isAnimating = false;
                             leverAnimator.stop();
                         }
@@ -167,13 +160,19 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         leverButton = new LeverHeadButton(); 
         leverButton.setBounds(0, 0, LEVER_HEAD_SIZE, LEVER_HEAD_SIZE);
         
-        leverButton.addActionListener(new ActionListener() {
+        leverButton.addMouseListener(new MouseAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void mousePressed(MouseEvent e) {
                 if (!isSpinning && !isAnimating) {
                     isAnimating = true;
                     leverAnimator.start();
-                    soundManager.playLeverSound();
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (!isSpinning && leverPosition >= 0.9f) {
+                    startSpinProcess();
                 }
             }
         });
@@ -181,7 +180,34 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         add(leverButton); 
         setComponentZOrder(leverButton, 0); 
         
-        initializeStatusLabels();
+        JPanel southContainer = new JPanel(new GridLayout(1, 8, 5, 0)); 
+        southContainer.setBackground(Color.BLACK); 
+        southContainer.setBounds(0, TOTAL_HEIGHT - SOUTH_PANEL_HEIGHT, TOTAL_WIDTH, SOUTH_PANEL_HEIGHT); 
+        
+        Font statusFont = new Font("Malgun Gothic", Font.PLAIN, 12);
+        if (statusFont.getFamily().equals("Malgun Gothic") == false) {
+             statusFont = new Font("Dotum", Font.PLAIN, 12); 
+        }
+
+        moneyLabel = createStatusLabel(statusFont);
+        interestLabel = createStatusLabel(statusFont);
+        ticketLabel = createStatusLabel(statusFont);
+        deadlineLabel = createStatusLabel(statusFont);
+        roundLabel = createStatusLabel(statusFont);
+        deadlineMoneyLabel = createStatusLabel(statusFont);
+        totalMoneyLabel = createStatusLabel(statusFont);
+        spinLeftLabel = createStatusLabel(statusFont);
+        
+        southContainer.add(moneyLabel);
+        southContainer.add(interestLabel);
+        southContainer.add(ticketLabel);
+        southContainer.add(deadlineLabel);
+        southContainer.add(roundLabel);
+        southContainer.add(spinLeftLabel);
+        southContainer.add(deadlineMoneyLabel);
+        southContainer.add(totalMoneyLabel);
+        
+        add(southContainer);
         
         updateStatusBar();
 
@@ -189,59 +215,45 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         gameThread.start();
     }
     
-    /**
-     * 룰렛 보드 초기화
-     * 3x5 그리드의 슬롯을 생성하고 배치
-     */
-    private void initializeRouletteBoard() {
-        slots = new JLabel[roulette.getRows()][roulette.getCols()];
+    private void startSpinProcess() {
+        if (isSpinning) return;
         
-        for (int i = 0; i < roulette.getRows(); i++) {
-            for (int j = 0; j < roulette.getCols(); j++) {
-                slots[i][j] = new JLabel("", JLabel.CENTER);
-                slots[i][j].setOpaque(true);
-                slots[i][j].setBackground(Color.WHITE);
-                slots[i][j].setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(200, 200, 200), 3),
-                    BorderFactory.createEmptyBorder(5, 5, 5, 5)
-                ));
-                slots[i][j].setBounds(
-                    START_X + BOARD_PADDING + j * (SLOT_SIZE + SLOT_SPACING),
-                    START_Y_SLOT + BOARD_PADDING + i * (SLOT_SIZE + SLOT_SPACING),
-                    SLOT_SIZE,
-                    SLOT_SIZE
-                );
-                setRandomSymbol(slots[i][j]);
-                add(slots[i][j]);
+        isSpinning = true;
+
+        handleSpinButtonClick(); 
+        
+        Timer delayTimer = new Timer(500, new ActionListener() { 
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ((Timer)e.getSource()).stop();
+                isSpinning = false; 
+                isAnimating = true;
+                leverAnimator.start(); 
             }
-        }
+        });
+        delayTimer.setRepeats(false);
+        delayTimer.start();
     }
     
-    private void setRandomSymbol(JLabel slot) {
-        int symbolIndex = roulette.generateRandomSymbol();
-        int[] symbolTypes = roulette.getSymbolTypes();
-        slot.setIcon(new SymbolIcon(symbolTypes[symbolIndex], SLOT_SIZE - 20));
+    private JLabel createStatusLabel(Font font) {
+        JLabel label = new JLabel("", SwingConstants.CENTER);
+        label.setForeground(Color.WHITE);
+        label.setFont(font);
+        return label;
     }
-    
-    private void initializeStatusLabels() {
-        moneyLabel = new JLabel("금액: 0");
-        interestLabel = new JLabel("이자: 0% (0)");
-        ticketLabel = new JLabel("티켓: 0");
-        deadlineLabel = new JLabel("기한: 0");
-        roundLabel = new JLabel("라운드: 0");
-        deadlineMoneyLabel = new JLabel("목표: 0");
-        totalMoneyLabel = new JLabel("납입: 0");
-    }
-    
+
     private void updateStatusBar() {
         int interestRatePct = (int)(user.getInterest() * 100); 
         int calculatedInterestAmount = (int)(user.getTotal_money() * user.getInterest()); 
+        int roundLeft = ROUNDS_PER_DEADLINE - user.getRound() + 1;
+        if (roundLeft < 0) roundLeft = 0;
 
         moneyLabel.setText("금액: " + user.getRoulatte_money());
         interestLabel.setText("이자: " + interestRatePct + "% (" + calculatedInterestAmount + ")");
         ticketLabel.setText("티켓: " + user.getTicket());
         deadlineLabel.setText("기한: " + user.getDeadline());
-        roundLabel.setText("라운드: " + user.getRound());
+        roundLabel.setText("라운드: " + roundLeft + "/" + ROUNDS_PER_DEADLINE);
+        spinLeftLabel.setText("남은 스핀:" + user.getRound_spin_left() + "/" + SPINS_PER_ROUND);
         deadlineMoneyLabel.setText("목표: " + user.getDeadline_money());
         totalMoneyLabel.setText("납입: " + user.getTotal_money());
     }
@@ -256,11 +268,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if ("종료".equals(label)) {
-                    Main.exitGame();
-                } else {
-                    showNewFrame(frameTitle);
-                }
+                showNewFrame(frameTitle);
             }
         });
         return button;
@@ -284,75 +292,37 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         frame.setVisible(true);
     }
     
-    /**
-     * 스핀 버튼 클릭 처리
-     * 사용자 금액 차감, 라운드 증가, 스핀 시작
-     */
     private void handleSpinButtonClick() {
-        if (isSpinning) return;
-        updateStatusBar();
+        if (user.getRound_spin_left() <= 0) {
+            JOptionPane.showMessageDialog(this,
+                    "이번 라운드의 기회을 모두 사용했습니다.");
+            return;
+        }
+
+        for (int i = 0; i < NUM_REELS; i++) { 
+            reels[i].randomizeSymbols(); 
+        }
+        user.setRoulatte_money(user.getRoulatte_money() - 100); 
+        user.setRound_spin_left(user.getRound_spin_left() - 1);
         
-        startSpin();
-    }
-    
-    /**
-     * 룰렛 스핀 시작
-     * 레버 애니메이션 시작, 스핀 사운드 재생, 슬롯 랜덤 변경
-     */
-    private void startSpin() {
-        isSpinning = true;
-        spinCount = 0;
-        soundManager.playSpinSound();
-        
-        isAnimating = true;
-        leverAnimator.start();
-        
-        spinTimer = new Timer(50, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                for (int i = 0; i < roulette.getRows(); i++) {
-                    for (int j = 0; j < roulette.getCols(); j++) {
-                        setRandomSymbol(slots[i][j]);
-                    }
-                }
-                
-                spinCount++;
-                
-                if (spinCount >= MAX_SPIN_COUNT) {
-                    spinTimer.stop();
-                    finishSpin();
-                }
-            }
-        });
-        
-        spinTimer.setInitialDelay(0);
-        spinTimer.start();
-        
-        for (int i = 0; i < roulette.getRows(); i++) {
-            for (int j = 0; j < roulette.getCols(); j++) {
-                setRandomSymbol(slots[i][j]);
+        if (user.getRound_spin_left() <= 0) {
+
+            if (user.getRound() < ROUNDS_PER_DEADLINE) {
+
+                user.setRound(user.getRound() + 1);          
+                user.setRound_spin_left(SPINS_PER_ROUND);  
+
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "기한 " + user.getDeadline() + "의 3라운드를 모두 사용했습니다.");
+
+                user.setDeadline(user.getDeadline() + 1);  
+
+                user.setRound(1);
+                user.setRound_spin_left(SPINS_PER_ROUND);
             }
         }
-        spinCount++;
-    }
-    
-    /**
-     * 스핀 완료 처리
-     * 최종 결과 생성, 패턴 체크, 사운드 중지
-     */
-    private void finishSpin() {
-        int[][] results = roulette.generateResults();
-        int[] symbolTypes = roulette.getSymbolTypes();
-        
-        for (int i = 0; i < roulette.getRows(); i++) {
-            for (int j = 0; j < roulette.getCols(); j++) {
-                slots[i][j].setIcon(new SymbolIcon(symbolTypes[results[i][j]], SLOT_SIZE - 20));
-            }
-        }
-        
-        roulette.checkResults(results);
-        soundManager.stopSpinSound();
-        isSpinning = false;
+        updateStatusBar(); 
     }
 
     @Override
@@ -376,72 +346,13 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        
         if (bufferImage == null) {
-            bufferImage = new BufferedImage(getWidth(), TOTAL_HEIGHT - SOUTH_PANEL_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-            bufferG = bufferImage.getGraphics();
-        }
-        
-        if (bufferImage.getWidth() != getWidth() || bufferImage.getHeight() != TOTAL_HEIGHT - SOUTH_PANEL_HEIGHT) {
-            bufferImage = new BufferedImage(getWidth(), TOTAL_HEIGHT - SOUTH_PANEL_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+            bufferImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
             bufferG = bufferImage.getGraphics();
         }
         
         draw(bufferG);
-        int statusBarY = TOTAL_HEIGHT - SOUTH_PANEL_HEIGHT - 40;
-        g.drawImage(bufferImage, 0, 0, getWidth(), statusBarY, null);
-        
-        drawStatusBar(g);
-    }
-    
-    private void drawStatusBar(Graphics g) {
-        int y = TOTAL_HEIGHT - SOUTH_PANEL_HEIGHT - 40;
-        
-        g.setColor(Color.BLACK);
-        g.fillRect(0, y, TOTAL_WIDTH, SOUTH_PANEL_HEIGHT);
-        
-        g.setColor(Color.WHITE);
-        g.drawRect(0, y, TOTAL_WIDTH - 1, SOUTH_PANEL_HEIGHT - 1);
-        
-        g.setColor(Color.WHITE);
-        Font statusFont = new Font("Malgun Gothic", Font.PLAIN, 16);
-        if (!statusFont.getFamily().equals("Malgun Gothic")) {
-            statusFont = new Font("Dotum", Font.PLAIN, 16);
-        }
-        g.setFont(statusFont);
-        
-        FontMetrics fm = g.getFontMetrics();
-        int cellWidth = TOTAL_WIDTH / 7;
-        int textY = y + (SOUTH_PANEL_HEIGHT + fm.getAscent() - fm.getDescent()) / 2;
-        String moneyText = (moneyLabel != null) ? moneyLabel.getText() : "금액: " + user.getRoulatte_money();
-        String interestText = (interestLabel != null) ? interestLabel.getText() : "이자: 0% (0)";
-        String ticketText = (ticketLabel != null) ? ticketLabel.getText() : "티켓: " + user.getTicket();
-        String deadlineText = (deadlineLabel != null) ? deadlineLabel.getText() : "기한: " + user.getDeadline();
-        String roundText = (roundLabel != null) ? roundLabel.getText() : "라운드: " + user.getRound();
-        String deadlineMoneyText = (deadlineMoneyLabel != null) ? deadlineMoneyLabel.getText() : "목표: " + user.getDeadline_money();
-        String totalMoneyText = (totalMoneyLabel != null) ? totalMoneyLabel.getText() : "납입: " + user.getTotal_money();
-        
-        int textX = cellWidth * 0 + (cellWidth - fm.stringWidth(moneyText)) / 2;
-        g.drawString(moneyText, textX, textY);
-        
-        textX = cellWidth * 1 + (cellWidth - fm.stringWidth(interestText)) / 2;
-        g.drawString(interestText, textX, textY);
-        
-        textX = cellWidth * 2 + (cellWidth - fm.stringWidth(ticketText)) / 2;
-        g.drawString(ticketText, textX, textY);
-        
-        textX = cellWidth * 3 + (cellWidth - fm.stringWidth(deadlineText)) / 2;
-        g.drawString(deadlineText, textX, textY);
-        
-        textX = cellWidth * 4 + (cellWidth - fm.stringWidth(roundText)) / 2;
-        g.drawString(roundText, textX, textY);
-        
-        textX = cellWidth * 5 + (cellWidth - fm.stringWidth(deadlineMoneyText)) / 2;
-        g.drawString(deadlineMoneyText, textX, textY);
-        
-        textX = cellWidth * 6 + (cellWidth - fm.stringWidth(totalMoneyText)) / 2;
-        g.drawString(totalMoneyText, textX, textY);
+        g.drawImage(bufferImage, 0, 0, this);
     }
     
     private void draw(Graphics g) {
@@ -451,22 +362,37 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     
-        g2d.setColor(new Color(195, 207, 226)); 
-        int boardWidth = ROULETTE_COLS * SLOT_SIZE + (ROULETTE_COLS - 1) * SLOT_SPACING + BOARD_PADDING * 2;
-        g2d.fillRect(START_X, START_Y_SLOT, boardWidth, BOARD_HEIGHT);
+        g2d.setColor(new Color(30, 30, 30)); 
+        int totalWidth = REEL_WIDTH * NUM_REELS + REEL_SPACING * (NUM_REELS - 1);
+        g2d.fillRect(START_X, START_Y_SLOT, totalWidth, REEL_HEIGHT);
+    
+        for (int i = 0; i < NUM_REELS; i++) {
+            int reelX = START_X + i * (REEL_WIDTH + REEL_SPACING);
+            
+            g2d.setColor(Color.WHITE);
+            g2d.setStroke(new BasicStroke(3)); 
+            g2d.drawRect(reelX, START_Y_SLOT, REEL_WIDTH, REEL_HEIGHT);
+
+            String[] currentSymbols = reels[i].getVisibleSymbols();
         
-        g2d.setColor(new Color(102, 126, 234));
-        g2d.setStroke(new BasicStroke(8));
-        g2d.drawRect(START_X, START_Y_SLOT, boardWidth, BOARD_HEIGHT);
+            for (int j = 0; j < VISIBLE_SYMBOLS; j++) {
+                int symbolY = START_Y_SLOT + j * SYMBOL_HEIGHT;
+                
+                g2d.setColor(new Color(100, 100, 100)); 
+                g2d.drawRect(reelX, symbolY, REEL_WIDTH, SYMBOL_HEIGHT);
+        
+                drawSymbol(g2d, currentSymbols[j], reelX, symbolY);
+            }
+        }
         
         g2d.setColor(Color.DARK_GRAY);
-        int rightPanelX = START_X + boardWidth + 50;
-        g2d.fillRect(rightPanelX, NORTH_PANEL_HEIGHT, EAST_PANEL_WIDTH, TOTAL_HEIGHT - NORTH_PANEL_HEIGHT - SOUTH_PANEL_HEIGHT);
+        g2d.fillRect(SLOT_TOTAL_WIDTH, NORTH_PANEL_HEIGHT, EAST_PANEL_WIDTH, TOTAL_HEIGHT - NORTH_PANEL_HEIGHT - SOUTH_PANEL_HEIGHT);
         
         drawLeverBar(g2d); 
     }
     
     private void drawLeverBar(Graphics2D g2d) {
+        
         int buttonCenterY = BUTTON_Y_TOP_TARGET + LEVER_HEAD_SIZE / 2 + 
                             (int) (LEVER_MOVEMENT_DISTANCE * leverPosition);
         
@@ -497,20 +423,108 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         }
     }
     
+    private void drawSymbol(Graphics2D g2d, String symbol, int x, int y) {
+        int centerX = x + REEL_WIDTH / 2;
+        int centerY = y + SYMBOL_HEIGHT / 2;
+        int size = Math.min(REEL_WIDTH, SYMBOL_HEIGHT) / 3;
+        
+        switch (symbol) {
+            case "Circle":
+                g2d.setColor(Color.YELLOW);
+                g2d.fillOval(centerX - size, centerY - size, 2 * size, 2 * size);
+                break;
+            case "Square":
+                g2d.setColor(Color.GREEN);
+                g2d.fillRect(centerX - size, centerY - size, 2 * size, 2 * size);
+                break;
+            case "Triangle":
+                g2d.setColor(Color.BLUE);
+                int[] tx = {centerX, centerX - size, centerX + size};
+                int[] ty = {centerY - size, centerY + size, centerY + size};
+                g2d.fillPolygon(tx, ty, 3);
+                break;
+            case "Star":
+                g2d.setColor(Color.RED);
+                int numPoints = 5;
+                int outerRadius = size;
+                int innerRadius = size / 2;
+                int[] sx = new int[numPoints * 2];
+                int[] sy = new int[numPoints * 2];
+                
+                for (int i = 0; i < numPoints * 2; i++) {
+                    double radius = (i % 2 == 0) ? outerRadius : innerRadius;
+                    double angle = Math.PI / 2 + i * Math.PI / numPoints;
+                    sx[i] = (int) (centerX + radius * Math.cos(angle));
+                    sy[i] = (int) (centerY - radius * Math.sin(angle));
+                }
+                g2d.fillPolygon(sx, sy, numPoints * 2);
+                break;
+            case "Diamond": 
+                g2d.setColor(Color.CYAN);
+                int[] dx = {centerX, centerX + size, centerX, centerX - size};
+                int[] dy = {centerY - size, centerY, centerY + size, centerY};
+                g2d.fillPolygon(dx, dy, 4);
+                break;
+            case "Hexagon": 
+                g2d.setColor(Color.MAGENTA);
+                int numSides = 6;
+                int[] hx = new int[numSides];
+                int[] hy = new int[numSides];
+                
+                for (int i = 0; i < numSides; i++) {
+                    double angle = i * 2 * Math.PI / numSides;
+                    hx[i] = (int) (centerX + size * Math.cos(angle));
+                    hy[i] = (int) (centerY + size * Math.sin(angle));
+                }
+                g2d.fillPolygon(hx, hy, numSides);
+                break;
+            case "Cross": 
+                g2d.setColor(Color.ORANGE);
+                int halfSize = size / 2;
+                g2d.fillRect(centerX - halfSize, centerY - size, 2 * halfSize, 2 * size);
+                g2d.fillRect(centerX - size, centerY - halfSize, 2 * size, 2 * halfSize);
+                break;
+        }
+    }
+
+
+    private class Reel {
+        private String[] visibleSymbols = new String[VISIBLE_SYMBOLS];
+        private Random reelRandom = new Random();
+
+        public Reel() {
+            for (int i = 0; i < VISIBLE_SYMBOLS; i++) {
+                visibleSymbols[i] = SYMBOLS[0];
+            }
+        }
+
+        public void randomizeSymbols() {
+            for (int i = 0; i < VISIBLE_SYMBOLS; i++) {
+                int randomIndex = reelRandom.nextInt(SYMBOLS.length);
+                visibleSymbols[i] = SYMBOLS[randomIndex];
+            }
+        }
+
+        public String[] getVisibleSymbols() {
+            return visibleSymbols;
+        }
+    }
+
+    
     private class RectangularButton extends JButton {
         private Color buttonColor;
     
         public RectangularButton(String label, Color color) {
             super(label);
             this.buttonColor = color;
-            setOpaque(false);
-            setContentAreaFilled(false);
-            setFocusPainted(false);
-            setForeground(Color.BLACK);
+            setOpaque(false); 
+            setContentAreaFilled(false); 
+            setFocusPainted(false); 
+            setForeground(Color.BLACK); 
             
-            setFont(new Font("Malgun Gothic", Font.BOLD, 16));
+            setFont(new Font("Malgun Gothic", Font.BOLD, 12)); 
             if (getFont().getFamily().equals("Malgun Gothic") == false) {
-                 setFont(new Font("Dotum", Font.BOLD, 16));
+                 setFont(new Font("Dotum", Font.BOLD, 12)); 
             }
         }
     
@@ -518,11 +532,11 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         protected void paintComponent(Graphics g) {
             Color currentColor = buttonColor;
             if (getModel().isArmed()) {
-                currentColor = buttonColor.darker();
+                currentColor = buttonColor.darker(); 
             }
             g.setColor(currentColor);
             g.fillRect(0, 0, getSize().width, getSize().height);
-            super.paintComponent(g);
+            super.paintComponent(g); 
         }
     
         @Override
@@ -536,17 +550,17 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         private Shape shape;
     
         public LeverHeadButton() {
-            super("");
-            setContentAreaFilled(false);
-            setFocusPainted(false);
-            setBackground(Color.RED);
+            super(""); 
+            setContentAreaFilled(false); 
+            setFocusPainted(false); 
+            setBackground(Color.RED); 
         }
     
         @Override
         protected void paintComponent(Graphics g) {
             Color currentColor = getBackground();
-            if (leverPosition > 0.5f) {
-                currentColor = getBackground().darker();
+            if (leverPosition > 0.5f) { 
+                currentColor = getBackground().darker(); 
             }
             g.setColor(currentColor);
             g.fillOval(0, 0, getSize().width - 1, getSize().height - 1);
@@ -571,4 +585,12 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             return shape.contains(x, y);
         }
     }
+
+    public void saveOnExit() {
+        if (saveManager != null && user != null) {
+            saveManager.save(user);
+        }
+    }
+
+	
 }
