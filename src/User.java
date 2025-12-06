@@ -1,26 +1,35 @@
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * 사용자 데이터 관리 클래스
- * 게임 상태 정보 저장 및 CSV 파일 입출력 담당
- */
 public class User {
-    private String userId = "";
-    private int roulatte_money = 10000;
-    private double interest = 0.1;
+
+    private String user_name;  
+    private String user_call;   
+
+    private int roulatte_money = 10000;  
+    private double interest = 0.1;  
     private int ticket = 3;
     private int deadline = 1;
-    private int round = 1;
+    private int round = 1;               
     private int deadline_money = 75;
     private int total_money = 30;
 
-    public User() {
+    private int round_spin_left = 7;
+    private int item_max = 6;
+
+    public User() { }
+
+    public String getUser_name() {
+        return user_name;
     }
-    
-    public User(String userId) {
-        this.userId = userId;
+
+    public void setUser_name(String user_name) {
+        this.user_name = user_name;
+    }
+
+    public String getUser_call() {
+        return user_call;
+    }
+
+    public void setUser_call(String user_call) {
+        this.user_call = user_call;
     }
 
     public int getRoulatte_money() {
@@ -29,6 +38,11 @@ public class User {
 
     public void setRoulatte_money(int roulatte_money) {
         this.roulatte_money = roulatte_money;
+    }
+
+    public void addRoulatte_money(int delta) {
+        this.roulatte_money += delta;
+        if (this.roulatte_money < 0) this.roulatte_money = 0;
     }
 
     public double getInterest() {
@@ -45,6 +59,11 @@ public class User {
 
     public void setTicket(int ticket) {
         this.ticket = ticket;
+    }
+
+    public void addTicket(int delta) {
+        this.ticket += delta;
+        if (this.ticket < 0) this.ticket = 0;
     }
 
     public int getDeadline() {
@@ -78,104 +97,25 @@ public class User {
     public void setTotal_money(int total_money) {
         this.total_money = total_money;
     }
-    
-    public String getUserId() {
-        return userId;
+
+    public void addTotal_money(int delta) {
+        this.total_money += delta;
+        if (this.total_money < 0) this.total_money = 0;
     }
-    
-    public void setUserId(String userId) {
-        this.userId = userId;
+
+    public int getRound_spin_left() {
+        return round_spin_left;
     }
-    
-    /**
-     * 사용자 데이터를 CSV 파일에 저장
-     * 기존 데이터가 있으면 업데이트, 없으면 추가
-     */
-    public void saveToCSV() {
-        if (userId == null || userId.isEmpty()) {
-            return;
-        }
-        
-        String filename = "user.csv";
-        List<String> lines = new ArrayList<>();
-        boolean found = false;
-        
-        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith(userId + ",")) {
-                    lines.add(toCSVLine());
-                    found = true;
-                } else {
-                    lines.add(line);
-                }
-            }
-        } catch (FileNotFoundException e) {
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        
-        if (!found) {
-            lines.add(toCSVLine());
-        }
-        
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename))) {
-            for (String line : lines) {
-                bw.write(line);
-                bw.newLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+    public void setRound_spin_left(int round_spin_left) {
+        this.round_spin_left = round_spin_left;
     }
-    
-    private String toCSVLine() {
-        return String.format("%s,%d,%.2f,%d,%d,%d,%d,%d",
-            userId, roulatte_money, interest, ticket, deadline, round, deadline_money, total_money);
+
+    public int getItem_max() {
+        return item_max;
     }
-    
-    /**
-     * CSV 파일에서 사용자 데이터 로드
-     * @param userId 찾을 사용자 ID
-     * @return User 객체 또는 null (찾지 못한 경우)
-     */
-    public static User loadFromCSV(String userId) {
-        String filename = "user.csv";
-        
-        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith(userId + ",")) {
-                    return parseCSVLine(line);
-                }
-            }
-        } catch (FileNotFoundException e) {
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        
-        return null;
-    }
-    
-    private static User parseCSVLine(String line) {
-        String[] parts = line.split(",");
-        if (parts.length != 8) {
-            return null;
-        }
-        
-        try {
-            User user = new User(parts[0]);
-            user.setRoulatte_money(Integer.parseInt(parts[1]));
-            user.setInterest(Double.parseDouble(parts[2]));
-            user.setTicket(Integer.parseInt(parts[3]));
-            user.setDeadline(Integer.parseInt(parts[4]));
-            user.setRound(Integer.parseInt(parts[5]));
-            user.setDeadline_money(Integer.parseInt(parts[6]));
-            user.setTotal_money(Integer.parseInt(parts[7]));
-            return user;
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            return null;
-        }
+
+    public void setItem_max(int item_max) {
+        this.item_max = item_max;
     }
 }
