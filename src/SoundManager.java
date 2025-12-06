@@ -39,7 +39,7 @@ public class SoundManager {
     
     /**
      * 백그라운드 음악 재생
-     * 볼륨을 30%로 설정하여 반복 재생
+     * 볼륨을 5%로 설정하여 반복 재생
      */
     public void playBackgroundMusic() {
         try {
@@ -60,13 +60,13 @@ public class SoundManager {
                 FloatControl gainControl = (FloatControl) backgroundMusic.getControl(FloatControl.Type.MASTER_GAIN);
                 float minGain = gainControl.getMinimum();
                 float maxGain = gainControl.getMaximum();
-                float targetGain = (float) (Math.log10(0.3) * 20);
+                float targetGain = (float) (Math.log10(0.05) * 20);
                 gainControl.setValue(Math.max(minGain, Math.min(maxGain, targetGain)));
             } else if (backgroundMusic.isControlSupported(FloatControl.Type.VOLUME)) {
                 FloatControl volumeControl = (FloatControl) backgroundMusic.getControl(FloatControl.Type.VOLUME);
                 float minVolume = volumeControl.getMinimum();
                 float maxVolume = volumeControl.getMaximum();
-                float targetVolume = minVolume + (maxVolume - minVolume) * 0.3f;
+                float targetVolume = minVolume + (maxVolume - minVolume) * 0.05f;
                 volumeControl.setValue(targetVolume);
             }
             

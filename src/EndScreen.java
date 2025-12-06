@@ -48,7 +48,7 @@ public class EndScreen extends JPanel {
             infoFont = new Font("Dotum", Font.PLAIN, 24);
         }
         
-        if (this.user != null && this.user.getUserId() != null && !this.user.getUserId().isEmpty()) {
+        if (this.user != null && this.user.getUser_name() != null && !this.user.getUser_name().isEmpty()) {
             JLabel saveLabel = new JLabel("게임 데이터가 저장되었습니다.");
             saveLabel.setFont(infoFont);
             saveLabel.setForeground(new Color(150, 255, 100));

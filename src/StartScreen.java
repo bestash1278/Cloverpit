@@ -12,6 +12,7 @@ public class StartScreen extends JPanel {
     private CardLayout cardLayout;
     private JPanel cardPanel;
     private SoundManager soundManager;
+    private SaveManagerCsv saveManager;
     
     public StartScreen(JFrame frame, CardLayout cl, JPanel cp) {
         this.parentFrame = frame;
@@ -140,7 +141,7 @@ public class StartScreen extends JPanel {
                     return;
                 }
                 
-                User existingUser = User.loadFromCSV(userId);
+            User existingUser = saveManager.load();
                 if (existingUser != null) {
                     int result = JOptionPane.showConfirmDialog(idDialog, 
                         "이미 존재하는 아이디입니다. 덮어쓰시겠습니까?", 
@@ -218,7 +219,7 @@ public class StartScreen extends JPanel {
                     return;
                 }
                 
-                User loadedUser = User.loadFromCSV(userId);
+                User loadedUser = saveManager.load();
                 if (loadedUser == null) {
                     JOptionPane.showMessageDialog(idDialog, "해당 아이디의 저장된 게임을 찾을 수 없습니다.", "오류", JOptionPane.ERROR_MESSAGE);
                     return;
