@@ -6,20 +6,19 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.Random;
 
 public class SlotMachinePanel extends JPanel implements Runnable {
     
-    private static final String[] SYMBOLS = {"Circle", "Star", "Triangle", "Square", "Diamond", "Hexagon", "Cross"};
+    private Roulette roulette;
+    private JLabel[][] slots;
+    private JLabel resultLabel;
+    private boolean isSpinning = false;
+    private Timer spinTimer;
+    private int spinCount = 0;
+    private static final int MAX_SPIN_COUNT = 30;
     
-    private static final int NUM_REELS = 5; 
-    private static final int VISIBLE_SYMBOLS = 3; 
     private static final int START_X = 50;
     private static final int START_Y_SLOT = 80; 
-    private static final int REEL_WIDTH = 120; 
-    private static final int SYMBOL_HEIGHT = 100;
-    private static final int REEL_SPACING = 20; 
-    private static final int REEL_HEIGHT = VISIBLE_SYMBOLS * SYMBOL_HEIGHT; 
     
     private LeverHeadButton leverButton; 
     private RectangularButton payButton;
@@ -44,24 +43,31 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int LEVER_HEAD_SIZE = 40; 
     private static final int LEVER_BAR_THICKNESS = 12; 
 
-    private static final int SLOT_TOTAL_WIDTH = REEL_WIDTH * NUM_REELS + REEL_SPACING * (NUM_REELS - 1) + START_X * 2; 
+    // 룰렛 보드 크기 계산
+    private static final int SLOT_SIZE = 80;
+    private static final int SLOT_SPACING = 10;
+    private static final int BOARD_PADDING = 15;
+    private static final int ROULETTE_COLS = 5;
+    private static final int ROULETTE_ROWS = 3;
+    private static final int SLOT_TOTAL_WIDTH = ROULETTE_COLS * SLOT_SIZE + (ROULETTE_COLS - 1) * SLOT_SPACING + BOARD_PADDING * 2 + START_X * 2;
     private static final int LEVER_CENTER_X = SLOT_TOTAL_WIDTH + EAST_PANEL_WIDTH / 2;
     
+    private static final int BOARD_HEIGHT = ROULETTE_ROWS * SLOT_SIZE + (ROULETTE_ROWS - 1) * SLOT_SPACING + BOARD_PADDING * 2;
     private static final int BUTTON_Y_TOP_TARGET = START_Y_SLOT; 
-    private static final int BAR_BASE_Y = START_Y_SLOT + REEL_HEIGHT / 2; 
+    private static final int BAR_BASE_Y = START_Y_SLOT + BOARD_HEIGHT / 2; 
     private static final int TRAVEL_TO_MID = BAR_BASE_Y - (BUTTON_Y_TOP_TARGET + LEVER_HEAD_SIZE / 2);
     private static final int LEVER_MOVEMENT_DISTANCE = TRAVEL_TO_MID * 2; 
     
     private float leverPosition = 0.0f; 
     private Timer leverAnimator;
-    private boolean isSpinning = false; 
     private boolean isAnimating = false; 
 
     private static final int SOUTH_PANEL_HEIGHT = 40; 
+    private static final int RESULT_LABEL_HEIGHT = 30;
+    private static final int RESULT_LABEL_MARGIN = 20;
     private static final int TOTAL_WIDTH_UNADJUSTED = SLOT_TOTAL_WIDTH + EAST_PANEL_WIDTH; 
-    private static final int TARGET_HEIGHT = 512;
     private static final int TOTAL_WIDTH = TOTAL_WIDTH_UNADJUSTED; 
-    private static final int TOTAL_HEIGHT = TARGET_HEIGHT; 
+    private static final int TOTAL_HEIGHT = NORTH_PANEL_HEIGHT + START_Y_SLOT + BOARD_HEIGHT + RESULT_LABEL_MARGIN + RESULT_LABEL_HEIGHT + RESULT_LABEL_MARGIN + SOUTH_PANEL_HEIGHT; 
     
     private User user;
     
@@ -76,19 +82,15 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private Thread gameThread;
     private BufferedImage bufferImage;
     private Graphics bufferG;
-    private Reel[] reels; 
-    private Random random = new Random();
     
     public SlotMachinePanel() {
         user = new User();
+        roulette = new Roulette();
         setLayout(null); 
         setPreferredSize(new Dimension(TOTAL_WIDTH, TOTAL_HEIGHT)); 
         setBackground(Color.DARK_GRAY);
         
-        reels = new Reel[NUM_REELS];
-        for (int i = 0; i < NUM_REELS; i++) {
-            reels[i] = new Reel();
-        }
+        initializeRouletteBoard();
         
         JPanel northContainer = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10)); 
         northContainer.setBackground(Color.DARK_GRAY.darker()); 
@@ -184,24 +186,63 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         
         add(southContainer);
         
+        // 결과 레이블 추가
+        resultLabel = new JLabel("게임을 시작하세요!");
+        Font resultFont = new Font("Malgun Gothic", Font.BOLD, 16);
+        if (resultFont.getFamily().equals("Malgun Gothic") == false) {
+            resultFont = new Font("Dotum", Font.BOLD, 16);
+        }
+        resultLabel.setFont(resultFont);
+        resultLabel.setForeground(Color.WHITE);
+        resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        resultLabel.setBounds(START_X, START_Y_SLOT + BOARD_HEIGHT + 20, SLOT_TOTAL_WIDTH - START_X * 2, 30);
+        add(resultLabel);
+        
         updateStatusBar();
 
         gameThread = new Thread(this);
         gameThread.start();
     }
     
+    private void initializeRouletteBoard() {
+        slots = new JLabel[roulette.getRows()][roulette.getCols()];
+        
+        for (int i = 0; i < roulette.getRows(); i++) {
+            for (int j = 0; j < roulette.getCols(); j++) {
+                slots[i][j] = new JLabel("", JLabel.CENTER);
+                slots[i][j].setOpaque(true);
+                slots[i][j].setBackground(Color.WHITE);
+                slots[i][j].setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(200, 200, 200), 3),
+                    BorderFactory.createEmptyBorder(5, 5, 5, 5)
+                ));
+                slots[i][j].setBounds(
+                    START_X + BOARD_PADDING + j * (SLOT_SIZE + SLOT_SPACING),
+                    START_Y_SLOT + BOARD_PADDING + i * (SLOT_SIZE + SLOT_SPACING),
+                    SLOT_SIZE,
+                    SLOT_SIZE
+                );
+                setRandomSymbol(slots[i][j]);
+                add(slots[i][j]);
+            }
+        }
+    }
+    
+    private void setRandomSymbol(JLabel slot) {
+        int symbolIndex = roulette.generateRandomSymbol();
+        int[] symbolTypes = roulette.getSymbolTypes();
+        slot.setIcon(new SymbolIcon(symbolTypes[symbolIndex], SLOT_SIZE - 10));
+    }
+    
     private void startSpinProcess() {
         if (isSpinning) return;
         
-        isSpinning = true;
-
         handleSpinButtonClick(); 
         
         Timer delayTimer = new Timer(500, new ActionListener() { 
             @Override
             public void actionPerformed(ActionEvent e) {
                 ((Timer)e.getSource()).stop();
-                isSpinning = false; 
                 isAnimating = true;
                 leverAnimator.start(); 
             }
@@ -265,12 +306,66 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     }
     
     private void handleSpinButtonClick() {
-        for (int i = 0; i < NUM_REELS; i++) { 
-            reels[i].randomizeSymbols(); 
-        }
+        if (isSpinning) return;
+        
         user.setRoulatte_money(user.getRoulatte_money() - 100); 
         user.setRound(user.getRound() + 1);
-        updateStatusBar(); 
+        updateStatusBar();
+        
+        startSpin();
+    }
+    
+    private void startSpin() {
+        isSpinning = true;
+        resultLabel.setText("돌리는 중...");
+        resultLabel.setForeground(Color.WHITE);
+        spinCount = 0;
+        
+        spinTimer = new Timer(50, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // 모든 슬롯 랜덤 변경
+                for (int i = 0; i < roulette.getRows(); i++) {
+                    for (int j = 0; j < roulette.getCols(); j++) {
+                        setRandomSymbol(slots[i][j]);
+                    }
+                }
+                
+                spinCount++;
+                
+                if (spinCount >= MAX_SPIN_COUNT) {
+                    spinTimer.stop();
+                    finishSpin();
+                }
+            }
+        });
+        
+        spinTimer.start();
+    }
+    
+    private void finishSpin() {
+        // 최종 결과 생성
+        int[][] results = roulette.generateResults();
+        int[] symbolTypes = roulette.getSymbolTypes();
+        
+        for (int i = 0; i < roulette.getRows(); i++) {
+            for (int j = 0; j < roulette.getCols(); j++) {
+                slots[i][j].setIcon(new SymbolIcon(symbolTypes[results[i][j]], SLOT_SIZE - 10));
+            }
+        }
+        
+        // 결과 확인
+        Roulette.PatternResult patternResult = roulette.checkResults(results);
+        
+        if (patternResult.hasWin()) {
+            resultLabel.setText("<html><center>" + patternResult.getMessage().replace("\n", "<br>") + "</center></html>");
+            resultLabel.setForeground(new Color(39, 174, 96));
+        } else {
+            resultLabel.setText("아쉽네요! 다시 시도해보세요!");
+            resultLabel.setForeground(new Color(231, 76, 60));
+        }
+        
+        isSpinning = false;
     }
 
     @Override
@@ -310,29 +405,17 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     
-        g2d.setColor(new Color(30, 30, 30)); 
-        int totalWidth = REEL_WIDTH * NUM_REELS + REEL_SPACING * (NUM_REELS - 1);
-        g2d.fillRect(START_X, START_Y_SLOT, totalWidth, REEL_HEIGHT);
-    
-        for (int i = 0; i < NUM_REELS; i++) {
-            int reelX = START_X + i * (REEL_WIDTH + REEL_SPACING);
-            
-            g2d.setColor(Color.WHITE);
-            g2d.setStroke(new BasicStroke(3)); 
-            g2d.drawRect(reelX, START_Y_SLOT, REEL_WIDTH, REEL_HEIGHT);
-
-            String[] currentSymbols = reels[i].getVisibleSymbols();
+        // 룰렛 보드 배경
+        g2d.setColor(new Color(195, 207, 226)); 
+        int boardWidth = ROULETTE_COLS * SLOT_SIZE + (ROULETTE_COLS - 1) * SLOT_SPACING + BOARD_PADDING * 2;
+        g2d.fillRect(START_X, START_Y_SLOT, boardWidth, BOARD_HEIGHT);
         
-            for (int j = 0; j < VISIBLE_SYMBOLS; j++) {
-                int symbolY = START_Y_SLOT + j * SYMBOL_HEIGHT;
-                
-                g2d.setColor(new Color(100, 100, 100)); 
-                g2d.drawRect(reelX, symbolY, REEL_WIDTH, SYMBOL_HEIGHT);
+        // 룰렛 보드 테두리
+        g2d.setColor(new Color(102, 126, 234));
+        g2d.setStroke(new BasicStroke(5));
+        g2d.drawRect(START_X, START_Y_SLOT, boardWidth, BOARD_HEIGHT);
         
-                drawSymbol(g2d, currentSymbols[j], reelX, symbolY);
-            }
-        }
-        
+        // 오른쪽 패널 배경
         g2d.setColor(Color.DARK_GRAY);
         g2d.fillRect(SLOT_TOTAL_WIDTH, NORTH_PANEL_HEIGHT, EAST_PANEL_WIDTH, TOTAL_HEIGHT - NORTH_PANEL_HEIGHT - SOUTH_PANEL_HEIGHT);
         
@@ -371,92 +454,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         }
     }
     
-    private void drawSymbol(Graphics2D g2d, String symbol, int x, int y) {
-        int centerX = x + REEL_WIDTH / 2;
-        int centerY = y + SYMBOL_HEIGHT / 2;
-        int size = Math.min(REEL_WIDTH, SYMBOL_HEIGHT) / 3;
-        
-        switch (symbol) {
-            case "Circle":
-                g2d.setColor(Color.YELLOW);
-                g2d.fillOval(centerX - size, centerY - size, 2 * size, 2 * size);
-                break;
-            case "Square":
-                g2d.setColor(Color.GREEN);
-                g2d.fillRect(centerX - size, centerY - size, 2 * size, 2 * size);
-                break;
-            case "Triangle":
-                g2d.setColor(Color.BLUE);
-                int[] tx = {centerX, centerX - size, centerX + size};
-                int[] ty = {centerY - size, centerY + size, centerY + size};
-                g2d.fillPolygon(tx, ty, 3);
-                break;
-            case "Star":
-                g2d.setColor(Color.RED);
-                int numPoints = 5;
-                int outerRadius = size;
-                int innerRadius = size / 2;
-                int[] sx = new int[numPoints * 2];
-                int[] sy = new int[numPoints * 2];
-                
-                for (int i = 0; i < numPoints * 2; i++) {
-                    double radius = (i % 2 == 0) ? outerRadius : innerRadius;
-                    double angle = Math.PI / 2 + i * Math.PI / numPoints;
-                    sx[i] = (int) (centerX + radius * Math.cos(angle));
-                    sy[i] = (int) (centerY - radius * Math.sin(angle));
-                }
-                g2d.fillPolygon(sx, sy, numPoints * 2);
-                break;
-            case "Diamond": 
-                g2d.setColor(Color.CYAN);
-                int[] dx = {centerX, centerX + size, centerX, centerX - size};
-                int[] dy = {centerY - size, centerY, centerY + size, centerY};
-                g2d.fillPolygon(dx, dy, 4);
-                break;
-            case "Hexagon": 
-                g2d.setColor(Color.MAGENTA);
-                int numSides = 6;
-                int[] hx = new int[numSides];
-                int[] hy = new int[numSides];
-                
-                for (int i = 0; i < numSides; i++) {
-                    double angle = i * 2 * Math.PI / numSides;
-                    hx[i] = (int) (centerX + size * Math.cos(angle));
-                    hy[i] = (int) (centerY + size * Math.sin(angle));
-                }
-                g2d.fillPolygon(hx, hy, numSides);
-                break;
-            case "Cross": 
-                g2d.setColor(Color.ORANGE);
-                int halfSize = size / 2;
-                g2d.fillRect(centerX - halfSize, centerY - size, 2 * halfSize, 2 * size);
-                g2d.fillRect(centerX - size, centerY - halfSize, 2 * size, 2 * halfSize);
-                break;
-        }
-    }
-
-
-    private class Reel {
-        private String[] visibleSymbols = new String[VISIBLE_SYMBOLS];
-        private Random reelRandom = new Random();
-
-        public Reel() {
-            for (int i = 0; i < VISIBLE_SYMBOLS; i++) {
-                visibleSymbols[i] = SYMBOLS[0];
-            }
-        }
-
-        public void randomizeSymbols() {
-            for (int i = 0; i < VISIBLE_SYMBOLS; i++) {
-                int randomIndex = reelRandom.nextInt(SYMBOLS.length);
-                visibleSymbols[i] = SYMBOLS[randomIndex];
-            }
-        }
-
-        public String[] getVisibleSymbols() {
-            return visibleSymbols;
-        }
-    }
 
     
     private class RectangularButton extends JButton {
