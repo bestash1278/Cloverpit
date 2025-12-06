@@ -15,6 +15,7 @@ public class Main {
             mainFrame.setLocationRelativeTo(null); 
             mainFrame.setResizable(false); 
             mainFrame.setVisible(true);
+            //test입니모모모
         });
     }
 }
