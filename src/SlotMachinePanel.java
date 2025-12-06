@@ -290,9 +290,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
      */
     private void handleSpinButtonClick() {
         if (isSpinning) return;
-        
-        user.setRoulatte_money(user.getRoulatte_money() - 100); 
-        user.setRound(user.getRound() + 1);
         updateStatusBar();
         
         startSpin();
