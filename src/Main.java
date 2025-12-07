@@ -34,16 +34,6 @@ public class Main {
                 }
             });
             
-            mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-            mainFrame.addWindowListener(new WindowAdapter() {
-             @Override
-             public void windowClosing(WindowEvent e) {
-                 slotPanel.saveOnExit();   
-                 mainFrame.dispose();
-                 System.exit(0);
-             }
-         });
             cardLayout = new CardLayout();
             cardPanel = new JPanel(cardLayout);
             

@@ -1,6 +1,2 @@
 round,round_spin_left,deadline,roulatte_money,total_money,ticket,interest,item_max,deadline_money
-<<<<<<< HEAD
-3,0,1,10007,30,7,0.1,6,75
-=======
-3,7,0,9955,75,5,0.1,6,75
->>>>>>> refs/remotes/origin/Jinsung
+1,7,1,10000,30,3,0.1,6,75
