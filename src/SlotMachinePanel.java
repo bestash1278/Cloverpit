@@ -467,42 +467,70 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     /**
      * 스핀 버튼 클릭 처리
      * 사용자 금액 차감, 라운드 증가, 스핀 시작
+     * 기간 내 납입 실패 시 탈락 처리
      */
     private void handleSpinButtonClick() {
         if (isSpinning) return;
-        
+
         if (!roundStarted) {
             JOptionPane.showMessageDialog(this, "먼저 라운드를 시작해주세요.");
             return;
         }
-        
+
         if (!roundManager.consumeSpin()) {
             JOptionPane.showMessageDialog(this,
-                    "이번 라운드의 기회을 모두 사용했습니다.");
+                    "이번 라운드의 기회를 모두 사용했습니다.");
             roundStarted = false;
             leverButton.setEnabled(false);
             roundStartButton.setVisible(true);
+            updateStatusBar();
             return;
         }
-        
+
         if (user.getRound_spin_left() <= 0) {
             roundStarted = false;
             leverButton.setEnabled(false);
             roundStartButton.setVisible(true);
+
             if (user.getRound() < ROUNDS_PER_DEADLINE) {
+
                 user.setRound(user.getRound() + 1);
+
             } else {
-                JOptionPane.showMessageDialog(this,
-                        "기한 " + user.getDeadline() + "의 3라운드를 모두 사용했습니다.");
-                user.setDeadline(user.getDeadline() + 1);
-                user.setRound(1);
+
+                int total = user.getTotal_money();
+                int target = user.getDeadline_money();
+
+                if (total < target) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "기한 " + user.getDeadline() + " 동안 목표 금액을 채우지 못했습니다.\n"
+                                    + "납입: " + total + " / 목표: " + target + "\n"
+                                    + "게임에서 탈락했습니다."
+                    );
+
+                    saveOnExit();
+                    Main.exitGame();
+                    return;
+
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "기한 " + user.getDeadline()
+                                    + "의 3라운드를 모두 사용했습니다.\n"
+                                    + "목표 금액을 달성했습니다! 다음 기한으로 진행합니다."
+                    );
+
+                    user.setDeadline(user.getDeadline() + 1);
+                    user.setRound(1);
+
+                }
             }
         }
-        
         updateStatusBar();
-        
         startSpin();
     }
+
     
     /**
      * 룰렛 스핀 시작
