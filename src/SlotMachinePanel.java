@@ -92,6 +92,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static int SPINS_PER_ROUND = 7;
     private static final int ROUNDS_PER_DEADLINE = 3;
     
+    private RoulatteInfo roulatte; // TODO 감자 :  룰렛정보클래스 만들어지면 그때 변경
+
+    
     public SlotMachinePanel() {
         SaveManagerCsv tempSaveManager = new SaveManagerCsv();
         User loaded = tempSaveManager.load();
@@ -106,6 +109,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     
     public SlotMachinePanel(User user) {
         init(user);
+        
     }
     
     private void init(User user) {
@@ -113,6 +117,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.soundManager = new SoundManager();
         this.saveManager = new SaveManagerCsv();
         this.roundManager = new RoundManager(user);
+        
+        // ⭐⭐ 이 부분이 누락되었을 가능성이 90% 이상입니다. ⭐⭐
+        this.roulatte = new RoulatteInfo();
         
         if (user.getRound() <= 0) {
             user.setRound(1);
@@ -337,22 +344,77 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         return button;
     }
 
+
+
+    // 새로운 프레임 보여주는 함수
     private void showNewFrame(String title) {
+        // 1. JFrame 기본 설정
         JFrame frame = new JFrame(title);
-        frame.setSize(400, 300);
-        frame.setLocationRelativeTo(null);
+        
+        // UI 컴포넌트(JPanel)를 담을 변수 선언
+        JPanel contentPanel = null;
+        int width = 400; // 기본 너비
+        int height = 300; // 기본 높이
+
+        // 2. 제목에 따라 적절한 UI 클래스 인스턴스화
+        switch (title) {
+            case "납입 버튼 화면":
+            	Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte);
+                // "납입 버튼 화면"에 해당하는 Payment_Screen 인스턴스 생성
+                contentPanel = new Payment_Screen(paymentLogic, this::updateStatusBar); // User 객체와 상태바 업데이트 콜백 전달
+                width = 800;
+                height = 600;
+                break;
+                
+            case "유물 상점 버튼 화면":
+                // "유물 상점 버튼 화면"에 해당하는 RelicShop_Screen 인스턴스 생성
+                //contentPanel = new RelicShop_Screen(this.user, this::updateStatusBar); // User 객체와 상태바 업데이트 콜백 전달
+                width = 800; 
+                height = 600;
+                break;
+                
+                
+            case "전화기능":
+                // 전화기능에 해당하는 Phone_Screen 인스턴스 생성
+                //contentPanel = new Phone_Screen(this.user); // User 객체 전달
+                width = 800;
+                height = 600;
+                break;
+
+            // 다른 메뉴 버튼 (무늬, 패턴, 소지 유물)은 임시 패널을 사용 //필요시 밑으로 추가
+            default:
+                contentPanel = createPlaceholderPanel(title);
+                width = 400;
+                height = 300;
+                break;
+        }
+
+        
+        frame.setSize(width, height);
+        frame.setLocationRelativeTo(null); // 화면 중앙에 표시
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
         
+        // 3. 생성된 패널을 프레임에 추가하고 크기 설정
+        if (contentPanel != null) {
+            frame.add(contentPanel);
+        }
+        
+
+        frame.setVisible(true);
+    }
+
+    // 임시 패널 생성 메서드 (기존 코드를 재사용/분리) //테스트용 더미 창 생성용.
+    private JPanel createPlaceholderPanel(String title) {
+        JPanel panel = new JPanel(new BorderLayout());
         JLabel label = new JLabel(title + " UI가 여기에 표시됩니다.", SwingConstants.CENTER);
         
         Font font = new Font("Malgun Gothic", Font.BOLD, 16);
-        if (font.getFamily().equals("Malgun Gothic") == false) {
+        if (!font.getFamily().equals("Malgun Gothic")) {
             font = new Font("Dotum", Font.BOLD, 16);
         }
         label.setFont(font);
-
-        frame.add(label);
-        frame.setVisible(true);
+        panel.add(label, BorderLayout.CENTER);
+        return panel;
     }
     
     /**

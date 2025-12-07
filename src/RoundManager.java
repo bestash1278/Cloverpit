@@ -5,6 +5,9 @@ public class RoundManager {
     private final int baseSpinsPerRound = 7;
     private final int roundsPerDeadLine = 3;
 
+    private int deadline_bonus_coin = 8;	//마감기한 보너스 코인
+    private int deadline_bonus_tiket = 4;	//마감기한 보너스 티켓
+    
     public RoundManager(User user) {
         this.user = user;
         if (user.getRound_spin_left() == 0) {
@@ -57,5 +60,13 @@ public class RoundManager {
 
     public boolean isDeadlineOver() {
         return user.getDeadline() <= 0;
+    }
+    
+    //마감기한 보너스 값 반환 함수
+    public int get_deadline_bonus_coin() {
+    	return this.deadline_bonus_coin;
+    }
+    public int get_deadline_bonus_tiket() {
+    	return this.deadline_bonus_tiket;
     }
 }
