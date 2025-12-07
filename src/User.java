@@ -13,6 +13,8 @@ public class User {
 
     private int round_spin_left = 7;
     private int item_max = 6;
+    
+    private int roulatte_cost = 2;	//룰렛 1회 비용
 
     public User() { }
 
@@ -118,4 +120,21 @@ public class User {
     public void setItem_max(int item_max) {
         this.item_max = item_max;
     }
+    
+    /*-----진성--------*/
+    public int getRoulatte_cost() {
+        return roulatte_cost;
+    }
+    
+    public void increaseInterestRate(double rate) {
+        this.interest += rate;
+        
+        // 디버깅/확인용 출력 (선택 사항)
+        java.lang.System.out.println(
+            "DEBUG: 이자율이 " + (rate * 100) + "%p 증가했습니다. " + 
+            "현재 이자율: " + (this.interest * 100) + "%p"
+        );
+    }
+    
+    /*---------------*/
 }
