@@ -528,7 +528,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     /**
      * 스핀 버튼 클릭 처리
      * - 스핀 가능 여부만 체크하고
-     * - 실제 기한/탈락 여부는 "스핀이 모두 끝난 뒤"에 처리한다.
+     * - "이번 스핀이 기한 마지막 스핀인지" 표시만 해 둔다.
+     * - 실제 기한/탈락 여부는 finishSpin() → checkDeadlineAfterLastSpin()에서 처리한다.
      */
     private void handleSpinButtonClick() {
         if (isSpinning) return;
@@ -538,10 +539,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             return;
         }
 
-        // 여기서는 "이번 스핀을 할 수 있는지만" 확인
-        // RoundManager를 쓰고 있다면 consumeSpin() 안에서 user.round_spin_left-- 해준다는 가정
+        lastSpinOfDeadline = false;
+
         if (!roundManager.consumeSpin()) {
-            // 더 이상 스핀 불가 (남은 스핀 없음)
             JOptionPane.showMessageDialog(this,
                     "이번 라운드의 기회를 모두 사용했습니다.\n라운드를 다시 시작해주세요.");
             roundStarted = false;
@@ -551,12 +551,19 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             return;
         }
 
-        // 스핀 1회 사용 반영 후 상태 업데이트
         updateStatusBar();
 
-        // 실제 룰렛 회전 시작
+        int spinsLeft    = user.getRound_spin_left();
+        int currentRound = user.getRound();
+
+        boolean isLastRoundOfDeadline = (currentRound == ROUNDS_PER_DEADLINE);
+        boolean isLastSpinOfRound     = (spinsLeft == 0);
+
+        lastSpinOfDeadline = (isLastRoundOfDeadline && isLastSpinOfRound);
+
         startSpin();
     }
+
 
 
 
@@ -631,30 +638,49 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     
 
     /**
-     * 기한 마지막 라운드의 마지막 스핀까지 모두 사용한 뒤 호출되는 메서드.
-     * - 이미 납입 완료면 다음 기한으로 진행
-     * - 보유 금액으로 남은 금액을 채울 수 있으면 납입 기회 제공
-     * - 그래도 납입 실패(거절/부족)면 탈락 처리
+     * 스핀이 모두 끝난 뒤 호출되는 메서드.
+     *
+     * - lastSpinOfDeadline == false 인 경우:
+     *   ▷ "기한 마지막 스핀"이 아니므로, 라운드 종료만 처리(onRoundFinished)하고 끝.
+     *
+     * - lastSpinOfDeadline == true 인 경우:
+     *   ▷ "기한 마지막 라운드의 마지막 스핀"이므로
+     *      · 남은 납입 필요 금액 계산
+     *      · 보유 금액으로 채울 수 있으면 납입 기회 제공
+     *      · 부족하거나, 납입 거부 시 탈락 처리
      */
     private void checkDeadlineAfterLastSpin() {
 
-        int target = user.getDeadline_money();
+        // 이 스핀이 마지막 스핀이 아닌 경우
+        if (!lastSpinOfDeadline) {
+           
+            if (user.getRound_spin_left() == 0 &&
+                user.getRound() < ROUNDS_PER_DEADLINE) {
+
+                onRoundFinished();
+            }
+            return; 
+        }
+
+        // 기한 내 마지막 스핀 시
+
+        int target = user.getDeadline_money(); 
         int paid   = user.getTotal_money();
         int have   = user.getRoulatte_money();
         int remain = target - paid;
 
-        // 이미 목표를 달성한 상태라면 그냥 다음 기한으로
+        // 이미 납입 완료했다면 다음 기한으로
         if (remain <= 0) {
             JOptionPane.showMessageDialog(
                     this,
                     "기한 " + user.getDeadline() + "의 목표 금액을 이미 달성했습니다.\n" +
                     "다음 기한으로 진행합니다."
             );
-            goToNextDeadline();
+            goNextDeadline();
             return;
         }
 
-        // 보유 금액이 남은 납입 필요 금액보다 적으면 탈락
+        // 보유 금액이 납입 불가 시 탈락
         if (have < remain) {
             JOptionPane.showMessageDialog(
                     this,
@@ -664,11 +690,11 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                     "게임에서 탈락했습니다."
             );
             saveOnExit();
-            // 실패 화면(Loose/LoseScreen)으로
             Main.exitGameWithLose();
             return;
         }
 
+        // 보유 금액으로 납입 가능 시 납입 기회
         int choice = JOptionPane.showConfirmDialog(
                 this,
                 "이번 기한의 남은 납입 필요 금액은 " + remain + "원입니다.\n" +
@@ -689,7 +715,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                     "납입을 완료했습니다!\n" +
                     "다음 기한으로 진행합니다."
             );
-            goToNextDeadline();
+            goNextDeadline();
         } else {
             // 플레이어가 납입을 선택하지 않음 → 탈락 처리
             JOptionPane.showMessageDialog(
@@ -701,22 +727,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             Main.exitGameWithLose();
         }
     }
+
     
-    /**
-     * 다음 기한으로 넘어갈 때 공통 처리
-     */
-    private void goToNextDeadline() {
-        // 기한 +1, 라운드 1로 리셋, 스핀은 다음 라운드 시작 시 선택하도록 0으로
-        user.setDeadline(user.getDeadline() + 1);
-        user.setRound(1);
-        user.setRound_spin_left(0);
-
-        roundStarted = false;
-        leverButton.setEnabled(false);
-        roundStartButton.setVisible(true);
-
-        updateStatusBar();
-    }
 
 
 
@@ -733,6 +745,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         user.setRound(user.getRound() + 1);
         user.setRound_spin_left(0);
     }
+    
     /**
      * 한 기한이 완전히 끝나고 다음 기한으로 넘어갈 때 호출
      */
@@ -747,7 +760,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         leverButton.setEnabled(false);
         roundStartButton.setVisible(true);
 
+        updateStatusBar();
     }
+
 
     /**
      * 게임 종료 시 저장
