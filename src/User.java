@@ -21,6 +21,8 @@ public class User {
     private int call_count = 0;	//전화를 걸 수 있는 기회
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
+    private int freeItemReroll_count = 0; //무료 유물상점 리롤권
+
     
     // 문양 가격 "레몬", "체리", "클로버", "종", "다이아", "보물", "7"
     private int[] symbol_sum = {2,2,3,3,5,5,7};
@@ -205,6 +207,25 @@ public class User {
     public int addItemReroll_count() {
     	return itemReroll_count += 1;
     }
+    
+    /*--------------*/
+    public void setItemReroll_count(int itemReroll_count) {
+    	this.itemReroll_count = itemReroll_count;
+    }
+
+    public int getFreeItemReroll_count() {
+    	return freeItemReroll_count;
+    }
+    
+    public void setFreeItemReroll_count(int freeItemReroll_count ) {
+    	this.freeItemReroll_count = freeItemReroll_count;
+    }
+    
+    public int addFreeItemReroll_count(int addFreeItemReroll_count) {
+    	this.freeItemReroll_count += addFreeItemReroll_count;
+    	return freeItemReroll_count;
+    }
+    /*--------------*/
     public int getTotal_spin() {
     	return total_spin;
     }

@@ -94,12 +94,13 @@ public abstract class ItemInfo {
     }
     public static class PlaceholderArtifact6 extends ItemInfo {
         public PlaceholderArtifact6() {
-            super("자리 채움 유물 6", 0, "res/dummy.png", "이 유물은 아직 미구현입니다."); 
+            super("자리 채움 유물 5", 0, "res/dummy.png", "이 유물은 아직 미구현입니다."); 
         }
         @Override
         public void applyEffect(User userInfo) {
+        	//userInfo.getLemonProbability();
+
             // 효과 없음
         }
     }
 }
-

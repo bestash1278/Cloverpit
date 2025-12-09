@@ -124,13 +124,13 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         
         // ⭐⭐ 이 부분이 누락되었을 가능성이 90% 이상입니다. ⭐⭐
         this.roulatte = new RoulatteInfo();
-        this.itemShop = new ItemShop(user);
+        this.itemShop = new ItemShop(user, this::updateStatusBar);
         this.call = new Call(user, roundManager);
         this.callScreen = new Call_Screen(this.call);
         Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
         		this.itemShop, this::updateStatusBar,this::updateShopScreen, this.call, this::updateCallScreen);
         this.paymentScreen = new Payment_Screen(paymentLogic);
-        this.itemShopScreen = new ItemShop_Screen(this.itemShop, this::updateStatusBar);
+        this.itemShopScreen = new ItemShop_Screen(this.itemShop);
         
         if (user.getRound() <= 0) {
             user.setRound(1);

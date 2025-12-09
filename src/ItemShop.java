@@ -4,9 +4,15 @@ import java.util.List;
 public class ItemShop {
     private final User userInfo; // 사용자 티켓/돈 정보를 위해 의존성 주입
     private List<ItemInfo> currentItems; // 현재 상점에 표시되는 5개 아이템 목록
+    private final Runnable updateMainStatus;
+    private List<ItemInfo> displayedItems;
 
-    public ItemShop(User userInfo) {
+
+    public ItemShop(User userInfo, Runnable updateMainStatus) {
         this.userInfo = userInfo;
+        this.updateMainStatus = updateMainStatus; //메인슬룻패널 스테이터스바 업데이트
+        this.displayedItems = getCurrentItems();
+
         initializeShop(); // 초기 아이템 목록 설정
     }
     
@@ -23,17 +29,20 @@ public class ItemShop {
             new ItemInfo.IncreaseInterestRateArtifact(),  
             new ItemInfo.PlaceholderArtifact4(), // 4번째 슬롯
             new ItemInfo.PlaceholderArtifact5(),  // 5번째 슬롯
-            new ItemInfo.PlaceholderArtifact6(),  // 6번째 슬롯
+            new ItemInfo.PlaceholderArtifact6(),  // 5번째 슬롯
 
             // 여기에 다른 유물 클래스들의 기본 생성자 호출을 추가합니다.
+            // 예: new ItemInfo.MoneyTreeArtifact(),
             new ItemInfo.HealthPotionArtifact() 
             // ... (모든 유물 정의)
         );
     }
+ // ... 나머지 ItemShop 필드 (userInfo, currentItems 등)
+    
     
     
 
-    // 초기 상점 아이템을 설정하거나 리롤하는 함수
+    // 초기 상점 아이템을 설정하는 함수
     private void initializeShop() {
     	if (this.currentItems == null) { // ⭐ 최초 1회만 실행되도록 조건 추가
             this.currentItems = createRandomItems();
@@ -55,14 +64,39 @@ public class ItemShop {
         return itemsToShuffle.subList(0, count);
     }
     
+    // ⭐ 새로 추가: 리롤만 할 때 티켓을 차감하는 함수 (핵심)
+    public boolean useItemForReroll() {
+    	int Reroll_cost = userInfo.getItemReroll_count() * 2 * userInfo.getRound();
+    	if(userInfo.getFreeItemReroll_count() > 0) {
+			System.out.println("무료 리롤 사용 성공. 남은 무료 리롤횟수: " + userInfo.getFreeItemReroll_count());
+    		return true;
+    	}
+    	else {
+    		if (userInfo.getRoulatte_money() > Reroll_cost) {
+    			userInfo.addRoulatte_money(- Reroll_cost);	//계산식 : (유물 리롤 횟수 * 2 * 라운드수)
+    			userInfo.addItemReroll_count();	//전화 리롤 카운트 증가
+    		    if (this.updateMainStatus != null) {
+    		        this.updateMainStatus.run(); // 메인 화면 갱신 요청!
+    		        System.out.println("Payment: 메인 스테이터스 바 갱신 요청 완료.");
+    		    }
+    			System.out.println("리롤 사용 성공. 남은 금액: " + userInfo.getRoulatte_money());
+    			return true;
+        }
+        return false;
+    	}
+    }
     
+    public int getFreeReroll_count() {
+    	return userInfo.getFreeItemReroll_count();
+    }
     
     // 리롤 버튼 클릭 시 호출될 함수
     public List<ItemInfo> rerollItems() {
         // TODO: 리롤 비용(예: 1 티켓)을 차감하는 로직 구현
-        
+        useItemForReroll();
         // 새로운 아이템 목록으로 갱신
     	this.currentItems = createRandomItems(); // 새로운 아이템 생성
+    	this.userInfo.addItemReroll_count();
     	System.out.println("ItemShop: 리롤 성공. 새 목록 크기: " + this.currentItems.size()); //디버깅용
     	
         // 갱신된 아이템 목록을 ItemShopScreen에 반환
@@ -95,8 +129,6 @@ public class ItemShop {
         
         int cost = item.getTicketCost();
         
-        // 2. UserInfo에서 티켓 차감 시도
-        // userInfo 필드는 ItemShop.class에 선언되어 있습니다.
         if (userInfo.minusTicket(cost)) {
             // 3. 티켓 차감 성공: 유물 효과 적용
             item.applyEffect(userInfo);
@@ -105,9 +137,13 @@ public class ItemShop {
             ItemInfo soldItem = new ItemInfo.SoldArtifact();
             currentItems.set(itemIndex, soldItem);
             
+            if (this.updateMainStatus != null) {
+                this.updateMainStatus.run(); 
+                System.out.println("ItemShop: 스테이터스 바 갱신 요청 완료.");
+            }
+            
             return PurchaseResult.SUCCESS; // 구매 성공
         } else {
-            // 티켓 차감 실패 (티켓 부족)
             return PurchaseResult.INSUFFICIENT_TICKETS; 
         }
     }
@@ -117,6 +153,4 @@ public class ItemShop {
         return this.currentItems;
     }
     
-    // ... 기타 UI 표시를 위한 Getter (예: 리롤 비용 등) ...
 }
-

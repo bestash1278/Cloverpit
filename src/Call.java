@@ -75,11 +75,7 @@ public class Call {
             // 2. 기회 차감
             user.minusCall_count();
             
-            // 3. 전화 내역에 추가 (능력 이름과 설명)
-            String callHistory = selectedAbility.getName() + " - " + selectedAbility.getDescription();
-            user.addUser_call(callHistory);
-            
-            // 4. 사용 후 다음 사용을 위해 선택지 리롤
+            // 3. 사용 후 다음 사용을 위해 선택지 리롤
             rerollAbilities(); 
             
             System.out.println("전화 사용 성공: [" + selectedAbility.getName() + "]");
@@ -108,4 +104,3 @@ public class Call {
     
     
 }
-
