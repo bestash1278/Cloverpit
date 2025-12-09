@@ -29,11 +29,11 @@ public abstract class ItemInfo {
     
     /**---------------유물 추가 파트---------------------**/
  // IncreaseInterestRateArtifact.java (이자율 증가 유물)
-    public static class IncreaseInterestRateArtifact extends ItemInfo {
+    public static class golden_compass extends ItemInfo {
         private final double rateIncrease = 0.05;
 
-        public IncreaseInterestRateArtifact() {
-            super("황금 나침반", 3, "res/dummy.png", "이자율을 영구히 5%p 증가시킵니다.");
+        public golden_compass() {
+            super("황금 나침반", 3, "res/golden_compass.png", "이자율을 영구히 5%p 증가시킵니다.");
         }
 
         @Override
@@ -72,29 +72,32 @@ public abstract class ItemInfo {
         }
     }
     
-    public static class PlaceholderArtifact4 extends ItemInfo {
-        public PlaceholderArtifact4() {
+    public static class symbol_train extends ItemInfo {
+        public symbol_train() {
             // 이름, 가격, 이미지 경로, 설명 (필요에 따라 변경)
-            super("자리 채움 유물 4", 0, "res/dummy.png", "이 유물은 아직 미구현입니다."); 
+            super("무늬 기차", 0, "res/symbol_train.png", "1번 패턴이 안나오면 무늬 가격이 원래 가격만큼 상승합니다"); 
         }
         @Override
         public void applyEffect(User userInfo) {
-            // 효과 없음 또는 임시 디버그 메시지
+            for (int i = 0; i < 7; i++) {
+                userInfo.setSymbolSum(i,userInfo.getSymbolSum(i) + userInfo.getSymbolOriginal(i));
+            }    
         }
     }
-
-    public static class PlaceholderArtifact5 extends ItemInfo {
-        public PlaceholderArtifact5() {
-            super("자리 채움 유물 5", 0, "res/dummy.png", "이 유물은 아직 미구현입니다."); 
+    public static class pattern_train extends ItemInfo {
+        public pattern_train() {
+            super("패턴 기차", 0, "res/pattern_train.png", "1번 패턴이 안나오면 패턴 가격이 원래 가격만큼 상승합니다"); 
         }
         @Override
         public void applyEffect(User userInfo) {
-            // 효과 없음
+            for (int i = 0; i < 11; i++) {
+                userInfo.setPatternSum(i,userInfo.getPatternSum(i) + userInfo.getPatternOriginal(i));
+            }
         }
     }
-    public static class PlaceholderArtifact6 extends ItemInfo {
-        public PlaceholderArtifact6() {
-            super("자리 채움 유물 6", 0, "res/dummy.png", "이 유물은 아직 미구현입니다."); 
+    public static class symbol_chain extends ItemInfo {
+        public symbol_chain() {
+            super("사슬 변형자 ", 0, "res/symbol_chain.png", "사슬 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다."); 
         }
         @Override
         public void applyEffect(User userInfo) {

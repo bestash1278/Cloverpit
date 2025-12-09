@@ -20,10 +20,9 @@ public class ItemShop {
         ALL_ARTIFACTS = java.util.List.of(
             // ⭐ 인수를 전달하지 않고 기본 생성자만 호출합니다.
             new ItemInfo.HealthPotionArtifact(),
-            new ItemInfo.IncreaseInterestRateArtifact(),  
-            new ItemInfo.PlaceholderArtifact4(), // 4번째 슬롯
-            new ItemInfo.PlaceholderArtifact5(),  // 5번째 슬롯
-            new ItemInfo.PlaceholderArtifact6(),  // 6번째 슬롯
+            new ItemInfo.golden_compass(),  // 6번째 슬롯
+            new ItemInfo.symbol_train(),  // 6번째 슬롯
+            new ItemInfo.pattern_train(),  // 6번째 슬롯
 
             // 여기에 다른 유물 클래스들의 기본 생성자 호출을 추가합니다.
             new ItemInfo.HealthPotionArtifact() 

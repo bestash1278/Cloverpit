@@ -51,9 +51,9 @@ public class ItemShop_Screen extends JPanel {
     
     // 아이템 박스 셋팅 함수
     private void setupItemAreas() {
-        int itemWidth = 100;
-        int itemHeight = 100;
-        int gap = 50;
+        int itemWidth = 150;
+        int itemHeight = 150;
+        int gap = 80;
         int center_x = 400;
 
         // 위에 2개 (인덱스 0, 1)
