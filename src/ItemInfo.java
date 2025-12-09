@@ -1,17 +1,24 @@
-// 유물 파트, 밑에 유물 추가 하면 됩니다.
+import java.util.HashMap; // ⭐ 추가
+import java.util.Map;     // ⭐ 추가
+
+//유물 파트, 밑에 유물 추가 하면 됩니다.
 public abstract class ItemInfo {
     private final String name;
     private final int ticketCost; 
     private final String imagePath;	//이미지가 저장되는 경로 필드
     private final String description; // 유물설명
-    
 
+    
+    private static final Map<String, String> ITEM_PATH_MAP = new HashMap<>();
     public ItemInfo(String name, int ticketCost, String imagePath, String description) {
         this.name = name;
         this.ticketCost = ticketCost;
         this.imagePath = imagePath;
         this.description = description;
+        ITEM_PATH_MAP.put(name, imagePath);
+
     }
+    
     
     // 모든 유물이 반드시 구현해야 하는 고유 기능
     public abstract void applyEffect(User userInfo); 
@@ -19,15 +26,18 @@ public abstract class ItemInfo {
     // 공통 Getter (UI/Shop 로직에서 사용)
     public String getName() { return name; }
     public int getTicketCost() { return ticketCost; }
-    public String getImagePath() { return imagePath; }
+    public String getImagePath() { return imagePath; }	//인스턴스 경로 값으로 유물을 찾을때(상점표시용)
+    public static String getImagePathByName(String name) {	//이름으로 유물을 찾을때
+        // 맵에서 찾거나, 없을 경우 기본 경로 반환
+        return ITEM_PATH_MAP.getOrDefault(name, "res/dummy.png"); 
+    }
     public String getDescription() { return description; }
     
+
     
     
     
-    
-    
-    /**---------------유물 추가 파트---------------------**/
+ /**--------------------------유물 추가 파트-----------------------------------------**/
  // IncreaseInterestRateArtifact.java (이자율 증가 유물)
     public static class IncreaseInterestRateArtifact extends ItemInfo {
         private final double rateIncrease = 0.05;

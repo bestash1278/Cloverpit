@@ -5,6 +5,7 @@ public class User {
 
     private String user_name;  
     private List<String> user_call;     
+    private List<String> user_item = new ArrayList<>();
 
     private int roulatte_money = 10000;  
     private double interest = 0.1;  
@@ -297,4 +298,14 @@ public class User {
             this.pattern_sum[index] = value;
         }
     }
+    
+    /*--------유저 유물-----------*/
+    public void addOwnItem_List(String itemName) {
+        this.user_item.add(itemName);
+    }
+
+    public List<String> getOwnItem_List() {
+        return user_item;
+    }
+    /*--------------------------*/
 }

@@ -46,8 +46,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int LEVER_HEAD_SIZE = 60; 
     private static final int LEVER_BAR_THICKNESS = 18; 
 
-    private static final int TARGET_WIDTH = 1600;
-    private static final int TARGET_HEIGHT = 900;
+    private static final int TARGET_WIDTH = 1000;
+    private static final int TARGET_HEIGHT = 650;
     
     private static final int SLOT_SIZE = 120;
     private static final int SLOT_SPACING = 15;
@@ -99,6 +99,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
 	private Payment_Screen paymentScreen;	//납입화면 보관용
 	private ItemShop_Screen currentPanel;	//유물화면 보관용
 	private Call_Screen callScreen;	//전화 화면
+	private OwnItem ownItem;
+	private OwnItem_Screen ownItemScreen;
+	
     
     public SlotMachinePanel() {
         SaveManagerCsv tempSaveManager = new SaveManagerCsv();
@@ -121,12 +124,15 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.soundManager = new SoundManager();
         this.saveManager = new SaveManagerCsv();
         this.roundManager = new RoundManager(user);
+        this.ownItem = new OwnItem(user);
         
-        // ⭐⭐ 이 부분이 누락되었을 가능성이 90% 이상입니다. ⭐⭐
         this.roulatte = new RoulatteInfo();
         this.itemShop = new ItemShop(user, this::updateStatusBar);
+        this.ownItemScreen = new OwnItem_Screen(this.ownItem);
+
         this.call = new Call(user, roundManager);
         this.callScreen = new Call_Screen(this.call);
+
         Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
         		this.itemShop, this::updateStatusBar,this::updateShopScreen, this.call, this::updateCallScreen);
         this.paymentScreen = new Payment_Screen(paymentLogic);
@@ -214,6 +220,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 }
             }
         });
+        
+        
 
         leverButton = new LeverHeadButton(); 
         leverButton.setBounds(0, 0, LEVER_HEAD_SIZE, LEVER_HEAD_SIZE);
@@ -429,6 +437,16 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 width = 800;
                 height = 600;
                 break;
+               
+            case "소지 유물 버튼 화면":
+                contentPanel = this.ownItemScreen;
+                width = 800;
+                height = 600;
+                if (this.ownItemScreen != null) {
+                    this.ownItemScreen.updateUI(); 
+                    System.out.println("SlotMachinePanel: 소지 유물 화면 갱신 요청 성공."); // 확인용 출력
+                }
+                break;
 
             // 다른 메뉴 버튼 (무늬, 패턴, 소지 유물)은 임시 패널을 사용 //필요시 밑으로 추가
             default:
@@ -446,6 +464,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         // 3. 생성된 패널을 프레임에 추가하고 크기 설정
         if (contentPanel != null) {
             frame.add(contentPanel);
+            contentPanel.revalidate();
+            contentPanel.repaint();
         }
 
         

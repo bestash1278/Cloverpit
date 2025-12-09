@@ -132,6 +132,9 @@ public class ItemShop {
         if (userInfo.minusTicket(cost)) {
             // 3. 티켓 차감 성공: 유물 효과 적용
             item.applyEffect(userInfo);
+
+         // ⭐ ⭐ 4. 유저 소유 목록에 유물 이름 추가 (핵심 수정) ⭐ ⭐
+            userInfo.addOwnItem_List(item.getName());
             
             // 4. 상점 UI 업데이트: '판매된 유물' 객체로 교체
             ItemInfo soldItem = new ItemInfo.SoldArtifact();
