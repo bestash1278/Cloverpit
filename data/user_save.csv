@@ -1,2 +1,2 @@
-round,round_spin_left,deadline,roulatte_money,total_money,ticket,interest,item_max,deadline_money
-1,7,1,10000,30,3,0.1,6,75
+round,round_spin_left,deadline,roulatte_money,total_money,ticket,interest,item_max,deadline_money,user_call
+3,0,1,20,30,9,0.1,6,75,

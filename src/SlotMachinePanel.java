@@ -19,6 +19,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int MAX_SPIN_COUNT = 30;
     private boolean roundStarted = false;
     
+    //이번 스핀이 기한 내 마지막 스핀인지 확인
+    private boolean lastSpinOfDeadline = false;
+    
     private static final int START_X = 100;
     private static final int START_Y_SLOT = 120; 
     
@@ -89,10 +92,17 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private SoundManager soundManager;
     private SaveManagerCsv saveManager;
     private RoundManager roundManager;
+    private Call call;	//전화 기능
     private static int SPINS_PER_ROUND = 7;
     private static final int ROUNDS_PER_DEADLINE = 3;
     
     private RoulatteInfo roulatte; // TODO 감자 :  룰렛정보클래스 만들어지면 그때 변경
+
+    private ItemShop itemShop;
+    private ItemShop_Screen itemShopScreen;	//유물화면 보관용
+	private Payment_Screen paymentScreen;	//납입화면 보관용
+	private ItemShop_Screen currentPanel;	//유물화면 보관용
+	private Call_Screen callScreen;	//전화 화면
 
     
     public SlotMachinePanel() {
@@ -120,6 +130,15 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         
         // ⭐⭐ 이 부분이 누락되었을 가능성이 90% 이상입니다. ⭐⭐
         this.roulatte = new RoulatteInfo();
+
+        this.itemShop = new ItemShop(user);
+        this.call = new Call(user, roundManager);
+        this.callScreen = new Call_Screen(this.call);
+        Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
+        		this.itemShop, this::updateStatusBar,this::updateShopScreen, this.call, this::updateCallScreen);
+        this.paymentScreen = new Payment_Screen(paymentLogic);
+        this.itemShopScreen = new ItemShop_Screen(this.itemShop, this::updateStatusBar);
+
         
         if (user.getRound() <= 0) {
             user.setRound(1);
@@ -132,6 +151,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         }
         
         roulette = new Roulette();
+        roulette.setUser(this.user);
         setLayout(null); 
         setPreferredSize(new Dimension(TOTAL_WIDTH, TOTAL_HEIGHT)); 
         setBackground(Color.DARK_GRAY);
@@ -344,6 +364,35 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         return button;
     }
 
+   /* ------ 화면 전환용 코드 -------*/
+ // ItemShop_Screen이 현재 활성화된 화면이라면 즉시 갱신을 요청하는 메서드
+    public void updateShopScreen() {
+        // 현재 표시 중인 화면이 ItemShop_Screen인지 확인
+        if (this.currentPanel == null) {
+            // itemShopLogic에 저장된 최신 목록(리롤된 목록)으로 UI 갱신 요청
+            this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+            
+            // 화면을 다시 그리도록 요청 (paintComponent 재호출)
+            this.itemShopScreen.revalidate();
+            this.itemShopScreen.repaint();
+            System.out.println("SlotMachinePanel: 라운드 전환으로 상점 화면 즉시 갱신 완료.");
+        }
+    }
+    
+    /**
+     * 전화 화면(Call_Screen)이 현재 열려 있다면 즉시 UI를 갱신합니다.
+     * Payment 클래스에서 라운드 전환 시 호출됩니다.
+     */
+    public void updateCallScreen() {
+        if (this.callScreen != null) {
+            this.callScreen.updateUI(); 
+            
+            // 팝업 창이 열려있다면 즉시 화면을 다시 그리도록 요청합니다.
+            this.callScreen.revalidate();
+            this.callScreen.repaint();
+            System.out.println("SlotMachinePanel: 라운드 전환으로 전화 화면 즉시 갱신 요청 완료.");
+        }
+    }
 
 
     // 새로운 프레임 보여주는 함수
@@ -359,24 +408,33 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         // 2. 제목에 따라 적절한 UI 클래스 인스턴스화
         switch (title) {
             case "납입 버튼 화면":
-            	Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte);
                 // "납입 버튼 화면"에 해당하는 Payment_Screen 인스턴스 생성
-                contentPanel = new Payment_Screen(paymentLogic, this::updateStatusBar); // User 객체와 상태바 업데이트 콜백 전달
+                contentPanel = this.paymentScreen; // User 객체와 상태바 업데이트 콜백 전달
                 width = 800;
                 height = 600;
+             // ⭐ 3. (중요) 상점 패널을 열 때, ItemShopLogic에 저장된 최신 목록으로 UI를 갱신
+                // ItemShop_Screen 내부에 updateShopUI(List<ItemInfo> items) 메서드가 있어야 합니다.
+                if (this.itemShopScreen != null) {
+                     this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+                }
                 break;
                 
             case "유물 상점 버튼 화면":
                 // "유물 상점 버튼 화면"에 해당하는 RelicShop_Screen 인스턴스 생성
-                //contentPanel = new RelicShop_Screen(this.user, this::updateStatusBar); // User 객체와 상태바 업데이트 콜백 전달
-                width = 800; 
+            	contentPanel = this.itemShopScreen;
+            	width = 800; 
                 height = 600;
+             // ItemShop Logic에 저장된 최신 목록(리롤된 목록)으로 UI를 갱신해야 합니다.
+                if (this.itemShopScreen != null) {
+                     this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+                     System.out.println("SlotMachinePanel: 상점 화면 열면서 UI 갱신 요청 완료."); // 💡 디버깅 코드 추가
+                }
                 break;
                 
                 
-            case "전화기능":
+            case "전화":
                 // 전화기능에 해당하는 Phone_Screen 인스턴스 생성
-                //contentPanel = new Phone_Screen(this.user); // User 객체 전달
+                contentPanel = this.callScreen;
                 width = 800;
                 height = 600;
                 break;
@@ -398,6 +456,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         if (contentPanel != null) {
             frame.add(contentPanel);
         }
+
+
         
 
         frame.setVisible(true);
@@ -416,6 +476,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         panel.add(label, BorderLayout.CENTER);
         return panel;
     }
+    /*------------------------*/
     
     /**
      * 라운드 시작 다이얼로그 표시
@@ -466,8 +527,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     
     /**
      * 스핀 버튼 클릭 처리
-     * 사용자 금액 차감, 라운드 증가, 스핀 시작
-     * 기간 내 납입 실패 시 탈락 처리
+     * - 스핀 가능 여부만 체크하고
+     * - 실제 기한/탈락 여부는 "스핀이 모두 끝난 뒤"에 처리한다.
      */
     private void handleSpinButtonClick() {
         if (isSpinning) return;
@@ -477,9 +538,12 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             return;
         }
 
+        // 여기서는 "이번 스핀을 할 수 있는지만" 확인
+        // RoundManager를 쓰고 있다면 consumeSpin() 안에서 user.round_spin_left-- 해준다는 가정
         if (!roundManager.consumeSpin()) {
+            // 더 이상 스핀 불가 (남은 스핀 없음)
             JOptionPane.showMessageDialog(this,
-                    "이번 라운드의 기회를 모두 사용했습니다.");
+                    "이번 라운드의 기회를 모두 사용했습니다.\n라운드를 다시 시작해주세요.");
             roundStarted = false;
             leverButton.setEnabled(false);
             roundStartButton.setVisible(true);
@@ -487,49 +551,14 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             return;
         }
 
-        if (user.getRound_spin_left() <= 0) {
-            roundStarted = false;
-            leverButton.setEnabled(false);
-            roundStartButton.setVisible(true);
-
-            if (user.getRound() < ROUNDS_PER_DEADLINE) {
-
-                user.setRound(user.getRound() + 1);
-
-            } else {
-
-                int total = user.getTotal_money();
-                int target = user.getDeadline_money();
-
-                if (total < target) {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "기한 " + user.getDeadline() + " 동안 목표 금액을 채우지 못했습니다.\n"
-                                    + "납입: " + total + " / 목표: " + target + "\n"
-                                    + "게임에서 탈락했습니다."
-                    );
-
-                    saveOnExit();
-                    Main.exitGame();
-                    return;
-
-                } else {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "기한 " + user.getDeadline()
-                                    + "의 3라운드를 모두 사용했습니다.\n"
-                                    + "목표 금액을 달성했습니다! 다음 기한으로 진행합니다."
-                    );
-
-                    user.setDeadline(user.getDeadline() + 1);
-                    user.setRound(1);
-
-                }
-            }
-        }
+        // 스핀 1회 사용 반영 후 상태 업데이트
         updateStatusBar();
+
+        // 실제 룰렛 회전 시작
         startSpin();
     }
+
+
 
     
     /**
@@ -573,27 +602,153 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         spinCount++;
     }
     
-    /**
-     * 스핀 완료 처리
-     * 최종 결과 생성, 패턴 체크, 사운드 중지
-     */
     private void finishSpin() {
         int[][] results = roulette.generateResults();
         int[] symbolTypes = roulette.getSymbolTypes();
-        
+
         for (int i = 0; i < roulette.getRows(); i++) {
             for (int j = 0; j < roulette.getCols(); j++) {
                 slots[i][j].setIcon(new SymbolIcon(symbolTypes[results[i][j]], SLOT_SIZE - 20));
             }
         }
-        
+
+        // 패턴 체크 & 당첨 금액 계산
         roulette.checkResults(results);
         soundManager.stopSpinSound();
         isSpinning = false;
+
+        // 룰렛에서 벌어들인 돈을 유저에게 반영
         user.setRoulatte_money(user.getRoulatte_money() + roulette.roulette_money);
         roulette.roulette_money = 0;
+
+        // 상태 UI 갱신
+        updateStatusBar();
+
+        // ❗ "이번 스핀 이후"에 라운드/기한/탈락 여부를 판정
+        checkDeadlineAfterLastSpin();
+    }
+
+    
+
+    /**
+     * 기한 마지막 라운드의 마지막 스핀까지 모두 사용한 뒤 호출되는 메서드.
+     * - 이미 납입 완료면 다음 기한으로 진행
+     * - 보유 금액으로 남은 금액을 채울 수 있으면 납입 기회 제공
+     * - 그래도 납입 실패(거절/부족)면 탈락 처리
+     */
+    private void checkDeadlineAfterLastSpin() {
+
+        int target = user.getDeadline_money();
+        int paid   = user.getTotal_money();
+        int have   = user.getRoulatte_money();
+        int remain = target - paid;
+
+        // 이미 목표를 달성한 상태라면 그냥 다음 기한으로
+        if (remain <= 0) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "기한 " + user.getDeadline() + "의 목표 금액을 이미 달성했습니다.\n" +
+                    "다음 기한으로 진행합니다."
+            );
+            goToNextDeadline();
+            return;
+        }
+
+        // 보유 금액이 남은 납입 필요 금액보다 적으면 탈락
+        if (have < remain) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "보유 금액이 부족하여 목표 금액을 채울 수 없습니다.\n" +
+                    "남은 납입 필요 금액 : " + remain + "\n" +
+                    "현재 보유 금액     : " + have + "\n\n" +
+                    "게임에서 탈락했습니다."
+            );
+            saveOnExit();
+            // 실패 화면(Loose/LoseScreen)으로
+            Main.exitGameWithLose();
+            return;
+        }
+
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "이번 기한의 남은 납입 필요 금액은 " + remain + "원입니다.\n" +
+                "현재 보유 금액은 " + have + "원입니다.\n\n" +
+                "지금 바로 납입하여 다음 기한으로 진행하시겠습니까?",
+                "마지막 납입 기회",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (choice == JOptionPane.YES_OPTION) {
+            // 보유 금액에서 차감하고 납입 금액에 더함
+            user.addRoulatte_money(-remain);
+            user.addTotal_money(remain);
+            updateStatusBar();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "납입을 완료했습니다!\n" +
+                    "다음 기한으로 진행합니다."
+            );
+            goToNextDeadline();
+        } else {
+            // 플레이어가 납입을 선택하지 않음 → 탈락 처리
+            JOptionPane.showMessageDialog(
+                    this,
+                    "납입을 하지 않아 목표 금액을 달성하지 못했습니다.\n" +
+                    "게임에서 탈락했습니다."
+            );
+            saveOnExit();
+            Main.exitGameWithLose();
+        }
     }
     
+    /**
+     * 다음 기한으로 넘어갈 때 공통 처리
+     */
+    private void goToNextDeadline() {
+        // 기한 +1, 라운드 1로 리셋, 스핀은 다음 라운드 시작 시 선택하도록 0으로
+        user.setDeadline(user.getDeadline() + 1);
+        user.setRound(1);
+        user.setRound_spin_left(0);
+
+        roundStarted = false;
+        leverButton.setEnabled(false);
+        roundStartButton.setVisible(true);
+
+        updateStatusBar();
+    }
+
+
+
+
+    /**
+     * 이번 기한 안에서 한 라운드가 끝났을 때 (마지막 기한 라운드가 아닌 경우)
+     * → 다음 라운드로 넘어가기 위해 레버를 잠그고 '라운드 시작' 버튼을 보이게 함
+     */
+    private void onRoundFinished() {
+        roundStarted = false;
+        leverButton.setEnabled(false);
+        roundStartButton.setVisible(true);
+
+        user.setRound(user.getRound() + 1);
+        user.setRound_spin_left(0);
+    }
+    /**
+     * 한 기한이 완전히 끝나고 다음 기한으로 넘어갈 때 호출
+     */
+    private void goNextDeadline() {
+        // 기한 +1, 라운드는 다시 1, 스핀은 0
+        // (다음 기한에서도 '라운드 시작' 버튼으로 회수 선택)
+        user.setDeadline(user.getDeadline() + 1);
+        user.setRound(1);
+        user.setRound_spin_left(0);
+
+        roundStarted = false;
+        leverButton.setEnabled(false);
+        roundStartButton.setVisible(true);
+
+    }
+
     /**
      * 게임 종료 시 저장
      */
@@ -601,6 +756,10 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         if (saveManager != null && user != null) {
             saveManager.save(user);
         }
+    }
+    
+    public User getUser() {
+        return user;
     }
 
     @Override

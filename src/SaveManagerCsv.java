@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class SaveManagerCsv {
@@ -21,7 +23,7 @@ public class SaveManagerCsv {
                 }
                 try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
                     bw.write("round,round_spin_left,deadline,roulatte_money,"
-                           + "total_money,ticket,interest,item_max,deadline_money");
+                           + "total_money,ticket,interest,item_max,deadline_money,user_call");
                     bw.newLine();
                 }
             } catch (IOException e) {
@@ -34,7 +36,7 @@ public class SaveManagerCsv {
         File file = new File(SAVE_FILE);
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
             bw.write("round,round_spin_left,deadline,roulatte_money,"
-                   + "total_money,ticket,interest,item_max,deadline_money");
+                   + "total_money,ticket,interest,item_max,deadline_money,user_call");
             bw.newLine();
 
             StringBuilder sb = new StringBuilder();
@@ -46,7 +48,12 @@ public class SaveManagerCsv {
             sb.append(user.getTicket()).append(",");
             sb.append(user.getInterest()).append(",");
             sb.append(user.getItem_max()).append(",");
-            sb.append(user.getDeadline_money());
+            sb.append(user.getDeadline_money()).append(",");
+
+            List<String> userCall = user.getUser_call();
+            if (userCall != null && !userCall.isEmpty()) {
+                sb.append(String.join("\n", userCall));
+            }
 
             bw.write(sb.toString());
             bw.newLine();
@@ -85,6 +92,22 @@ public class SaveManagerCsv {
             user.setInterest(Double.parseDouble(arr[6]));
             user.setItem_max(Integer.parseInt(arr[7]));
             user.setDeadline_money(Integer.parseInt(arr[8]));
+            
+
+            if (arr.length > 9 && arr[9] != null && !arr[9].trim().isEmpty()) {
+                List<String> userCallList = new ArrayList<>();
+                String userCallStr = arr[9];
+                String[] callItems = userCallStr.split("\n");
+                for (String item : callItems) {
+                    String trimmed = item.trim();
+                    if (!trimmed.isEmpty()) {
+                        userCallList.add(trimmed);
+                    }
+                }
+                user.setUser_call(userCallList);
+            } else {
+                user.setUser_call(new ArrayList<>());
+            }
 
             return user;
 
@@ -92,5 +115,11 @@ public class SaveManagerCsv {
             e.printStackTrace();
             return null;
         }
+    }
+    public void reset() {
+    	File f = new File(SAVE_FILE);
+    	if (f.exists()) {
+    		f.delete();
+    	}
     }
 }

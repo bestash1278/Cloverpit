@@ -1,10 +1,10 @@
 /**
  * UserInfo.java (임시 파일: PaymentScreen 디버깅용)
  */
+
 public class RoulatteInfo {
     
     private int roulatte_cost = 2; 
-
 
     public RoulatteInfo() {
         // 기본 생성자 
