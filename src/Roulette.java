@@ -23,71 +23,35 @@ public class Roulette {
     private static final String JACKPOT = "jackpot";
  
     
-    // 문양 가격 "레몬", "체리", "클로버", "종", "다이아", "보물", "7"
-    private int[] symbol_sum = {2,2,3,3,5,5,7};
+
     
-    // 패턴 가격 "트리플", "쿼드라", "펜타", "세로", "대각선", "지그", "재그", "지상", "천상", "눈", "잭팟" 
-    private int[] pattern_sum = {1,2,3,1,1,4,4,7,7,8,10};
-    
-    /*
-    private int what_symbol(String symbol) {
-    	int index=0;
-    	switch(symbol) {
-    	case "레몬": index=0;
-    	case "체리": index=1;
-    	case "클로버": index=2;
-    	case "종": index=3;
-    	case "다이아": index=4;
-    	case "보물": index=5;
-    	case "7": index=6;
-    	}
-    	return symbol_sum[index];
-    }
-    */
     
     private int what_pattern(String pattern) {
-    	int index=0;
     	switch(pattern) {
-    	case "triple": index=0; break;
-    	case "quadra": index=1; break;
-    	case "penta": index=2; break;
-    	case "vertical": index=3;break;
-    	case "diagonal": index=4; break;
-    	case "zig": index=5; break;
-    	case "zag": index=6; break;
-    	case "ground": index=7;break;
-    	case "heaven": index=8; break;
-    	case "eye": index=9;break;
-    	case "jackpot": index=10; break;
-    	}
-    	return pattern_sum[index];
+    	case "triple": return user.getPatternSum(0);
+    	case "quadra": return user.getPatternSum(1);
+    	case "penta": return user.getPatternSum(2);
+    	case "vertical": return user.getPatternSum(3);
+    	case "diagonal": return user.getPatternSum(4);
+    	case "zig": return user.getPatternSum(5);
+    	case "zag": return user.getPatternSum(6);
+    	case "ground": return user.getPatternSum(7);
+    	case "heaven": return user.getPatternSum(8);
+    	case "eye": return user.getPatternSum(9);
+    	case "jackpot": return user.getPatternSum(10);
+    	default: return 0;
+        }
     }
    
-    // 게임 상태 변수
-    private int round = 1;
-    private int round_spin_left = 0;
     int roulette_money = 0;
-    private int total_money = 0;
-    private int item_max = 0;
-    private String user_name = "";
-    private String user_call = "";
-    private int roulatte_cost = 0;
-    private int item_reroll_cost = 0;
-    private int call_reroll_cost = 0;
-    private int item_free_reroll_cost = 0;
     private int symbol_mul=1;
     private int pattern_mul=1;
     
     private Random random;
+    public User user;
     
     // 문양별 확률 변수 (전체 합계 100)
-    private double lemon_probability = 100.0 / 7.0;
-    private double cherry_probability = 100.0 / 7.0;
-    private double clover_probability = 100.0 / 7.0;
-    private double bell_probability = 100.0 / 7.0;
-    private double diamond_probability = 100.0 / 7.0;
-    private double treasure_probability = 100.0 / 7.0;
-    private double seven_probability = 100.0 / 7.0;
+
     
     public Roulette() {
         random = new Random();
@@ -96,14 +60,26 @@ public class Roulette {
     }
     
     private void initializeProbabilities() {
+        if (user == null) {
+            return; // User not set yet, skip initialization
+        }
         double defaultProb = 100.0 / SYMBOL_TYPES.length;
-        lemon_probability = defaultProb;
-        cherry_probability = defaultProb;
-        clover_probability = defaultProb;
-        bell_probability = defaultProb;
-        diamond_probability = defaultProb;
-        treasure_probability = defaultProb;
-        seven_probability = defaultProb;
+        user.setLemonProbability(defaultProb);
+        user.setCherryProbability(defaultProb);
+        user.setCloverProbability(defaultProb);
+        user.setBellProbability(defaultProb);
+        user.setDiamondProbability(defaultProb);
+        user.setTreasureProbability(defaultProb);
+        user.setSevenProbability(defaultProb);
+    }
+    
+    /**
+     * User 객체를 설정하고 확률을 초기화합니다.
+     * @param user User 객체
+     */
+    public void setUser(User user) {
+        this.user = user;
+        initializeProbabilities();
     }
     
     public int getRows() {
@@ -127,27 +103,27 @@ public class Roulette {
         double cumulative = 0.0;
         
         // 레몬
-        cumulative += lemon_probability;
+        cumulative += user.getLemonProbability();
         if (randomValue < cumulative) return 0;
         
         // 체리
-        cumulative += cherry_probability;
+        cumulative += user.getCherryProbability();
         if (randomValue < cumulative) return 1;
         
         // 클로버
-        cumulative += clover_probability;
+        cumulative += user.getCloverProbability();
         if (randomValue < cumulative) return 2;
         
         // 종
-        cumulative += bell_probability;
+        cumulative += user.getBellProbability();
         if (randomValue < cumulative) return 3;
         
         // 다이아
-        cumulative += diamond_probability;
+        cumulative += user.getDiamondProbability();
         if (randomValue < cumulative) return 4;
         
         // 보물
-        cumulative += treasure_probability;
+        cumulative += user.getTreasureProbability();
         if (randomValue < cumulative) return 5;
         
         // 7
@@ -173,13 +149,13 @@ public class Roulette {
         
         // 변경된 확률 설정
         switch (symbolIndex) {
-            case 0: lemon_probability = newProbability; break;
-            case 1: cherry_probability = newProbability; break;
-            case 2: clover_probability = newProbability; break;
-            case 3: bell_probability = newProbability; break;
-            case 4: diamond_probability = newProbability; break;
-            case 5: treasure_probability = newProbability; break;
-            case 6: seven_probability = newProbability; break;
+            case 0: user.setLemonProbability(newProbability); break;
+            case 1: user.setCherryProbability(newProbability); break;
+            case 2: user.setCloverProbability(newProbability); break;
+            case 3: user.setBellProbability(newProbability); break;
+            case 4: user.setDiamondProbability(newProbability); break;
+            case 5: user.setTreasureProbability(newProbability); break;
+            case 6: user.setSevenProbability(newProbability); break;
         }
         
         // 나머지 문양들의 확률 조정
@@ -202,13 +178,13 @@ public class Roulette {
      */
     private double getTotalProbabilityExcept(int excludeIndex) {
         double total = 0.0;
-        if (excludeIndex != 0) total += lemon_probability;
-        if (excludeIndex != 1) total += cherry_probability;
-        if (excludeIndex != 2) total += clover_probability;
-        if (excludeIndex != 3) total += bell_probability;
-        if (excludeIndex != 4) total += diamond_probability;
-        if (excludeIndex != 5) total += treasure_probability;
-        if (excludeIndex != 6) total += seven_probability;
+        if (excludeIndex != 0) total += user.getLemonProbability();
+        if (excludeIndex != 1) total += user.getCherryProbability();
+        if (excludeIndex != 2) total += user.getCloverProbability();
+        if (excludeIndex != 3) total += user.getBellProbability();
+        if (excludeIndex != 4) total += user.getDiamondProbability();
+        if (excludeIndex != 5) total += user.getTreasureProbability();
+        if (excludeIndex != 6) total += user.getSevenProbability();
         return total;
     }
     
@@ -216,45 +192,45 @@ public class Roulette {
      * 특정 문양을 제외한 나머지 문양들의 확률을 비율로 조정합니다.
      */
     private void adjustOtherProbabilities(int excludeIndex, double ratio) {
-        if (excludeIndex != 0) lemon_probability *= ratio;
-        if (excludeIndex != 1) cherry_probability *= ratio;
-        if (excludeIndex != 2) clover_probability *= ratio;
-        if (excludeIndex != 3) bell_probability *= ratio;
-        if (excludeIndex != 4) diamond_probability *= ratio;
-        if (excludeIndex != 5) treasure_probability *= ratio;
-        if (excludeIndex != 6) seven_probability *= ratio;
+        if (excludeIndex != 0) user.setLemonProbability(user.getLemonProbability() * ratio);
+        if (excludeIndex != 1) user.setCherryProbability(user.getCherryProbability() * ratio);
+        if (excludeIndex != 2) user.setCloverProbability(user.getCloverProbability() * ratio);
+        if (excludeIndex != 3) user.setBellProbability(user.getBellProbability() * ratio);
+        if (excludeIndex != 4) user.setDiamondProbability(user.getDiamondProbability() * ratio);
+        if (excludeIndex != 5) user.setTreasureProbability(user.getTreasureProbability() * ratio);
+        if (excludeIndex != 6) user.setSevenProbability(user.getSevenProbability() * ratio);
     }
     
     /**
      * 특정 문양을 제외한 나머지 문양들의 확률을 동일한 값으로 설정합니다.
      */
     private void setEqualProbabilitiesExcept(int excludeIndex, double prob) {
-        if (excludeIndex != 0) lemon_probability = prob;
-        if (excludeIndex != 1) cherry_probability = prob;
-        if (excludeIndex != 2) clover_probability = prob;
-        if (excludeIndex != 3) bell_probability = prob;
-        if (excludeIndex != 4) diamond_probability = prob;
-        if (excludeIndex != 5) treasure_probability = prob;
-        if (excludeIndex != 6) seven_probability = prob;
+        if (excludeIndex != 0) user.setLemonProbability(prob);
+        if (excludeIndex != 1) user.setCherryProbability(prob);
+        if (excludeIndex != 2) user.setCloverProbability(prob);
+        if (excludeIndex != 3) user.setBellProbability(prob);
+        if (excludeIndex != 4) user.setDiamondProbability(prob);
+        if (excludeIndex != 5) user.setTreasureProbability(prob);
+        if (excludeIndex != 6) user.setSevenProbability(prob);
     }
     
     /**
      * 확률을 정규화하여 전체 합이 정확히 100이 되도록 합니다.
      */
     private void normalizeProbabilities() {
-        double total = lemon_probability + cherry_probability + clover_probability + 
-                      bell_probability + diamond_probability + treasure_probability + 
-                      seven_probability;
+        double total = user.getLemonProbability() + user.getCherryProbability() + user.getCloverProbability() + 
+                      user.getBellProbability() + user.getDiamondProbability() + user.getTreasureProbability() + 
+                      user.getSevenProbability();
         
         if (total > 0) {
             double ratio = 100.0 / total;
-            lemon_probability *= ratio;
-            cherry_probability *= ratio;
-            clover_probability *= ratio;
-            bell_probability *= ratio;
-            diamond_probability *= ratio;
-            treasure_probability *= ratio;
-            seven_probability *= ratio;
+            user.setLemonProbability(user.getLemonProbability() * ratio);
+            user.setCherryProbability(user.getCherryProbability() * ratio);
+            user.setCloverProbability(user.getCloverProbability() * ratio);
+            user.setBellProbability(user.getBellProbability() * ratio);
+            user.setDiamondProbability(user.getDiamondProbability() * ratio);
+            user.setTreasureProbability(user.getTreasureProbability() * ratio);
+            user.setSevenProbability(user.getSevenProbability() * ratio);
         }
     }
     
@@ -264,13 +240,13 @@ public class Roulette {
      */
     public double[] getSymbolProbabilities() {
         return new double[] {
-            lemon_probability,
-            cherry_probability,
-            clover_probability,
-            bell_probability,
-            diamond_probability,
-            treasure_probability,
-            seven_probability
+            user.getLemonProbability(),
+            user.getCherryProbability(),
+            user.getCloverProbability(),
+            user.getBellProbability(),
+            user.getDiamondProbability(),
+            user.getTreasureProbability(),
+            user.getSevenProbability()
         };
     }
     
@@ -281,13 +257,13 @@ public class Roulette {
      */
     public double getSymbolProbability(int symbolIndex) {
         switch (symbolIndex) {
-            case 0: return lemon_probability;
-            case 1: return cherry_probability;
-            case 2: return clover_probability;
-            case 3: return bell_probability;
-            case 4: return diamond_probability;
-            case 5: return treasure_probability;
-            case 6: return seven_probability;
+            case 0: return user.getLemonProbability();
+            case 1: return user.getCherryProbability();
+            case 2: return user.getCloverProbability();
+            case 3: return user.getBellProbability();
+            case 4: return user.getDiamondProbability();
+            case 5: return user.getTreasureProbability();
+            case 6: return user.getSevenProbability();
             default: return 0.0;
         }
     }
@@ -301,36 +277,19 @@ public class Roulette {
             return;
         }
         
-        lemon_probability = probabilities[0];
-        cherry_probability = probabilities[1];
-        clover_probability = probabilities[2];
-        bell_probability = probabilities[3];
-        diamond_probability = probabilities[4];
-        treasure_probability = probabilities[5];
-        seven_probability = probabilities[6];
+        user.setLemonProbability(probabilities[0]);
+        user.setCherryProbability(probabilities[1]);
+        user.setCloverProbability(probabilities[2]);
+        user.setBellProbability(probabilities[3]);
+        user.setDiamondProbability(probabilities[4]);
+        user.setTreasureProbability(probabilities[5]);
+        user.setSevenProbability(probabilities[6]);
         
         normalizeProbabilities();
     }
-    
-    // 개별 확률 getter/setter 메서드들
-    public double getLemonProbability() { return lemon_probability; }
-    public double getCherryProbability() { return cherry_probability; }
-    public double getCloverProbability() { return clover_probability; }
-    public double getBellProbability() { return bell_probability; }
-    public double getDiamondProbability() { return diamond_probability; }
-    public double getTreasureProbability() { return treasure_probability; }
-    public double getSevenProbability() { return seven_probability; }
-    
-    public void setLemonProbability(double prob) { setSymbolProbability(0, prob); }
-    public void setCherryProbability(double prob) { setSymbolProbability(1, prob); }
-    public void setCloverProbability(double prob) { setSymbolProbability(2, prob); }
-    public void setBellProbability(double prob) { setSymbolProbability(3, prob); }
-    public void setDiamondProbability(double prob) { setSymbolProbability(4, prob); }
-    public void setTreasureProbability(double prob) { setSymbolProbability(5, prob); }
-    public void setSevenProbability(double prob) { setSymbolProbability(6, prob); }
+
     
     public int[][] generateResults() {
-        
         int[][] results = new int[ROWS][COLS];
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
@@ -362,13 +321,13 @@ public class Roulette {
                 detectedPattern = GROUND;
                 winMessage.append(String.format("%s 패턴! (%s)\n", 
                     GROUND, SYMBOL_NAMES[zigSymbol]));
-                roulette_money += symbol_sum[results[0][2]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[0][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             } else if (isZig) {
                 detectedPattern = ZIG;
                 winMessage.append(String.format("%s 패턴! (%s)\n", 
                     ZIG, SYMBOL_NAMES[zigSymbol]));
-                roulette_money += symbol_sum[results[0][2]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[0][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
             
@@ -387,13 +346,13 @@ public class Roulette {
                 detectedPattern = HEAVEN;
                 winMessage.append(String.format("%s 패턴! (%s)\n", 
                     HEAVEN, SYMBOL_NAMES[zagSymbol]));
-                roulette_money += symbol_sum[results[0][0]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[0][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             } else if (isZag) {
                 detectedPattern = ZAG;
                 winMessage.append(String.format("%s 패턴! (%s)\n", 
                     ZAG, SYMBOL_NAMES[zagSymbol]));
-                roulette_money += symbol_sum[results[0][0]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[0][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
             
@@ -410,7 +369,7 @@ public class Roulette {
                 detectedPattern = EYE;
                 winMessage.append(String.format("%s 패턴! (%s)\n", 
                     EYE, SYMBOL_NAMES[eyeSymbol]));
-                roulette_money += symbol_sum[results[2][1]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[2][1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
             
@@ -437,7 +396,7 @@ public class Roulette {
                     
                     detectedPattern = RIGHT_DIAGONAL;
                     winMessage.append(String.format("아래로 대각선패턴! (%s)\n", SYMBOL_NAMES[results[0][j]]));
-                    roulette_money += symbol_sum[results[0][j]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    roulette_money += user.getSymbolSum(results[0][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                     
                 }
@@ -447,7 +406,7 @@ public class Roulette {
                    
                     detectedPattern = LEFT_DIAGONAL;
                     winMessage.append(String.format("위로 대각선 패턴! (%s)\n", SYMBOL_NAMES[results[2][j]]));
-                    roulette_money += symbol_sum[results[0][j]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    roulette_money += user.getSymbolSum(results[0][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                     
                 }
@@ -463,20 +422,20 @@ public class Roulette {
                     detectedPattern = SECPENTA;
                     winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                         2, SECPENTA, SYMBOL_NAMES[results[1][0]]));
-                    roulette_money += symbol_sum[results[1][0]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    roulette_money += user.getSymbolSum(results[1][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
             }else if (results[1][0] == results[1][1] && results[1][1] == results[1][2] && results[1][2] == results[1][3]) {
                 detectedPattern = QUADRA;
                 winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                     2, QUADRA, SYMBOL_NAMES[results[1][0]]));
-                roulette_money += symbol_sum[results[1][0]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[1][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
             else if (results[1][1] == results[1][2] && results[1][2] == results[1][3] && results[1][3] == results[1][4]) {
                 detectedPattern = QUADRA;
                 winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                     2, QUADRA, SYMBOL_NAMES[results[1][1]]));
-                roulette_money += symbol_sum[results[1][1]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[1][1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
             // TRIPLE (3개 일치)
@@ -484,21 +443,21 @@ public class Roulette {
                 detectedPattern = TRIPLE;
                 winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                     2, TRIPLE, SYMBOL_NAMES[results[1][0]]));
-                roulette_money += symbol_sum[results[1][0]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[1][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
             else if (results[1][1] == results[1][2] && results[1][2] == results[1][3]) {
                 detectedPattern = TRIPLE;
                 winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                     2, TRIPLE, SYMBOL_NAMES[results[1][1]]));
-                roulette_money += symbol_sum[results[1][1]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[1][1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
             else if (results[1][2] == results[1][3] && results[1][3] == results[1][4]) {
                 detectedPattern = TRIPLE;
                 winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                     2, TRIPLE, SYMBOL_NAMES[results[1][2]]));
-                roulette_money += symbol_sum[results[1][2]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[1][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
         
@@ -520,7 +479,7 @@ public class Roulette {
                         detectedPattern = PENTA;
                         winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                             i + 1, PENTA, SYMBOL_NAMES[row[0]]));
-                        roulette_money += symbol_sum[row[0]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                        roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                         hasWin = true;
                     } 
                     // QUADRA (4개 일치)
@@ -528,14 +487,14 @@ public class Roulette {
                         detectedPattern = QUADRA;
                         winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                             i + 1, QUADRA, SYMBOL_NAMES[row[0]]));
-                        roulette_money += symbol_sum[row[0]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                        roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                         hasWin = true;
                     }
                     else if (row[1] == row[2] && row[2] == row[3] && row[3] == row[4]) {
                         detectedPattern = QUADRA;
                         winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                             i + 1, QUADRA, SYMBOL_NAMES[row[1]]));
-                        roulette_money += symbol_sum[row[1]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                        roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                         hasWin = true;
                     }
                     // TRIPLE (3개 일치)
@@ -543,21 +502,21 @@ public class Roulette {
                         detectedPattern = TRIPLE;
                         winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                             i + 1, TRIPLE, SYMBOL_NAMES[row[0]]));
-                        roulette_money += symbol_sum[row[0]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                        roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                         hasWin = true;
                     }
                     else if (row[1] == row[2] && row[2] == row[3]) {
                         detectedPattern = TRIPLE;
                         winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                             i + 1, TRIPLE, SYMBOL_NAMES[row[1]]));
-                        roulette_money += symbol_sum[row[1]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                        roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                         hasWin = true;
                     }
                     else if (row[2] == row[3] && row[3] == row[4]) {
                         detectedPattern = TRIPLE;
                         winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                             i + 1, TRIPLE, SYMBOL_NAMES[row[2]]));
-                        roulette_money += symbol_sum[row[2]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                        roulette_money += user.getSymbolSum(row[2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                         hasWin = true;
                     }
                 }
@@ -572,7 +531,7 @@ public class Roulette {
                     detectedPattern = VERTICAL;
                     winMessage.append(String.format("%d번째 열 %s 패턴! (%s)\n", 
                         j + 1, VERTICAL, SYMBOL_NAMES[results[0][j]]));
-                    roulette_money += symbol_sum[results[1][j]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    roulette_money += user.getSymbolSum(results[1][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                 }
             }
@@ -593,7 +552,7 @@ public class Roulette {
                 detectedPattern = JACKPOT;
                 winMessage.append(String.format("%s 패턴! (%s)\n", 
                     JACKPOT, SYMBOL_NAMES[jackpotSymbol]));
-                roulette_money += symbol_sum[results[1][2]] * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                roulette_money += user.getSymbolSum(results[1][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
         

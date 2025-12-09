@@ -8,15 +8,9 @@ import java.awt.event.ActionListener;
  * 게임 종료 시 표시되는 화면
  */
 public class EndScreen extends JPanel {
-    private JFrame parentFrame;
-    private CardLayout cardLayout;
-    private JPanel cardPanel;
     private User user;
     
     public EndScreen(JFrame frame, CardLayout cl, JPanel cp, User user) {
-        this.parentFrame = frame;
-        this.cardLayout = cl;
-        this.cardPanel = cp;
         this.user = user;
         
         setLayout(new BorderLayout());

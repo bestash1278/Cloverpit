@@ -89,8 +89,16 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private SoundManager soundManager;
     private SaveManagerCsv saveManager;
     private RoundManager roundManager;
+    private Call call;	//전화 기능
     private static int SPINS_PER_ROUND = 7;
     private static final int ROUNDS_PER_DEADLINE = 3;
+    
+    private RoulatteInfo roulatte; // TODO 감자 :  룰렛정보클래스 만들어지면 그때 변경
+    private ItemShop itemShop;
+    private ItemShop_Screen itemShopScreen;	//유물화면 보관용
+	private Payment_Screen paymentScreen;	//납입화면 보관용
+	private ItemShop_Screen currentPanel;	//유물화면 보관용
+	private Call_Screen callScreen;	//전화 화면
     
     public SlotMachinePanel() {
         SaveManagerCsv tempSaveManager = new SaveManagerCsv();
@@ -114,6 +122,16 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.saveManager = new SaveManagerCsv();
         this.roundManager = new RoundManager(user);
         
+        // ⭐⭐ 이 부분이 누락되었을 가능성이 90% 이상입니다. ⭐⭐
+        this.roulatte = new RoulatteInfo();
+        this.itemShop = new ItemShop(user);
+        this.call = new Call(user, roundManager);
+        this.callScreen = new Call_Screen(this.call);
+        Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
+        		this.itemShop, this::updateStatusBar,this::updateShopScreen, this.call, this::updateCallScreen);
+        this.paymentScreen = new Payment_Screen(paymentLogic);
+        this.itemShopScreen = new ItemShop_Screen(this.itemShop, this::updateStatusBar);
+        
         if (user.getRound() <= 0) {
             user.setRound(1);
         }
@@ -125,6 +143,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         }
         
         roulette = new Roulette();
+        roulette.setUser(this.user);
         setLayout(null); 
         setPreferredSize(new Dimension(TOTAL_WIDTH, TOTAL_HEIGHT)); 
         setBackground(Color.DARK_GRAY);
@@ -337,23 +356,119 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         return button;
     }
 
+   /* ------ 화면 전환용 코드 -------*/
+ // ItemShop_Screen이 현재 활성화된 화면이라면 즉시 갱신을 요청하는 메서드
+    public void updateShopScreen() {
+        // 현재 표시 중인 화면이 ItemShop_Screen인지 확인
+        if (this.currentPanel == null) {
+            // itemShopLogic에 저장된 최신 목록(리롤된 목록)으로 UI 갱신 요청
+            this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+            
+            // 화면을 다시 그리도록 요청 (paintComponent 재호출)
+            this.itemShopScreen.revalidate();
+            this.itemShopScreen.repaint();
+            System.out.println("SlotMachinePanel: 라운드 전환으로 상점 화면 즉시 갱신 완료.");
+        }
+    }
+    
+    /**
+     * 전화 화면(Call_Screen)이 현재 열려 있다면 즉시 UI를 갱신합니다.
+     * Payment 클래스에서 라운드 전환 시 호출됩니다.
+     */
+    public void updateCallScreen() {
+        if (this.callScreen != null) {
+            this.callScreen.updateUI(); 
+            
+            // 팝업 창이 열려있다면 즉시 화면을 다시 그리도록 요청합니다.
+            this.callScreen.revalidate();
+            this.callScreen.repaint();
+            System.out.println("SlotMachinePanel: 라운드 전환으로 전화 화면 즉시 갱신 요청 완료.");
+        }
+    }
+
+    // 새로운 프레임 보여주는 함수
     private void showNewFrame(String title) {
+        // 1. JFrame 기본 설정
         JFrame frame = new JFrame(title);
-        frame.setSize(400, 300);
-        frame.setLocationRelativeTo(null);
+        
+        // UI 컴포넌트(JPanel)를 담을 변수 선언
+        JPanel contentPanel = null;
+        int width = 400; // 기본 너비
+        int height = 300; // 기본 높이
+
+        // 2. 제목에 따라 적절한 UI 클래스 인스턴스화
+        switch (title) {
+            case "납입 버튼 화면":
+                // "납입 버튼 화면"에 해당하는 Payment_Screen 인스턴스 생성
+                contentPanel = this.paymentScreen; // User 객체와 상태바 업데이트 콜백 전달
+                width = 800;
+                height = 600;
+             // ⭐ 3. (중요) 상점 패널을 열 때, ItemShopLogic에 저장된 최신 목록으로 UI를 갱신
+                // ItemShop_Screen 내부에 updateShopUI(List<ItemInfo> items) 메서드가 있어야 합니다.
+                if (this.itemShopScreen != null) {
+                     this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+                }
+                break;
+                
+            case "유물 상점 버튼 화면":
+                // "유물 상점 버튼 화면"에 해당하는 RelicShop_Screen 인스턴스 생성
+            	contentPanel = this.itemShopScreen;
+            	width = 800; 
+                height = 600;
+             // ItemShop Logic에 저장된 최신 목록(리롤된 목록)으로 UI를 갱신해야 합니다.
+                if (this.itemShopScreen != null) {
+                     this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+                     System.out.println("SlotMachinePanel: 상점 화면 열면서 UI 갱신 요청 완료."); // 💡 디버깅 코드 추가
+                }
+                break;
+                
+                
+            case "전화":
+                // 전화기능에 해당하는 Phone_Screen 인스턴스 생성
+                contentPanel = this.callScreen;
+                width = 800;
+                height = 600;
+                break;
+
+            // 다른 메뉴 버튼 (무늬, 패턴, 소지 유물)은 임시 패널을 사용 //필요시 밑으로 추가
+            default:
+                contentPanel = createPlaceholderPanel(title);
+                width = 400;
+                height = 300;
+                break;
+        }
+
+        
+        frame.setSize(width, height);
+        frame.setLocationRelativeTo(null); // 화면 중앙에 표시
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
         
+        // 3. 생성된 패널을 프레임에 추가하고 크기 설정
+        if (contentPanel != null) {
+            frame.add(contentPanel);
+        }
+
+        
+
+        frame.setVisible(true);
+        
+        
+    }
+
+    // 임시 패널 생성 메서드 (기존 코드를 재사용/분리) //테스트용 더미 창 생성용.
+    private JPanel createPlaceholderPanel(String title) {
+        JPanel panel = new JPanel(new BorderLayout());
         JLabel label = new JLabel(title + " UI가 여기에 표시됩니다.", SwingConstants.CENTER);
         
         Font font = new Font("Malgun Gothic", Font.BOLD, 16);
-        if (font.getFamily().equals("Malgun Gothic") == false) {
+        if (!font.getFamily().equals("Malgun Gothic")) {
             font = new Font("Dotum", Font.BOLD, 16);
         }
         label.setFont(font);
-
-        frame.add(label);
-        frame.setVisible(true);
+        panel.add(label, BorderLayout.CENTER);
+        return panel;
     }
+    /*------------------------*/
     
     /**
      * 라운드 시작 다이얼로그 표시
@@ -427,13 +542,41 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             roundStarted = false;
             leverButton.setEnabled(false);
             roundStartButton.setVisible(true);
+            user.setTotal_spin(user.getTotal_spin() + 1);
+
             if (user.getRound() < ROUNDS_PER_DEADLINE) {
+
                 user.setRound(user.getRound() + 1);
+
             } else {
-                JOptionPane.showMessageDialog(this,
-                        "기한 " + user.getDeadline() + "의 3라운드를 모두 사용했습니다.");
-                user.setDeadline(user.getDeadline() + 1);
-                user.setRound(1);
+
+                int total = user.getTotal_money();
+                int target = user.getDeadline_money();
+
+                if (total < target) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "기한 " + user.getDeadline() + " 동안 목표 금액을 채우지 못했습니다.\n"
+                                    + "납입: " + total + " / 목표: " + target + "\n"
+                                    + "게임에서 탈락했습니다."
+                    );
+
+                    saveOnExit();
+                    Main.exitGame();
+                    return;
+
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "기한 " + user.getDeadline()
+                                    + "의 3라운드를 모두 사용했습니다.\n"
+                                    + "목표 금액을 달성했습니다! 다음 기한으로 진행합니다."
+                    );
+
+                    user.setDeadline(user.getDeadline() + 1);
+                    user.setRound(1);
+
+                }
             }
         }
         
