@@ -124,7 +124,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.soundManager = new SoundManager();
         this.saveManager = new SaveManagerCsv();
         this.roundManager = new RoundManager(user);
-        this.ownItem = new OwnItem(user);
+        this.ownItem = new OwnItem(user, this::updateStatusBar);
         
         this.roulatte = new RoulatteInfo();
         this.itemShop = new ItemShop(user, this::updateStatusBar);

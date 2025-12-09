@@ -34,6 +34,14 @@ public abstract class ItemInfo {
     }
     public String getDescription() { return description; }
     
+    /**
+     * 유물 이름으로 해당 유물의 템플릿 인스턴스를 가져옵니다.
+     * @param name 유물 이름
+     * @return ItemInfo 템플릿 인스턴스
+     */
+    public static ItemInfo getArtifactTemplateByName(String name) {
+        return ARTIFACT_TEMPLATES.get(name);
+    }
 
     
     

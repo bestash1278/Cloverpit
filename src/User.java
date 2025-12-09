@@ -345,5 +345,21 @@ public class User {
     	this.freeItemReroll_count += addFreeItemReroll_count;
     	return freeItemReroll_count;
     }
+    
+    public void addUserItem_List(String itemName) {
+    	this.user_item.add(itemName);
+    }
+    
+    public List<String> getUserItem_List() {
+        return this.user_item;
+    }
+    
+    public boolean removeUserItem_List(String itemName) {
+        // List의 remove(Object) 메서드는 첫 번째로 일치하는 항목을 제거하고 성공 여부를 반환합니다.
+        if (itemName == null) {
+            return false;
+        }
+        return this.user_item.remove(itemName);
+    }
     /*--------------------------*/
 }
