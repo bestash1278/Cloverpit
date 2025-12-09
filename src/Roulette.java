@@ -1,4 +1,4 @@
-import java.util.Random;
+﻿import java.util.Random;
 
 public class Roulette {
     private static final int[] SYMBOL_TYPES = {SymbolIcon.LEMON, SymbolIcon.CHERRY, SymbolIcon.CLOVER, 
@@ -63,20 +63,15 @@ public class Roulette {
         if (user == null) {
             return; // User not set yet, skip initialization
         }
-        double defaultProb = 100.0 / SYMBOL_TYPES.length;
-        user.setLemonProbability(defaultProb);
-        user.setCherryProbability(defaultProb);
-        user.setCloverProbability(defaultProb);
-        user.setBellProbability(defaultProb);
-        user.setDiamondProbability(defaultProb);
-        user.setTreasureProbability(defaultProb);
-        user.setSevenProbability(defaultProb);
+        user.setLemonProbability(user.getLemonProbability());
+        user.setCherryProbability(user.getCherryProbability());
+        user.setCloverProbability(user.getCloverProbability());
+        user.setBellProbability(user.getBellProbability());
+        user.setDiamondProbability(user.getDiamondProbability());
+        user.setTreasureProbability(user.getTreasureProbability());
+        user.setSevenProbability(user.getSevenProbability());
     }
-    
-    /**
-     * User 객체를 설정하고 확률을 초기화합니다.
-     * @param user User 객체
-     */
+
     public void setUser(User user) {
         this.user = user;
         initializeProbabilities();

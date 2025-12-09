@@ -1,5 +1,9 @@
 import javax.swing.*;
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -13,6 +17,7 @@ public class StartScreen extends JPanel {
     private JPanel cardPanel;
     private SoundManager soundManager;
     private SaveManagerCsv saveManager;
+    private BufferedImage backgroundImage;
     
     public StartScreen(JFrame frame, CardLayout cl, JPanel cp) {
         this.parentFrame = frame;
@@ -21,69 +26,69 @@ public class StartScreen extends JPanel {
         this.soundManager = new SoundManager();
         this.saveManager = new SaveManagerCsv();
         
-        setLayout(new BorderLayout());
-        setBackground(new Color(30, 30, 50));
+        // 배경 이미지 로드
+        try {
+            backgroundImage = ImageIO.read(new File("res/start_background.png"));
+        } catch (IOException e) {
+            backgroundImage = null;
+        }
+        
+        setLayout(null); // 절대 위치 레이아웃 사용
+        setOpaque(false);
         
         soundManager.playBackgroundMusic();
         
-        JPanel titlePanel = new JPanel();
-        titlePanel.setBackground(new Color(30, 30, 50));
-        titlePanel.setBorder(BorderFactory.createEmptyBorder(50, 0, 30, 0));
-        
-        JLabel titleLabel = new JLabel("클로버핏 (Cloverpit)");
-        Font titleFont = new Font("Malgun Gothic", Font.BOLD, 64);
-        if (!titleFont.getFamily().equals("Malgun Gothic")) {
-            titleFont = new Font("Dotum", Font.BOLD, 64);
-        }
-        titleLabel.setFont(titleFont);
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        titlePanel.add(titleLabel);
-        
-        add(titlePanel, BorderLayout.NORTH);
-        
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
-        buttonPanel.setBackground(new Color(30, 30, 50));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(50, 100, 50, 100));
+        // 버튼 위치 설정 (배경 이미지의 네모 상자 영역에 맞춤)
+        // 화면 중앙 하단 영역: x=500, y=550부터 시작 (1600x900 기준)
+        int buttonX = 693;
+        int buttonY = 500;
+        int buttonWidth = 200;
+        int buttonHeight = 60;
+        int buttonSpacing = 10;
         
         JButton newGameButton = createMenuButton("새 게임 시작", new Color(50, 150, 250));
+        newGameButton.setBounds(buttonX, buttonY, buttonWidth, buttonHeight);
         newGameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 startNewGame();
             }
         });
+        add(newGameButton);
         
         JButton continueGameButton = createMenuButton("저장된 게임 시작", new Color(150, 255, 100));
+        continueGameButton.setBounds(buttonX, buttonY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight);
         continueGameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 loadSavedGame();
             }
         });
-        
-        buttonPanel.add(Box.createVerticalStrut(50));
-        buttonPanel.add(newGameButton);
-        buttonPanel.add(Box.createVerticalStrut(50));
-        buttonPanel.add(continueGameButton);
-        
-        add(buttonPanel, BorderLayout.CENTER);
+        add(continueGameButton);
+    }
+    
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+        } else {
+            // 이미지 로드 실패 시 기본 배경색
+            g.setColor(new Color(30, 30, 50));
+            g.fillRect(0, 0, getWidth(), getHeight());
+        }
     }
     
     private JButton createMenuButton(String text, Color color) {
         JButton button = new JButton(text);
-        button.setFont(new Font("Malgun Gothic", Font.BOLD, 32));
+        button.setFont(new Font("Malgun Gothic", Font.BOLD, 20));
         if (!button.getFont().getFamily().equals("Malgun Gothic")) {
-            button.setFont(new Font("Dotum", Font.BOLD, 32));
+            button.setFont(new Font("Dotum", Font.BOLD, 20));
         }
         button.setBackground(color);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setBorderPainted(false);
-        button.setPreferredSize(new Dimension(400, 100));
-        button.setMaximumSize(new Dimension(400, 100));
-        button.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override

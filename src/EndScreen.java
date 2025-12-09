@@ -1,5 +1,9 @@
 import javax.swing.*;
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -9,15 +13,23 @@ import java.awt.event.ActionListener;
  */
 public class EndScreen extends JPanel {
     private User user;
+    private BufferedImage backgroundImage;
     
     public EndScreen(JFrame frame, CardLayout cl, JPanel cp, User user) {
         this.user = user;
         
+        // 배경 이미지 로드
+        try {
+            backgroundImage = ImageIO.read(new File("res/end_background.png"));
+        } catch (IOException e) {
+            backgroundImage = null;
+        }
+        
         setLayout(new BorderLayout());
-        setBackground(new Color(30, 30, 50));
+        setOpaque(false);
         
         JPanel titlePanel = new JPanel();
-        titlePanel.setBackground(new Color(30, 30, 50));
+        titlePanel.setOpaque(false);
         titlePanel.setBorder(BorderFactory.createEmptyBorder(50, 0, 30, 0));
         
         JLabel titleLabel = new JLabel("게임 종료");
@@ -34,7 +46,7 @@ public class EndScreen extends JPanel {
         
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.setBackground(new Color(30, 30, 50));
+        infoPanel.setOpaque(false);
         infoPanel.setBorder(BorderFactory.createEmptyBorder(50, 100, 50, 100));
         
         Font infoFont = new Font("Malgun Gothic", Font.PLAIN, 24);
@@ -48,19 +60,12 @@ public class EndScreen extends JPanel {
             saveLabel.setForeground(new Color(150, 255, 100));
             saveLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             infoPanel.add(saveLabel);
-            infoPanel.add(Box.createVerticalStrut(20));
         }
-        
-        JLabel thanksLabel = new JLabel("게임을 플레이해주셔서 감사합니다!");
-        thanksLabel.setFont(infoFont);
-        thanksLabel.setForeground(Color.WHITE);
-        thanksLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        infoPanel.add(thanksLabel);
         
         add(infoPanel, BorderLayout.CENTER);
         
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(new Color(30, 30, 50));
+        buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 50, 0));
         
         JButton exitButton = createMenuButton("종료", new Color(231, 76, 60));
@@ -74,6 +79,18 @@ public class EndScreen extends JPanel {
         buttonPanel.add(exitButton);
         
         add(buttonPanel, BorderLayout.SOUTH);
+    }
+    
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+        } else {
+            // 이미지 로드 실패 시 기본 배경색
+            g.setColor(new Color(30, 30, 50));
+            g.fillRect(0, 0, getWidth(), getHeight());
+        }
     }
     
     private JButton createMenuButton(String text, Color color) {

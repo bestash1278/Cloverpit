@@ -17,6 +17,7 @@ public class Main {
      * CardLayout을 사용하여 시작 화면, 게임 화면, 종료 화면을 관리
      */
     private static SlotMachinePanel currentGamePanel = null;
+    private static String currentScreen = "START";
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -26,11 +27,25 @@ public class Main {
             mainFrame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
+                    // 시작 화면에서는 바로 종료
+                    if ("START".equals(currentScreen)) {
+                        System.exit(0);
+                        return;
+                    }
+                    
+                    // 게임 데이터 저장
                     if (currentGamePanel != null) {
                         currentGamePanel.saveOnExit();
                     }
-                    mainFrame.dispose();
-                    System.exit(0);
+                    
+                    // EndScreen으로 전환
+                    User user = (currentGamePanel != null) ? currentGamePanel.getUser() : null;
+                    EndScreen endScreen = new EndScreen(mainFrame, cardLayout, cardPanel, user);
+                    cardPanel.add(endScreen, "END");
+                    cardLayout.show(cardPanel, "END");
+                    currentScreen = "END";
+                    mainFrame.revalidate();
+                    mainFrame.repaint();
                 }
             });
             
@@ -47,11 +62,20 @@ public class Main {
             mainFrame.setVisible(true);
             
             cardLayout.show(cardPanel, "START");
+            currentScreen = "START";
         });
     }
     
     public static void setCurrentGamePanel(SlotMachinePanel panel) {
         currentGamePanel = panel;
+        if (cardLayout != null && cardPanel != null) {
+            cardLayout.show(cardPanel, "GAME");
+            currentScreen = "GAME";
+        }
+    }
+    
+    public static void setCurrentScreen(String screen) {
+        currentScreen = screen;
     }
     
     /**
@@ -63,6 +87,7 @@ public class Main {
             EndScreen endScreen = new EndScreen(mainFrame, cardLayout, cardPanel, null);
             cardPanel.add(endScreen, "END");
             cardLayout.show(cardPanel, "END");
+            currentScreen = "END";
         } else {
             System.exit(0);
         }

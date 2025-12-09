@@ -655,6 +655,10 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             saveManager.save(user);
         }
     }
+    
+    public User getUser() {
+        return user;
+    }
 
     @Override
     public void run() {

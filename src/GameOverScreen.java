@@ -21,16 +21,36 @@ public class GameOverScreen extends JPanel {
     // 더미 데이터 (실제로는 User, ItemShop, Call 객체에서 가져와야 함)
     private User user;
     private List<ItemInfo> ownedArtifacts; // 소지 유물 목록
+    private BufferedImage backgroundImage;
     
     public GameOverScreen(User user, List<ItemInfo> ownedArtifacts) {
         this.user = user;
         this.ownedArtifacts = ownedArtifacts != null ? ownedArtifacts : new ArrayList<>();
         
+        // 배경 이미지 로드
+        try {
+            backgroundImage = ImageIO.read(new File("res/gameover_background.png"));
+        } catch (IOException e) {
+            backgroundImage = null;
+        }
+        
         setLayout(new BorderLayout());
-        setBackground(new Color(30, 30, 50));
+        setOpaque(false);
         setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
         
         initializeUI();
+    }
+    
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+        } else {
+            // 이미지 로드 실패 시 기본 배경색
+            g.setColor(new Color(30, 30, 50));
+            g.fillRect(0, 0, getWidth(), getHeight());
+        }
     }
     
     private void initializeUI() {
@@ -49,7 +69,7 @@ public class GameOverScreen extends JPanel {
     
     private JPanel createTitlePanel() {
         JPanel panel = new JPanel();
-        panel.setBackground(new Color(30, 30, 50));
+        panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(50, 0, 30, 0));
         
         JLabel titleLabel = new JLabel("게임 오버");
@@ -67,7 +87,7 @@ public class GameOverScreen extends JPanel {
     
     private JPanel createContentPanel() {
         JPanel panel = new JPanel(new GridLayout(1, 3, 20, 0));
-        panel.setBackground(new Color(30, 30, 50));
+        panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
         
         // 왼쪽: 소지 유물
@@ -313,7 +333,7 @@ public class GameOverScreen extends JPanel {
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(new Color(30, 30, 50));
+        panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(30, 0, 50, 0));
         
         // 재시작 버튼
