@@ -34,9 +34,13 @@ public class OwnItem_Screen extends JPanel {
     private static final int START_Y = 100;
     
     private static final Rectangle[] ITEM_AREAS = new Rectangle[TOTAL_SLOTS];
-    // TODO: 배경 이미지 경로를 실제 프로젝트 경로로 변경하세요.
-    private static final String BACKGROUND_PATH = "res/shop_background.png"; 
+    
+    private Image centralBackgroundImage; // ⭐ 중앙 배경 이미지 필드
+    private static final String BACKGROUND_PATH = "res/back_ground.png"; 
+    private static final String CENTRAL_BG_PATH = "res/dummy.png"; // 유물 전체 뒤 배경 경로
     private Image backgroundImage;
+    
+    private static final Rectangle CENTRAL_ARTIFACT_AREA;	//유물 전체 뒷 배경
 
     // Static initializer for layout geometry (3-4-4)
     static {
@@ -65,6 +69,29 @@ public class OwnItem_Screen extends JPanel {
         for (int i = 0; i < 4; i++) {
             ITEM_AREAS[i + 7] = new Rectangle(startX3 + i * (ITEM_SIZE + H_GAP), startY, ITEM_SIZE, ITEM_SIZE);
         }
+        
+     // ⭐ 중앙 유물 전체 영역 CENTRAL_ARTIFACT_AREA 계산
+        int minX = Integer.MAX_VALUE;
+        int minY = ITEM_AREAS[0].y; // 첫 번째 행의 Y 시작점
+        int maxX = Integer.MIN_VALUE;
+        int maxY = ITEM_AREAS[10].y + ITEM_AREAS[10].height; // 마지막 행의 Y 끝점
+        
+        // X 경계를 계산합니다.
+        for (int i = 0; i < TOTAL_SLOTS; i++) {
+            minX = Math.min(minX, ITEM_AREAS[i].x);
+            maxX = Math.max(maxX, ITEM_AREAS[i].x + ITEM_AREAS[i].width);
+        }
+        
+        // 중앙 배경에 약간의 여백(Padding)을 추가합니다. (선택 사항)
+        int padding = 20; 
+        
+        CENTRAL_ARTIFACT_AREA = new Rectangle(
+            minX - padding,
+            minY - padding,
+            (maxX - minX) + 2 * padding,
+            (maxY - minY) + 2 * padding
+        );
+        
     }
     
     public OwnItem_Screen(OwnItem ownItemLogic) {
@@ -72,12 +99,22 @@ public class OwnItem_Screen extends JPanel {
         setLayout(null); // Custom layout for drawing
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
         loadBackgroundImage(BACKGROUND_PATH); // 배경 이미지 로드
-
+        loadCentralBackgroundImage(CENTRAL_BG_PATH); // ⭐ 중앙 배경 로드 (수정)
         // 마우스 리스너 추가
         addMouseListener(new ItemMouseAdapter());
 
         // 상세 정보 패널 초기화
         initializeItemDetailPanel();
+    }
+    
+ // ⭐ 중앙 배경 이미지 로드 함수 추가 (이전 loadItemSlotBackgroundImage 대체)
+    private void loadCentralBackgroundImage(String path) {
+        try {
+            centralBackgroundImage = ImageIO.read(new File(path));
+        } catch (IOException e) {
+            System.err.println("중앙 배경 이미지 로드 실패: " + path);
+            centralBackgroundImage = null;
+        }
     }
     
     // ----------- UI 그리기 및 갱신 -----------
@@ -94,6 +131,26 @@ public class OwnItem_Screen extends JPanel {
              g2d.setColor(Color.DARK_GRAY);
              g2d.fillRect(0, 0, getWidth(), getHeight());
         }
+     // ⭐ 2. 중앙 유물 전체 배경 이미지 그리기 (유물 개별 슬롯보다 먼저)
+        if (centralBackgroundImage != null) {
+            g2d.drawImage(
+                centralBackgroundImage,
+                CENTRAL_ARTIFACT_AREA.x,
+                CENTRAL_ARTIFACT_AREA.y,
+                CENTRAL_ARTIFACT_AREA.width,
+                CENTRAL_ARTIFACT_AREA.height,
+                this
+            );
+        } else {
+            // 이미지가 없으면 전체 배경과 구분되는 임시 색상으로 대체
+            g2d.setColor(new Color(50, 50, 50, 150)); // 어두운 반투명 회색
+            g2d.fillRect(
+                CENTRAL_ARTIFACT_AREA.x,
+                CENTRAL_ARTIFACT_AREA.y,
+                CENTRAL_ARTIFACT_AREA.width,
+                CENTRAL_ARTIFACT_AREA.height
+            );
+        }
         
         // 2. 소유 유물 표시
         for (int i = 0; i < displayedItems.size() && i < TOTAL_SLOTS; i++) {
@@ -109,11 +166,13 @@ public class OwnItem_Screen extends JPanel {
             if (itemImage != null) {
                 g2d.drawImage(itemImage, area.x + imagePadding, area.y + imagePadding, imageSize, imageSize, this);
             } else {
-                // 이미지가 없으면 임시 박스 표시
+            	// 이미지가 없으면 임시 박스 표시 (⭐ 덮어쓰기 로직이 문제되지 않도록 수정된 상태여야 합니다)
+                int itemAreaX = area.x + imagePadding;
+                int itemAreaY = area.y + imagePadding;
                 g2d.setColor(Color.LIGHT_GRAY);
-                g2d.fillRect(area.x, area.y, area.width, area.height);
+                g2d.fillRect(itemAreaX, itemAreaY, imageSize, imageSize); 
                 g2d.setColor(Color.BLACK);
-                g2d.drawString(item.getName(), area.x + 5, area.y + 15);
+                g2d.drawString(item.getName(), itemAreaX + 5, itemAreaY + 15);
             }
 
             // 테두리
