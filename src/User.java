@@ -4,7 +4,7 @@ import java.util.List;
 public class User {
 
     private String user_name;  
-    private List<String> user_call;     
+    private List<String> user_call;    
     private List<String> user_item = new ArrayList<>();
 
     private int roulatte_money = 10000;  
@@ -22,9 +22,10 @@ public class User {
     private int call_count = 0;	//전화를 걸 수 있는 기회
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
-    private int freeItemReroll_count = 0; //무료 유물상점 리롤권
-
+    private int freeItemReroll_count = 0; //무료 상점 리롤 횟숫
     
+    private int[] symbol_original = {2,2,3,3,5,5,7};
+    private int[] pattern_original = {1,2,3,1,1,4,4,7,7,8,10};
     // 문양 가격 "레몬", "체리", "클로버", "종", "다이아", "보물", "7"
     private int[] symbol_sum = {2,2,3,3,5,5,7};
     
@@ -208,25 +209,6 @@ public class User {
     public int addItemReroll_count() {
     	return itemReroll_count += 1;
     }
-    
-    /*--------------*/
-    public void setItemReroll_count(int itemReroll_count) {
-    	this.itemReroll_count = itemReroll_count;
-    }
-
-    public int getFreeItemReroll_count() {
-    	return freeItemReroll_count;
-    }
-    
-    public void setFreeItemReroll_count(int freeItemReroll_count ) {
-    	this.freeItemReroll_count = freeItemReroll_count;
-    }
-    
-    public int addFreeItemReroll_count(int addFreeItemReroll_count) {
-    	this.freeItemReroll_count += addFreeItemReroll_count;
-    	return freeItemReroll_count;
-    }
-    /*--------------*/
     public int getTotal_spin() {
     	return total_spin;
     }
@@ -251,6 +233,44 @@ public class User {
     public void setTreasureProbability(double prob) { this.treasure_probability = prob; }
     public void setSevenProbability(double prob) { this.seven_probability = prob; }
     
+    public int[] getSymbolOriginal() {
+        return symbol_original.clone();
+    }
+    public int getSymbolOriginal(int index) {
+        if (index >= 0 && index < symbol_original.length) {
+            return symbol_original[index];
+        }
+        return 0;
+    }
+    public void setSymbolOriginal(int[] symbolOriginal) {
+        if (symbolOriginal != null && symbolOriginal.length == symbol_original.length) {
+            this.symbol_original = symbolOriginal.clone();
+        }
+    }
+    public void setSymbolOriginal(int index, int value) {
+        if (index >= 0 && index < symbol_original.length) {
+            this.symbol_original[index] = value;
+        }
+    }
+    public int[] getPatternOriginal() {
+        return pattern_original.clone();
+    }
+    public int getPatternOriginal(int index) {
+        if (index >= 0 && index < pattern_original.length) {
+            return pattern_original[index];
+        }
+        return 0;
+    }
+    public void setPatternOriginal(int[] patternOriginal) {
+        if (patternOriginal != null && patternOriginal.length == pattern_original.length) {
+            this.pattern_original = patternOriginal.clone();
+        }
+    }
+    public void setPatternOriginal(int index, int value) {
+        if (index >= 0 && index < pattern_original.length) {
+            this.pattern_original[index] = value;
+        }
+    }
     // symbol_sum getter/setter
     public int[] getSymbolSum() {
         return symbol_sum.clone(); // 배열 복사본 반환 (캡슐화 유지)
@@ -298,6 +318,7 @@ public class User {
             this.pattern_sum[index] = value;
         }
     }
+
     
     /*--------유저 유물-----------*/
     public void addOwnItem_List(String itemName) {
@@ -306,6 +327,23 @@ public class User {
 
     public List<String> getOwnItem_List() {
         return user_item;
+    }
+    /*--------------*/
+    public void setItemReroll_count(int itemReroll_count) {
+    	this.itemReroll_count = itemReroll_count;
+    }
+
+    public int getFreeItemReroll_count() {
+    	return freeItemReroll_count;
+    }
+    
+    public void setFreeItemReroll_count(int freeItemReroll_count ) {
+    	this.freeItemReroll_count = freeItemReroll_count;
+    }
+    
+    public int addFreeItemReroll_count(int addFreeItemReroll_count) {
+    	this.freeItemReroll_count += addFreeItemReroll_count;
+    	return freeItemReroll_count;
     }
     /*--------------------------*/
 }

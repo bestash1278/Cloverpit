@@ -25,11 +25,10 @@ public class ItemShop {
         // ItemInfo.class에 정의된 '인수가 없는 기본 생성자'를 사용하여 유물을 생성합니다.
         ALL_ARTIFACTS = java.util.List.of(
             // ⭐ 인수를 전달하지 않고 기본 생성자만 호출합니다.
-            new ItemInfo.HealthPotionArtifact(),
-            new ItemInfo.IncreaseInterestRateArtifact(),  
-            new ItemInfo.PlaceholderArtifact4(), // 4번째 슬롯
-            new ItemInfo.PlaceholderArtifact5(),  // 5번째 슬롯
-            new ItemInfo.PlaceholderArtifact6(),  // 5번째 슬롯
+                new ItemInfo.HealthPotionArtifact(),
+                new ItemInfo.golden_compass(),  // 6번째 슬롯
+                new ItemInfo.symbol_train(),  // 6번째 슬롯
+                new ItemInfo.pattern_train(),  // 6번째 슬롯
 
             // 여기에 다른 유물 클래스들의 기본 생성자 호출을 추가합니다.
             // 예: new ItemInfo.MoneyTreeArtifact(),

@@ -8,7 +8,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +32,7 @@ public class ItemShop_Screen extends JPanel {
     //5개의 아이템 박스 영역 좌표
     private static final Rectangle[] ITEM_AREAS = new Rectangle[5]; 
     //리롤 버튼 영역 좌표
-    private static final Rectangle REROLL_AREA = new Rectangle(650, 300, 80, 50); 
+    private static final Rectangle REROLL_AREA = new Rectangle(700, 300, 80, 50); 
     
     public ItemShop_Screen(ItemShop itemShopLogic) {
         this.itemShopLogic = itemShopLogic;
@@ -56,9 +55,9 @@ public class ItemShop_Screen extends JPanel {
     
     // 아이템 박스 셋팅 함수
     private void setupItemAreas() {
-        int itemWidth = 100;
-        int itemHeight = 100;
-        int gap = 50;
+        int itemWidth = 150;
+        int itemHeight = 150;
+        int gap = 80;
         int center_x = 400;
 
         //유물 상점 위에 2개 위치지정
