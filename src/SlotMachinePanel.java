@@ -99,12 +99,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
 	private Payment_Screen paymentScreen;	//납입화면 보관용
 	private ItemShop_Screen currentPanel;	//유물화면 보관용
 	private Call_Screen callScreen;	//전화 화면
-<<<<<<< Updated upstream
-=======
 	private OwnItem ownItem;
 	private OwnItem_Screen ownItemScreen;
 
->>>>>>> Stashed changes
     
     public SlotMachinePanel() {
         SaveManagerCsv tempSaveManager = new SaveManagerCsv();
@@ -130,12 +127,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         
         // ⭐⭐ 이 부분이 누락되었을 가능성이 90% 이상입니다. ⭐⭐
         this.roulatte = new RoulatteInfo();
-<<<<<<< Updated upstream
-=======
-
         this.ownItem = new OwnItem(user, this::updateStatusBar);
         this.roulatte = new RoulatteInfo();
->>>>>>> Stashed changes
         this.itemShop = new ItemShop(user);
         this.ownItemScreen = new OwnItem_Screen(this.ownItem);
         this.call = new Call(user, roundManager);

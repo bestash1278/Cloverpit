@@ -317,10 +317,6 @@ public class User {
             this.pattern_sum[index] = value;
         }
     }
-<<<<<<< Updated upstream
-}
-=======
-    
     //--------유저 유물-----------
     public void addOwnItem_List(String itemName) {
         this.user_item.add(itemName);
@@ -348,8 +344,13 @@ public class User {
     }
     
     public void addUserItem_List(String itemName) {
-    	this.user_item.add(itemName);
-    }
+            if (this.user_item.size() < this.item_max) { // item_max 제한 확인 (선택 사항)
+                this.user_item.add(itemName);
+                System.out.println("DEBUG: 유물 [" + itemName + "] 획득. 현재 " + this.user_item.size() + "개 소유.");
+            } else {
+                System.out.println("DEBUG: 유물 최대 소유 개수를 초과하여 획득 실패.");
+            }
+        }
     
     public List<String> getUserItem_List() {
         return this.user_item;
@@ -364,4 +365,3 @@ public class User {
     }
     //--------------------------
 }
->>>>>>> Stashed changes

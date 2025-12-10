@@ -100,6 +100,7 @@ public class ItemShop {
             // 3. 티켓 차감 성공: 유물 효과 적용
             item.applyEffect(userInfo);
             
+            userInfo.addUserItem_List(item.getName());
             // 4. 상점 UI 업데이트: '판매된 유물' 객체로 교체
             ItemInfo soldItem = new ItemInfo.SoldArtifact();
             currentItems.set(itemIndex, soldItem);
