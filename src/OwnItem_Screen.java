@@ -65,10 +65,10 @@ public class OwnItem_Screen extends JPanel {
         int row3Width = 4 * ITEM_SIZE + 3 * H_GAP;
         int startX3 = (panelWidth - row3Width) / 2;
         for (int i = 0; i < 4; i++) {
-            ITEM_AREAS[i + 7] = new Rectangle(startX3 + i * (ITEM_SIZE + H_GAP), startY, ITEM_SIZE, ITEM_SIZE);
+            ITEM_AREAS[i + 7] = new Rectangle(startX3 + i * (ITEM_SIZE + H_GAP), startY + 60, ITEM_SIZE, ITEM_SIZE);
         }
         
-        final int FIXED_X = 125;
+        final int FIXED_X = 100;
         final int FIXED_Y = 50;
         final int FIXED_WIDTH = 600;
         final int FIXED_HEIGHT = 450;
@@ -164,8 +164,8 @@ public class OwnItem_Screen extends JPanel {
             }
 
             // 테두리
-            g2d.setColor(Color.WHITE);
-            g2d.drawRect(area.x, area.y, area.width, area.height);
+//            g2d.setColor(Color.WHITE);
+//            g2d.drawRect(area.x, area.y, area.width, area.height);
         }
     }
 
@@ -228,7 +228,7 @@ public class OwnItem_Screen extends JPanel {
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         descriptionArea.setBackground(new Color(50, 50, 50, 0));
-        descriptionArea.setForeground(Color.WHITE);
+        descriptionArea.setForeground(Color.BLACK);
         descriptionArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         itemDetailPanel.add(new JScrollPane(descriptionArea), BorderLayout.CENTER);
 

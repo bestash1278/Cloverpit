@@ -125,18 +125,28 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.saveManager = new SaveManagerCsv();
         this.roundManager = new RoundManager(user);
         
-        // ⭐⭐ 이 부분이 누락되었을 가능성이 90% 이상입니다. ⭐⭐
         this.roulatte = new RoulatteInfo();
         this.ownItem = new OwnItem(user, this::updateStatusBar);
-        this.roulatte = new RoulatteInfo();
-        this.itemShop = new ItemShop(user);
         this.ownItemScreen = new OwnItem_Screen(this.ownItem);
         this.call = new Call(user, roundManager);
         this.callScreen = new Call_Screen(this.call);
+        this.itemShop = new ItemShop(
+                user, 
+                this::updateStatusBar, // 메인 상태바 갱신
+                this.ownItemScreen::updateOwnedItemsUI // ⭐ 구매 후 소유 유물 화면 갱신
+            );
+        this.itemShopScreen = new ItemShop_Screen(
+                this.itemShop, 
+                this::updateStatusBar, 
+                this.ownItemScreen::updateOwnedItemsUI // ⭐ 소유 유물 화면 갱신을 ItemShop_Screen에도 전달
+            );
+        
         Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
         		this.itemShop, this::updateStatusBar,this::updateShopScreen, this.call, this::updateCallScreen);
         this.paymentScreen = new Payment_Screen(paymentLogic);
-        this.itemShopScreen = new ItemShop_Screen(this.itemShop, this::updateStatusBar);
+        
+        this.roulatte = new RoulatteInfo();
+        this.paymentScreen = new Payment_Screen(paymentLogic);
         
         if (user.getRound() <= 0) {
             user.setRound(1);

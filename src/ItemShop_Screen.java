@@ -10,6 +10,8 @@ import java.util.List;
 public class ItemShop_Screen extends JPanel {
     private final ItemShop itemShopLogic; // ItemShop 객체에 의존성 주입
     private final Runnable updateMainStatus; // 메인패널 스테이터스바
+    private final Runnable updateOwnItemScreen;
+    
 
     private Image backgroundImage;
     private List<ItemInfo> displayedItems;
@@ -30,10 +32,11 @@ public class ItemShop_Screen extends JPanel {
     // 💡 리롤 버튼 영역 좌표 (아이템 UI 크기 기준: 너비 150, 높이 100, 가운데 아래 배치)
     private static final Rectangle REROLL_AREA = new Rectangle(325, 450, 150, 100); 
     
-    public ItemShop_Screen(ItemShop itemShopLogic, Runnable updateMainStatus) {
+    public ItemShop_Screen(ItemShop itemShopLogic, Runnable updateMainStatus, Runnable updateOwnItemScreen) {
         this.itemShopLogic = itemShopLogic;
-        this.updateMainStatus = updateMainStatus; // ⭐ 필드 초기화
-        
+        this.updateMainStatus = updateMainStatus;
+        this.updateOwnItemScreen = updateOwnItemScreen;
+
         // 초기 아이템 목록 가져오기
         this.displayedItems = itemShopLogic.getCurrentItems();
 
@@ -272,6 +275,10 @@ public class ItemShop_Screen extends JPanel {
                         updateShopUI(itemShopLogic.getCurrentItems());
                         // SlotMachinePanel의 상태 표시줄 갱신 (티켓 차감 반영)
                         updateMainStatus.run(); 
+                        if (this.updateOwnItemScreen != null) {
+                            this.updateOwnItemScreen.run(); // ⭐ 구매 성공 시 소유 유물 화면 갱신 요청
+                            System.out.println("ItemShop: 소유 유물 화면 갱신 요청 완료.");
+                        }
                         
                         javax.swing.JOptionPane.showMessageDialog(this, selectedItem.getName() + " 구매 성공!", "알림", javax.swing.JOptionPane.INFORMATION_MESSAGE);
                         break;
@@ -284,6 +291,14 @@ public class ItemShop_Screen extends JPanel {
                     case ALREADY_SOLD:
                         // 이미 판매된 유물을 재구매 시도
                         javax.swing.JOptionPane.showMessageDialog(this, "이미 판매된 유물입니다!", "구매 실패", javax.swing.JOptionPane.WARNING_MESSAGE);
+                        break;
+                        
+                    case INVENTORY_FULL: // ⭐ 인벤토리 가득 찼을 경우 메시지
+                        JOptionPane.showMessageDialog(this, 
+                            "유물 소유 개수가 최대치에 도달하여 더 이상 구매할 수 없습니다.", 
+                            "구매 실패", 
+                            JOptionPane.WARNING_MESSAGE
+                        );
                         break;
                 }
             }

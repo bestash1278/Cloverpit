@@ -16,7 +16,7 @@ public class User {
     private int total_money = 30;
     private int total_spin = 0;
     private int round_spin_left = 7;
-    private int item_max = 6;
+    private int item_max = 11;
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
     private int call_count = 0;	//전화를 걸 수 있는 기회

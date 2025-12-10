@@ -4,9 +4,14 @@ import java.util.List;
 public class ItemShop {
     private final User userInfo; // 사용자 티켓/돈 정보를 위해 의존성 주입
     private List<ItemInfo> currentItems; // 현재 상점에 표시되는 5개 아이템 목록
+    private Runnable updateMainStatus; // 상태바 업데이트를 위한 Runnable 인터페이스
+    private final Runnable updateOwnItemScreen;
 
-    public ItemShop(User userInfo) {
+
+    public ItemShop(User userInfo,Runnable updateMainStatus, Runnable updateOwnItemScreen) {
         this.userInfo = userInfo;
+        this.updateMainStatus = updateMainStatus;
+        this.updateOwnItemScreen = updateOwnItemScreen;
         initializeShop(); // 초기 아이템 목록 설정
     }
     
@@ -72,7 +77,8 @@ public class ItemShop {
     public enum PurchaseResult {
         SUCCESS,       // 구매 성공
         INSUFFICIENT_TICKETS, // 티켓 부족
-        ALREADY_SOLD   // 이미 판매된 유물
+        ALREADY_SOLD,  // 이미 판매된 유물
+        INVENTORY_FULL	//인벤토리 가득참
     }
 
     /**
@@ -90,6 +96,15 @@ public class ItemShop {
         // 1. 판매된 유물인지 확인 (SoldArtifact는 재구매 불가)
         if (item instanceof ItemInfo.SoldArtifact) {
             return PurchaseResult.ALREADY_SOLD;
+        }
+        
+        int currentItemsCount = userInfo.getUserItem_List().size();
+        int maxItemsCount = userInfo.getItem_max();
+        
+        if (currentItemsCount >= maxItemsCount) {
+            // 인벤토리가 가득 찼을 경우, 구매 불가 반환
+            System.out.println("DEBUG: 인벤토리가 가득 찼습니다. 현재: " + currentItemsCount + "/" + maxItemsCount);
+            return PurchaseResult.INVENTORY_FULL; 
         }
         
         int cost = item.getTicketCost();
