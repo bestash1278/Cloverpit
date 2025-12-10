@@ -309,13 +309,22 @@ public class ItemShop_Screen extends JPanel {
                 return;
             }
 
-            // 1. 리롤 버튼 클릭 처리
+         // 1. 리롤 버튼 클릭 처리
             if (REROLL_AREA.contains(clickedPoint)) {
-                List<ItemInfo> newItems = itemShopLogic.rerollItems();
-                updateShopUI(newItems);
-                // TODO: 리롤 결과에 따른 알림 메시지 (예: 비용 부족) 처리
+                // ⭐ 이 부분에 List<ItemInfo> newItems = ... 할당이 필요합니다.
+                List<ItemInfo> newItems = itemShopLogic.rerollItems(); 
                 
-            } 
+                if (newItems != null) {
+                    // 리롤 성공 (비용 차감 성공)
+                    updateShopUI(newItems);
+                } else {
+                    // 리롤 실패 (비용 부족 등 useItemForReroll()이 false를 반환한 경우)
+//                    JOptionPane.showMessageDialog(this, "리롤 비용이 부족하거나 리롤 조건이 충족되지 않았습니다.", "리롤 실패", JOptionPane.WARNING_MESSAGE);
+                }
+                // TODO: 리롤 결과에 따른 알림 메시지 (예: 비용 부족) 처리는 if/else 블록에서 처리되었습니다.
+                
+            }
+            
             
             
             // 2. 아이템 박스 클릭 처리

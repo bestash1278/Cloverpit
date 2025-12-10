@@ -1,5 +1,8 @@
 // ItemShop.java
 import java.util.List;
+import java.util.ArrayList; 
+import java.util.Collections;
+import java.util.Random;
 
 public class ItemShop {
     private final User userInfo; // 사용자 티켓/돈 정보를 위해 의존성 주입
@@ -45,6 +48,7 @@ public class ItemShop {
     	}
     }
     
+    
  // 무작위로 5개의 유물을 뽑아 반환하는 함수
     private java.util.List<ItemInfo> createRandomItems() {
         // 1. ALL_ARTIFACTS 리스트를 복사 (원본 보호)
@@ -59,17 +63,95 @@ public class ItemShop {
         return itemsToShuffle.subList(0, count);
     }
     
+    private boolean tryRerollCost() {
+        int Reroll_cost = userInfo.getItemReroll_count() * 2 * userInfo.getRound();
+        
+        // 1. 무료 리롤 횟수 확인 및 사용
+        if (userInfo.getFreeItemReroll_count() > 0) {
+            // 무료 리롤 사용: 무료 횟수 1 차감
+            userInfo.addFreeItemReroll_count(-1); 
+            System.out.println("무료 리롤 사용 성공. 남은 무료 리롤횟수: " + userInfo.getFreeItemReroll_count());
+            
+            // 상태바 갱신은 메인 로직(rerollItems)에서 한 번에 처리합니다.
+            return true;
+        }
+        
+        // 2. 돈으로 리롤 시도
+        else {
+            if (userInfo.getRoulatte_money() >= Reroll_cost) { // 금액 비교 >=로 변경
+                userInfo.addRoulatte_money(-Reroll_cost);    // 계산식: (유물 리롤 횟수 * 2 * 라운드수)
+                userInfo.addItemReroll_count();                // 유물 리롤 카운트 증가
+                
+                // 갱신은 rerollItems에서 처리되므로 여기서는 제거합니다.
+                
+                System.out.println("리롤 사용 성공. 차감 금액: " + Reroll_cost + " 남은 금액: " + userInfo.getRoulatte_money());
+                return true;
+            }
+            System.out.println("리롤 실패. 비용 (" + Reroll_cost + ")이 부족합니다. 남은 금액: " + userInfo.getRoulatte_money());
+            return false;
+        }
+    }
+    
     
     
     // 리롤 버튼 클릭 시 호출될 함수
+//    public List<ItemInfo> rerollItems() {
+//        // TODO: 리롤 비용(예: 1 티켓)을 차감하는 로직 구현
+//        useItemForReroll();
+//        // 새로운 아이템 목록으로 갱신
+//    	this.currentItems = createRandomItems(); // 새로운 아이템 생성
+//    	System.out.println("ItemShop: 리롤 성공. 새 목록 크기: " + this.currentItems.size()); //디버깅용
+//    	
+//        // 갱신된 아이템 목록을 ItemShopScreen에 반환
+//        return this.currentItems;
+//    }
+    
+    /**
+     * 현재 상점 유물 목록을 리롤하고 새로운 목록을 반환합니다.
+     * @return 새로 리롤된 5개의 유물 목록. (리롤 비용 부족 시 null)
+     */
     public List<ItemInfo> rerollItems() {
-        // TODO: 리롤 비용(예: 1 티켓)을 차감하는 로직 구현
+        // 1. 리롤 비용 확인 및 차감
+    	// ⭐ 1. 리롤 비용 계산 및 차감 (사용자 제공 로직 통합)
+        if (!tryRerollCost()) {
+            // 비용(돈 또는 무료 횟수) 차감 실패 시 리롤 중단
+            return null; 
+        }
         
-        // 새로운 아이템 목록으로 갱신
-    	this.currentItems = createRandomItems(); // 새로운 아이템 생성
-    	System.out.println("ItemShop: 리롤 성공. 새 목록 크기: " + this.currentItems.size()); //디버깅용
-    	
-        // 갱신된 아이템 목록을 ItemShopScreen에 반환
+        // ⭐ 2. 소유 유물 목록 가져오기 (ItemInfo 이름 목록)
+        List<String> ownedItemNames = userInfo.getUserItem_List();
+        
+        // ⭐ 3. 새로운 상점 목록 후보 (구매 가능 유물) 생성
+        List<ItemInfo> availableArtifacts = new ArrayList<>();
+        
+        for (ItemInfo artifact : ALL_ARTIFACTS) {
+            // 소유 목록에 없는 유물만 후보로 추가
+            if (!ownedItemNames.contains(artifact.getName())) { // getName()으로 비교
+                availableArtifacts.add(artifact);
+            }
+        }
+        
+        // 4. 새로운 5개 아이템을 무작위로 선택
+        int itemsToSelect = Math.min(5, availableArtifacts.size());
+        
+        // 리스트를 섞고, 앞에서 itemsToSelect 개를 선택
+        Collections.shuffle(availableArtifacts, new Random());
+        
+        List<ItemInfo> newItems = new ArrayList<>(availableArtifacts.subList(0, itemsToSelect));
+        
+        // 5. 상점 목록을 5개로 채우기 (5개 미만인 경우 SoldArtifact로 채움)
+        while (newItems.size() < 5) {
+            newItems.add(new ItemInfo.SoldArtifact());
+        }
+        
+        // 6. 현재 상점 목록 업데이트
+        this.currentItems = newItems;
+        
+        // 상태바 갱신 요청 (리롤 횟수 차감 반영)
+        if (this.updateMainStatus != null) {
+            this.updateMainStatus.run();
+        }
+
         return this.currentItems;
     }
     
