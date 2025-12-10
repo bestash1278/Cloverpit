@@ -27,8 +27,8 @@ public class ItemShop_Screen extends JPanel {
     
     // 💡 5개의 아이템 박스 영역 좌표
     private static final Rectangle[] ITEM_AREAS = new Rectangle[5]; 
-    // 💡 리롤 버튼 영역 좌표
-    private static final Rectangle REROLL_AREA = new Rectangle(700, 300, 80, 50); 
+    // 💡 리롤 버튼 영역 좌표 (아이템 UI 크기 기준: 너비 150, 높이 100, 가운데 아래 배치)
+    private static final Rectangle REROLL_AREA = new Rectangle(325, 450, 150, 100); 
     
     public ItemShop_Screen(ItemShop itemShopLogic, Runnable updateMainStatus) {
         this.itemShopLogic = itemShopLogic;
@@ -147,9 +147,14 @@ public class ItemShop_Screen extends JPanel {
             // 사각형 테두리를 그려 REROLL 버튼 영역을 시각적으로 표시합니다.
             g.drawRect(REROLL_AREA.x, REROLL_AREA.y, REROLL_AREA.width, REROLL_AREA.height); 
             
-            // REROLL 텍스트 표시 (예시)
+            // REROLL 텍스트 표시 (중앙 정렬)
             g.setColor(java.awt.Color.WHITE);
-            g.drawString("REROLL", REROLL_AREA.x + 10, REROLL_AREA.y + REROLL_AREA.height / 2 + 5);
+            g.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 18));
+            String rerollText = "REROLL";
+            int textWidth = g.getFontMetrics().stringWidth(rerollText);
+            int textX = REROLL_AREA.x + (REROLL_AREA.width - textWidth) / 2;
+            int textY = REROLL_AREA.y + REROLL_AREA.height / 2 + 7;
+            g.drawString(rerollText, textX, textY);
         }
         
         // 참고: 상세 정보 패널(itemDetailPanel)은 이 메서드 외부에서 add()되었기 때문에
@@ -205,14 +210,16 @@ public class ItemShop_Screen extends JPanel {
         priceLabel.setBounds(10, panelH - 70, panelW - 20, 20);
         itemDetailPanel.add(priceLabel);
 
-        // 구매 버튼 (하단)
+        // 구매 버튼 (하단) - 아이템 UI 크기 기준 (150x150)
         buyButton = new javax.swing.JButton("구매 (BUY)");
-        buyButton.setBounds(panelW / 2 - 110, panelH - 40, 100, 30);
+        buyButton.setBounds(panelW / 2 - 165, panelH - 40, 150, 40);
+        buyButton.setFont(new java.awt.Font("Dialog", java.awt.Font.BOLD, 16));
         itemDetailPanel.add(buyButton);
         
-        // 취소 버튼 (하단)
+        // 취소 버튼 (하단) - 아이템 UI 크기 기준 (150x150)
         cancelButton = new javax.swing.JButton("취소 (CANCEL)");
-        cancelButton.setBounds(panelW / 2 + 10, panelH - 40, 100, 30);
+        cancelButton.setBounds(panelW / 2 + 15, panelH - 40, 150, 40);
+        cancelButton.setFont(new java.awt.Font("Dialog", java.awt.Font.BOLD, 16));
         itemDetailPanel.add(cancelButton);
 
         // 메인 패널에 상세 정보 패널 추가

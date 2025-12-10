@@ -1,16 +1,23 @@
 // 유물 파트, 밑에 유물 추가 하면 됩니다.
+import java.util.HashMap;
+import java.util.Map;
+
 public abstract class ItemInfo {
     private final String name;
     private final int ticketCost; 
     private final String imagePath;	//이미지가 저장되는 경로 필드
     private final String description; // 유물설명
     
+    private static final Map<String, ItemInfo> ARTIFACT_TEMPLATES = new HashMap<>();
+    private static final Map<String, String> ITEM_PATH_MAP = new HashMap<>();
 
     public ItemInfo(String name, int ticketCost, String imagePath, String description) {
         this.name = name;
         this.ticketCost = ticketCost;
         this.imagePath = imagePath;
         this.description = description;
+        ARTIFACT_TEMPLATES.put(name, this); 
+        ITEM_PATH_MAP.put(name, imagePath);
     }
     
     // 모든 유물이 반드시 구현해야 하는 고유 기능
@@ -20,7 +27,20 @@ public abstract class ItemInfo {
     public String getName() { return name; }
     public int getTicketCost() { return ticketCost; }
     public String getImagePath() { return imagePath; }
+    public static String getImagePathByName(String name) {	//이름으로 유물을 찾을 때
+        // 맵에서 찾거나 없는 경우 기본 경로 반환
+        return ITEM_PATH_MAP.getOrDefault(name, "res/dummy.png"); 
+    }
     public String getDescription() { return description; }
+    
+    /**
+     * 유물 이름으로 해당 유물의 템플릿 인스턴스를 가져옵니다.
+     * @param name 유물 이름
+     * @return ItemInfo 템플릿 인스턴스
+     */
+    public static ItemInfo getArtifactTemplateByName(String name) {
+        return ARTIFACT_TEMPLATES.get(name);
+    }
     
     
     
