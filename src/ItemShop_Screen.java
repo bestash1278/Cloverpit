@@ -9,10 +9,6 @@ import java.util.List;
 
 public class ItemShop_Screen extends JPanel {
     private final ItemShop itemShopLogic; // ItemShop 객체에 의존성 주입
-    private final Runnable updateMainStatus; // 메인패널 스테이터스바
-    private final Runnable updateOwnItemScreen;
-    
-
     private Image backgroundImage;
     private List<ItemInfo> displayedItems;
     
@@ -32,10 +28,8 @@ public class ItemShop_Screen extends JPanel {
     // 💡 리롤 버튼 영역 좌표 (아이템 UI 크기 기준: 너비 150, 높이 100, 가운데 아래 배치)
     private static final Rectangle REROLL_AREA = new Rectangle(325, 450, 150, 100); 
     
-    public ItemShop_Screen(ItemShop itemShopLogic, Runnable updateMainStatus, Runnable updateOwnItemScreen) {
+    public ItemShop_Screen(ItemShop itemShopLogic) {
         this.itemShopLogic = itemShopLogic;
-        this.updateMainStatus = updateMainStatus;
-        this.updateOwnItemScreen = updateOwnItemScreen;
 
         // 초기 아이템 목록 가져오기
         this.displayedItems = itemShopLogic.getCurrentItems();
@@ -270,16 +264,7 @@ public class ItemShop_Screen extends JPanel {
             	// 2. 결과에 따라 처리 분기
                 switch (result) {
                     case SUCCESS:
-                        // 구매 성공
-                        // UI 갱신 (구매된 슬롯을 '판매 완료'로 표시)
-                        updateShopUI(itemShopLogic.getCurrentItems());
-                        // SlotMachinePanel의 상태 표시줄 갱신 (티켓 차감 반영)
-                        updateMainStatus.run(); 
-                        if (this.updateOwnItemScreen != null) {
-                            this.updateOwnItemScreen.run(); // ⭐ 구매 성공 시 소유 유물 화면 갱신 요청
-                            System.out.println("ItemShop: 소유 유물 화면 갱신 요청 완료.");
-                        }
-                        
+                    	updateShopUI(itemShopLogic.getCurrentItems()); // ⭐ ItemShop_Screen 자신의 화면만 갱신
                         javax.swing.JOptionPane.showMessageDialog(this, selectedItem.getName() + " 구매 성공!", "알림", javax.swing.JOptionPane.INFORMATION_MESSAGE);
                         break;
                         

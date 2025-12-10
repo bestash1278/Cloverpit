@@ -135,11 +135,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 this::updateStatusBar, // 메인 상태바 갱신
                 this.ownItemScreen::updateOwnedItemsUI // ⭐ 구매 후 소유 유물 화면 갱신
             );
-        this.itemShopScreen = new ItemShop_Screen(
-                this.itemShop, 
-                this::updateStatusBar, 
-                this.ownItemScreen::updateOwnedItemsUI // ⭐ 소유 유물 화면 갱신을 ItemShop_Screen에도 전달
-            );
+        this.itemShopScreen = new ItemShop_Screen(this.itemShop);
         
         Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
         		this.itemShop, this::updateStatusBar,this::updateShopScreen, this.call, this::updateCallScreen);

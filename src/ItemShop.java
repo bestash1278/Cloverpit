@@ -120,6 +120,12 @@ public class ItemShop {
             ItemInfo soldItem = new ItemInfo.SoldArtifact();
             currentItems.set(itemIndex, soldItem);
             
+            updateMainStatus.run();
+            if (this.updateOwnItemScreen != null) {
+                this.updateOwnItemScreen.run(); 
+                System.out.println("ItemShop: 소유 유물 화면 갱신 요청 완료.");
+            }
+            
             return PurchaseResult.SUCCESS; // 구매 성공
         } else {
             // 티켓 차감 실패 (티켓 부족)
