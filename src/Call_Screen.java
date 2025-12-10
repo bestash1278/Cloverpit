@@ -61,19 +61,26 @@ public class Call_Screen extends JPanel {
         // --- 3. 하단: 리롤 버튼 (BorderLayout.SOUTH 유지) ---
         // ... (기존 하단 southPanel 로직 유지) ...
         JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        rerollButton = new JButton("리롤 ("+ callLogic.getCallReroll_count()+"티켓 사용)"); 
+        rerollButton = new JButton("리롤 ("+ callLogic.getCallReroll_cost()+"티켓 사용)"); 
         rerollButton.addActionListener(e -> {
             handleRerollAction();
         });
+        updateRerollButtonText();
         southPanel.add(rerollButton);
         southPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 10));
         add(southPanel, BorderLayout.SOUTH);
 
     }
     
+    public void updateRerollButtonText() {
+        // callLogic은 Call_Screen 생성자에서 받은 Call 객체라고 가정합니다.
+        int cost = callLogic.getCallReroll_cost();
+        rerollButton.setText("리롤 (" + cost + "티켓 사용)");
+    }
+    
  // ⭐ 리롤 버튼 동작 처리 함수 (핵심)
     private void handleRerollAction() {
-        if (callLogic.getCall_count() > 0) {
+        if (callLogic.getTicket() > callLogic.getCallReroll_cost()) {
             // 1. Call 로직에서 기회 차감 및 능력 리롤 실행
             callLogic.useCallForReroll(); 
             
@@ -99,8 +106,8 @@ public class Call_Screen extends JPanel {
     // ⭐ 화면 UI 갱신 함수 (핵심)
     public void updateUI() {
     	if (callLogic == null) return; 
-    	int chances = callLogic.getCall_count();
-        chanceLabel.setText("남은 전화 기회: " + chances + "회");
+    	boolean chances = callLogic.getCall_count();
+        chanceLabel.setText("전화 가능 여부 : " + chances);
         
         List<CallInfo> selections = callLogic.getCurrentSelections();
         for (int i = 0; i < abilityButtons.length; i++) {
@@ -108,14 +115,14 @@ public class Call_Screen extends JPanel {
                 CallInfo info = selections.get(i);
                 // 버튼 텍스트를 능력 이름과 설명으로 설정
                 abilityButtons[i].setText("<html><center>" + info.getName() + "<br><font size='3'>" + info.getDescription() + "</font></center></html>");
-                abilityButtons[i].setEnabled(chances > 0);
+                abilityButtons[i].setEnabled(chances);
             } else {
                 abilityButtons[i].setText("선택지 없음");
                 abilityButtons[i].setEnabled(false);
             }
         }
      // ⭐ 리롤 버튼 활성화/비활성화 (기회가 있어야 리롤 가능)
-        rerollButton.setEnabled(chances > 0);
+        rerollButton.setEnabled(chances);
         revalidate();
         repaint();
     }

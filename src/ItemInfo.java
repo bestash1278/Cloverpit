@@ -28,7 +28,6 @@ public abstract class ItemInfo {
     public int getTicketCost() { return ticketCost; }
     public String getImagePath() { return imagePath; }
     public static String getImagePathByName(String name) {	//이름으로 유물을 찾을 때
-        // 맵에서 찾거나 없는 경우 기본 경로 반환
         return ITEM_PATH_MAP.getOrDefault(name, "res/dummy.png"); 
     }
     public String getDescription() { return description; }

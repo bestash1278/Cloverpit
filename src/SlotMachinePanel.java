@@ -128,7 +128,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.roulatte = new RoulatteInfo();
         this.ownItem = new OwnItem(user, this::updateStatusBar);
         this.ownItemScreen = new OwnItem_Screen(this.ownItem);
-        this.call = new Call(user, roundManager);
+        this.call = new Call(user, roundManager, () -> callScreen.updateRerollButtonText());
         this.callScreen = new Call_Screen(this.call);
         this.itemShop = new ItemShop(
                 user, 
@@ -143,6 +143,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         
         this.roulatte = new RoulatteInfo();
         this.paymentScreen = new Payment_Screen(paymentLogic);
+        updatePhoneButtonState();
         
         if (user.getRound() <= 0) {
             user.setRound(1);
@@ -346,6 +347,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         spinLeftLabel.setText("남은 스핀:" + user.getRound_spin_left() + "/" + SPINS_PER_ROUND);
         deadlineMoneyLabel.setText("목표: " + user.getDeadline_money());
         totalMoneyLabel.setText("납입: " + user.getTotal_money());
+        updatePhoneButtonState();	//전화 버튼 활성화 여부확인 함수
     }
     
     private RectangularButton createMenuButton(String label, String frameTitle, Color color) {
@@ -395,6 +397,22 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             this.callScreen.revalidate();
             this.callScreen.repaint();
             System.out.println("SlotMachinePanel: 라운드 전환으로 전화 화면 즉시 갱신 요청 완료.");
+        }
+    }
+    
+    /**
+     * 사용자 call_count에 따라 전화 버튼의 활성화/비활성화 상태를 업데이트합니다.
+     */
+    private void updatePhoneButtonState() {
+        if (user != null && phoneButton != null) {
+            boolean isEnabled = user.getCall_count();
+            phoneButton.setEnabled(isEnabled);
+            
+            if (!isEnabled) {
+                phoneButton.setToolTipText("남은 전화 기회(Call Count)가 없습니다.");
+            } else {
+                phoneButton.setToolTipText(null);
+            }
         }
     }
 
