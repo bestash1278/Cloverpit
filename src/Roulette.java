@@ -457,19 +457,404 @@ public class Roulette {
     
     /**
      * 변형자 정보를 포함한 패턴 체크 (변형자 효과 적용)
+     * 각 패턴이 발동될 때마다 그 패턴의 변형자를 즉시 발동합니다.
      * @param results 문양 인덱스 배열
      * @param symbolInfos 변형자 정보 배열
      * @return 패턴 결과
      */
     public PatternResult checkResults(int[][] results, SymbolInfo[][] symbolInfos) {
-        PatternResult result = checkResults(results);
+        // 변형자 정보를 포함하여 패턴 체크 (패턴 감지 시점에 변형자 발동)
+        return checkResultsWithModifiers(results, symbolInfos);
+    }
+    
+    /**
+     * 변형자 정보를 포함한 패턴 체크 (내부 메서드)
+     * @param results 문양 인덱스 배열
+     * @param symbolInfos 변형자 정보 배열
+     * @return 패턴 결과
+     */
+    private PatternResult checkResultsWithModifiers(int[][] results, SymbolInfo[][] symbolInfos) {
+        StringBuilder winMessage = new StringBuilder();
+        boolean hasWin = false;
+        String detectedPattern = "";
         
-        // 패턴이 완성되었고 변형자가 있는 경우 효과 적용
-        if (result.hasWin() && symbolInfos != null) {
-            applyModifierEffects(result, symbolInfos, results);
+        // 지그재그 패턴 먼저 체크 (대각선과 중복 방지)
+        // 지그 패턴 체크 - ZIG (위로 뾰족한 패턴)
+        int zigSymbol = results[0][2];
+        boolean isZig = (results[0][2] == zigSymbol && 
+                        results[1][1] == zigSymbol && results[1][3] == zigSymbol && 
+                        results[2][0] == zigSymbol && results[2][4] == zigSymbol);
+        
+        // 지상 패턴 체크 - GROUND (지그 패턴 + 아래 행이 모두 같은 문양)
+        boolean isGround = false;
+        if (isZig && results[2][0] == zigSymbol && results[2][1] == zigSymbol &&
+            results[2][2] == zigSymbol && results[2][3] == zigSymbol && 
+            results[2][4] == zigSymbol) {
+            isGround = true;
+            detectedPattern = GROUND;
+            winMessage.append(String.format("%s 패턴! (%s)\n", 
+                GROUND, SYMBOL_NAMES[zigSymbol]));
+            roulette_money += user.getSymbolSum(results[0][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+            hasWin = true;
+            // 패턴 발동 시 변형자 발동
+            if (symbolInfos != null) {
+                applyModifierEffectsForPattern(GROUND, symbolInfos, results);
+            }
+        } else if (isZig) {
+            detectedPattern = ZIG;
+            winMessage.append(String.format("%s 패턴! (%s)\n", 
+                ZIG, SYMBOL_NAMES[zigSymbol]));
+            roulette_money += user.getSymbolSum(results[0][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+            hasWin = true;
+            // 패턴 발동 시 변형자 발동
+            if (symbolInfos != null) {
+                applyModifierEffectsForPattern(ZIG, symbolInfos, results);
+            }
         }
         
-        return result;
+        // 재그 패턴 체크 - ZAG (아래로 뾰족한 패턴)
+        int zagSymbol = results[0][0];
+        boolean isZag = (results[0][0] == zagSymbol && results[0][4] == zagSymbol &&
+                        results[1][1] == zagSymbol && results[1][3] == zagSymbol && 
+                        results[2][2] == zagSymbol);
+        
+        // 천상 패턴 체크 - HEAVEN (재그 패턴 + 윗 행이 모두 같은 문양)
+        boolean isHeaven = false;
+        if (isZag && results[0][0] == zagSymbol && results[0][1] == zagSymbol &&
+            results[0][2] == zagSymbol && results[0][3] == zagSymbol && 
+            results[0][4] == zagSymbol) {
+            isHeaven = true;
+            detectedPattern = HEAVEN;
+            winMessage.append(String.format("%s 패턴! (%s)\n", 
+                HEAVEN, SYMBOL_NAMES[zagSymbol]));
+            roulette_money += user.getSymbolSum(results[0][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+            hasWin = true;
+            // 패턴 발동 시 변형자 발동
+            if (symbolInfos != null) {
+                applyModifierEffectsForPattern(HEAVEN, symbolInfos, results);
+            }
+        } else if (isZag) {
+            detectedPattern = ZAG;
+            winMessage.append(String.format("%s 패턴! (%s)\n", 
+                ZAG, SYMBOL_NAMES[zagSymbol]));
+            roulette_money += user.getSymbolSum(results[0][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+            hasWin = true;
+            // 패턴 발동 시 변형자 발동
+            if (symbolInfos != null) {
+                applyModifierEffectsForPattern(ZAG, symbolInfos, results);
+            }
+        }
+        
+        // 눈 패턴 체크 - EYE
+        int eyeSymbol = results[0][1];
+        boolean isEye = (results[0][1] == eyeSymbol && results[0][2] == eyeSymbol && 
+                        results[0][3] == eyeSymbol &&
+                        results[1][0] == eyeSymbol && results[1][4] == eyeSymbol &&
+                        results[1][1] == eyeSymbol && results[1][3] == eyeSymbol &&
+                        results[2][1] == eyeSymbol && results[2][2] == eyeSymbol && 
+                        results[2][3] == eyeSymbol);
+        
+        if (isEye) {
+            detectedPattern = EYE;
+            winMessage.append(String.format("%s 패턴! (%s)\n", 
+                EYE, SYMBOL_NAMES[eyeSymbol]));
+            roulette_money += user.getSymbolSum(results[2][1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+            hasWin = true;
+            // 패턴 발동 시 변형자 발동
+            if (symbolInfos != null) {
+                applyModifierEffectsForPattern(EYE, symbolInfos, results);
+            }
+        }
+        
+        // 지그재그 패턴이 없을 때만 대각선 체크
+        for(int j = 0; j < COLS-2; j++) {
+            // 대각선 체크 - RIGHT_DIAGONAL (왼쪽 위 -> 오른쪽 아래)
+            if((j==0 && isZag) || (j==0 && isHeaven)) {
+                continue;
+            }
+            if((j==2 && isZig) || (j==2 && isGround)) {
+                continue;
+            }
+            if((j==0 && isZig) || (j==0 && isGround)) {
+                continue;
+            }
+            if((j==2 && isZag) || (j==2 && isHeaven)) {
+                continue;
+            }
+            
+            if (results[0][j] == results[1][j+1] && results[1][j+1] == results[2][j+2]) {
+                detectedPattern = RIGHT_DIAGONAL;
+                winMessage.append(String.format("아래로 대각선패턴! (%s)\n", SYMBOL_NAMES[results[0][j]]));
+                roulette_money += user.getSymbolSum(results[0][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                hasWin = true;
+                // 패턴 발동 시 변형자 발동
+                if (symbolInfos != null) {
+                    applyModifierEffectsForPattern(RIGHT_DIAGONAL, symbolInfos, results);
+                }
+            }
+            
+            // 대각선 체크 - LEFT_DIAGONAL (오른쪽 위 -> 왼쪽 아래)
+            if (results[2][j] == results[1][j+1] && results[1][j+1] == results[0][j+2]) {
+                detectedPattern = LEFT_DIAGONAL;
+                winMessage.append(String.format("위로 대각선 패턴! (%s)\n", SYMBOL_NAMES[results[2][j]]));
+                roulette_money += user.getSymbolSum(results[0][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                hasWin = true;
+                // 패턴 발동 시 변형자 발동
+                if (symbolInfos != null) {
+                    applyModifierEffectsForPattern(LEFT_DIAGONAL, symbolInfos, results);
+                }
+            }
+        }
+        
+        // 모든 행에서 트리플/쿼드라/펜타 패턴 체크 (겹치는 패턴 제외)
+        for (int i = 0; i < ROWS; i++) {
+            int[] row = results[i];
+            
+            // PENTA (5개 일치)
+            if (row[0] == row[1] && row[1] == row[2] && row[2] == row[3] && row[3] == row[4]) {
+                // 천상 패턴이 있으면 0행의 펜타 제외
+                if (isHeaven && i == 0) {
+                    continue;
+                }
+                // 지상 패턴이 있으면 2행의 펜타 제외
+                if (isGround && i == 2) {
+                    continue;
+                }
+                // 1행의 펜타는 SECPENTA로 처리
+                if (i == 1) {
+                    detectedPattern = SECPENTA;
+                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                        i + 1, SECPENTA, SYMBOL_NAMES[row[0]]));
+                    roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    hasWin = true;
+                    // 패턴 발동 시 변형자 발동
+                    if (symbolInfos != null) {
+                        applyModifierEffectsForPattern(SECPENTA, symbolInfos, results);
+                    }
+                } else {
+                    detectedPattern = PENTA;
+                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                        i + 1, PENTA, SYMBOL_NAMES[row[0]]));
+                    roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    hasWin = true;
+                    // 패턴 발동 시 변형자 발동
+                    if (symbolInfos != null) {
+                        applyModifierEffectsForPattern(PENTA, symbolInfos, results);
+                    }
+                }
+            } 
+            // QUADRA (4개 일치)
+            else if (row[0] == row[1] && row[1] == row[2] && row[2] == row[3]) {
+                // 천상 패턴이 있으면 0행의 쿼드라 제외
+                if (isHeaven && i == 0) {
+                    continue;
+                }
+                // 지상 패턴이 있으면 2행의 쿼드라 제외
+                if (isGround && i == 2) {
+                    continue;
+                }
+                detectedPattern = QUADRA;
+                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                    i + 1, QUADRA, SYMBOL_NAMES[row[0]]));
+                roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                hasWin = true;
+                // 패턴 발동 시 변형자 발동
+                if (symbolInfos != null) {
+                    applyModifierEffectsForPattern(QUADRA, symbolInfos, results);
+                }
+            }
+            else if (row[1] == row[2] && row[2] == row[3] && row[3] == row[4]) {
+                // 천상 패턴이 있으면 0행의 쿼드라 제외
+                if (isHeaven && i == 0) {
+                    continue;
+                }
+                // 지상 패턴이 있으면 2행의 쿼드라 제외
+                if (isGround && i == 2) {
+                    continue;
+                }
+                detectedPattern = QUADRA;
+                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                    i + 1, QUADRA, SYMBOL_NAMES[row[1]]));
+                roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                hasWin = true;
+                // 패턴 발동 시 변형자 발동
+                if (symbolInfos != null) {
+                    applyModifierEffectsForPattern(QUADRA, symbolInfos, results);
+                }
+            }
+            // TRIPLE (3개 일치)
+            else if (row[0] == row[1] && row[1] == row[2]) {
+                // 천상 패턴이 있으면 0행의 트리플 제외
+                if (isHeaven && i == 0) {
+                    continue;
+                }
+                // 지상 패턴이 있으면 2행의 트리플 제외
+                if (isGround && i == 2) {
+                    continue;
+                }
+                detectedPattern = TRIPLE;
+                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                    i + 1, TRIPLE, SYMBOL_NAMES[row[0]]));
+                roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                hasWin = true;
+                // 패턴 발동 시 변형자 발동
+                if (symbolInfos != null) {
+                    applyModifierEffectsForPattern(TRIPLE, symbolInfos, results);
+                }
+            }
+            else if (row[1] == row[2] && row[2] == row[3]) {
+                // 천상 패턴이 있으면 0행의 트리플 제외
+                if (isHeaven && i == 0) {
+                    continue;
+                }
+                // 지상 패턴이 있으면 2행의 트리플 제외
+                if (isGround && i == 2) {
+                    continue;
+                }
+                // 눈 패턴이 있을 때 0행과 2행의 [1,2,3] 열 트리플 제외 (눈 패턴과 겹침)
+                if (isEye && (i == 0 || i == 2)) {
+                    continue;
+                }
+                detectedPattern = TRIPLE;
+                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                    i + 1, TRIPLE, SYMBOL_NAMES[row[1]]));
+                roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                hasWin = true;
+                // 패턴 발동 시 변형자 발동
+                if (symbolInfos != null) {
+                    applyModifierEffectsForPattern(TRIPLE, symbolInfos, results);
+                }
+            }
+            else if (row[2] == row[3] && row[3] == row[4]) {
+                // 천상 패턴이 있으면 0행의 트리플 제외
+                if (isHeaven && i == 0) {
+                    continue;
+                }
+                // 지상 패턴이 있으면 2행의 트리플 제외
+                if (isGround && i == 2) {
+                    continue;
+                }
+                detectedPattern = TRIPLE;
+                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                    i + 1, TRIPLE, SYMBOL_NAMES[row[2]]));
+                roulette_money += user.getSymbolSum(row[2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                hasWin = true;
+                // 패턴 발동 시 변형자 발동
+                if (symbolInfos != null) {
+                    applyModifierEffectsForPattern(TRIPLE, symbolInfos, results);
+                }
+            }
+        }
+        
+        // 세로 라인 체크 - VERTICAL
+        for (int j = 0; j < COLS; j++) {
+            if((isEye && j==1) || (isEye && j==3)) {
+                continue;
+            }
+            if (results[0][j] == results[1][j] && results[1][j] == results[2][j]) {
+                detectedPattern = VERTICAL;
+                winMessage.append(String.format("%d번째 열 %s 패턴! (%s)\n", 
+                    j + 1, VERTICAL, SYMBOL_NAMES[results[0][j]]));
+                roulette_money += user.getSymbolSum(results[1][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                hasWin = true;
+                // 패턴 발동 시 변형자 발동
+                if (symbolInfos != null) {
+                    applyModifierEffectsForPattern(VERTICAL, symbolInfos, results);
+                }
+            }
+        }
+        
+        boolean isJackpot = true;
+        int jackpotSymbol = results[0][0];
+        for (int i = 0; i < ROWS; i++) {
+            for (int j = 0; j < COLS; j++) {
+                if (results[i][j] != jackpotSymbol) {
+                    isJackpot = false;
+                    break;
+                }
+            }
+            if (!isJackpot) break;
+        }
+        
+        if (isJackpot) {
+            detectedPattern = JACKPOT;
+            winMessage.append(String.format("%s 패턴! (%s)\n", 
+                JACKPOT, SYMBOL_NAMES[jackpotSymbol]));
+            roulette_money += user.getSymbolSum(results[1][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+            hasWin = true;
+            // 패턴 발동 시 변형자 발동
+            if (symbolInfos != null) {
+                applyModifierEffectsForPattern(JACKPOT, symbolInfos, results);
+            }
+        }
+        
+        return new PatternResult(hasWin, winMessage.toString(), detectedPattern);
+    }
+    
+    /**
+     * 특정 패턴에 대한 변형자 효과를 적용합니다.
+     * @param pattern 패턴 타입
+     * @param symbolInfos 변형자 정보 배열
+     * @param results 문양 인덱스 배열
+     */
+    private void applyModifierEffectsForPattern(String pattern, SymbolInfo[][] symbolInfos, int[][] results) {
+        java.util.ArrayList<int[]> patternPositions = getPatternPositions(pattern, results);
+        
+        if (patternPositions.isEmpty()) {
+            return;
+        }
+        
+        // 패턴에 포함된 위치들의 변형자 확인 (중복 허용 - 같은 변형자가 여러 개 있으면 모두 발동)
+        java.util.ArrayList<String> modifiersInPattern = new java.util.ArrayList<>();
+        for (int[] pos : patternPositions) {
+            int i = pos[0];
+            int j = pos[1];
+            if (symbolInfos[i][j].hasModifier()) {
+                modifiersInPattern.add(symbolInfos[i][j].getModifier());
+            }
+        }
+        
+        if (modifiersInPattern.isEmpty()) {
+            return;
+        }
+        
+        // 반복 변형자의 개수 세기
+        int repeatCount = 0;
+        for (String modifier : modifiersInPattern) {
+            if (modifier.equals(MODIFIER_REPEAT)) {
+                repeatCount += 1;
+            }
+        }
+        
+        // 패턴 결과 생성 (변형자 효과 적용을 위해)
+        PatternResult patternResult = new PatternResult(true, "", pattern);
+        
+        // 각 변형자 효과 적용
+        for (String modifier : modifiersInPattern) {
+            if (modifier.equals(MODIFIER_REPEAT)) {
+                // 반복 변형자 자체는 원래 개수만큼만 발동 (패턴 보상 추가)
+                applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
+            } else {
+                // 다른 변형자는 원래 개수만큼 발동
+                applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
+            }
+        }
+        
+        // 반복 변형자가 있으면 다른 변형자들의 효과를 반복 변형자 개수만큼 추가 발동
+        if (repeatCount > 0) {
+            java.util.Set<String> otherModifiers = new java.util.HashSet<>();
+            for (String modifier : modifiersInPattern) {
+                if (!modifier.equals(MODIFIER_REPEAT)) {
+                    otherModifiers.add(modifier);
+                }
+            }
+            // 각 다른 변형자를 반복 변형자 개수만큼 추가 발동
+            for (int i = 0; i < repeatCount; i++) {
+                for (String modifier : otherModifiers) {
+                    applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
+                }
+            }
+        }
     }
     
     /**
@@ -500,7 +885,7 @@ public class Roulette {
         int repeatCount = 0;
         for (String modifier : modifiersInPattern) {
             if (modifier.equals(MODIFIER_REPEAT)) {
-                repeatCount++;
+                repeatCount+=1;
             }
         }
         
@@ -546,69 +931,140 @@ public class Roulette {
             return positions;
         }
         
+        // 먼저 겹치는 패턴들을 확인
+        boolean hasEye = checkEyePattern(results);
+        boolean hasHeaven = checkHeavenPattern(results);
+        boolean hasGround = checkGroundPattern(results);
+        boolean hasZig = checkZigPattern(results);
+        boolean hasZag = checkZagPattern(results);
+        
         switch (pattern) {
             case TRIPLE:
-                // 중간 행의 트리플 패턴 위치 찾기
-                for (int j = 0; j <= COLS - 3; j++) {
-                    if (results[1][j] == results[1][j+1] && results[1][j+1] == results[1][j+2]) {
-                        positions.add(new int[]{1, j});
-                        positions.add(new int[]{1, j+1});
-                        positions.add(new int[]{1, j+2});
-                        break; // 첫 번째 트리플만
+                // 모든 행에서 트리플 패턴 위치 찾기 (겹치는 패턴 제외)
+                for (int i = 0; i < ROWS; i++) {
+                    for (int j = 0; j <= COLS - 3; j++) {
+                        if (results[i][j] == results[i][j+1] && results[i][j+1] == results[i][j+2]) {
+                            // 겹치는 패턴 체크
+                            boolean shouldExclude = false;
+                            if (hasEye && i == 0 && j == 1) shouldExclude = true; // 눈 패턴의 [0,1],[0,2],[0,3]
+                            if (hasEye && i == 2 && j == 1) shouldExclude = true; // 눈 패턴의 [2,1],[2,2],[2,3]
+                            if (hasHeaven && i == 0) shouldExclude = true; // 천상 패턴의 윗 행
+                            if (hasGround && i == 2) shouldExclude = true; // 지상 패턴의 아래 행
+                            
+                            if (!shouldExclude) {
+                                positions.add(new int[]{i, j});
+                                positions.add(new int[]{i, j+1});
+                                positions.add(new int[]{i, j+2});
+                                return positions; // 첫 번째 트리플만
+                            }
+                        }
                     }
                 }
                 break;
                 
             case QUADRA:
-                // 중간 행의 쿼드라 패턴 위치 찾기
-                for (int j = 0; j <= COLS - 4; j++) {
-                    if (results[1][j] == results[1][j+1] && results[1][j+1] == results[1][j+2] && 
-                        results[1][j+2] == results[1][j+3]) {
-                        positions.add(new int[]{1, j});
-                        positions.add(new int[]{1, j+1});
-                        positions.add(new int[]{1, j+2});
-                        positions.add(new int[]{1, j+3});
-                        break;
+                // 모든 행에서 쿼드라 패턴 위치 찾기 (겹치는 패턴 제외)
+                for (int i = 0; i < ROWS; i++) {
+                    for (int j = 0; j <= COLS - 4; j++) {
+                        if (results[i][j] == results[i][j+1] && results[i][j+1] == results[i][j+2] && 
+                            results[i][j+2] == results[i][j+3]) {
+                            // 겹치는 패턴 체크
+                            boolean shouldExclude = false;
+                            if (hasHeaven && i == 0) shouldExclude = true; // 천상 패턴의 윗 행
+                            if (hasGround && i == 2) shouldExclude = true; // 지상 패턴의 아래 행
+                            
+                            if (!shouldExclude) {
+                                positions.add(new int[]{i, j});
+                                positions.add(new int[]{i, j+1});
+                                positions.add(new int[]{i, j+2});
+                                positions.add(new int[]{i, j+3});
+                                return positions; // 첫 번째 쿼드라만
+                            }
+                        }
                     }
                 }
                 break;
                 
             case PENTA:
-                // PENTA와 SECPENTA는 같은 값이므로 하나의 case로 처리
-                // 중간 행 전체
-                for (int j = 0; j < COLS; j++) {
-                    positions.add(new int[]{1, j});
+                // 모든 행에서 펜타 패턴 위치 찾기 (겹치는 패턴 제외)
+                for (int i = 0; i < ROWS; i++) {
+                    if (results[i][0] == results[i][1] && results[i][1] == results[i][2] && 
+                        results[i][2] == results[i][3] && results[i][3] == results[i][4]) {
+                        // 겹치는 패턴 체크
+                        boolean shouldExclude = false;
+                        if (hasHeaven && i == 0) shouldExclude = true; // 천상 패턴의 윗 행
+                        if (hasGround && i == 2) shouldExclude = true; // 지상 패턴의 아래 행
+                        
+                        if (!shouldExclude) {
+                            for (int j = 0; j < COLS; j++) {
+                                positions.add(new int[]{i, j});
+                            }
+                            return positions; // 첫 번째 펜타만
+                        }
+                    }
                 }
                 break;
                 
             case VERTICAL:
-                // 세로 패턴 위치 찾기
+                // 세로 패턴 위치 찾기 (눈 패턴 제외)
                 for (int j = 0; j < COLS; j++) {
                     if (results[0][j] == results[1][j] && results[1][j] == results[2][j]) {
+                        // 눈 패턴 체크 (j==1 또는 j==3인 경우 제외)
+                        if (hasEye && (j == 1 || j == 3)) {
+                            continue;
+                        }
                         positions.add(new int[]{0, j});
                         positions.add(new int[]{1, j});
                         positions.add(new int[]{2, j});
-                        break; // 첫 번째 세로 패턴만
+                        return positions; // 첫 번째 세로 패턴만
                     }
                 }
                 break;
                 
             case RIGHT_DIAGONAL:
-                // RIGHT_DIAGONAL과 LEFT_DIAGONAL은 같은 값이므로 하나의 case로 처리
-                // 대각선 패턴 위치 찾기
+                // RIGHT_DIAGONAL과 LEFT_DIAGONAL은 같은 값이므로 results 배열을 확인하여 구분
+                // 오른쪽 대각선 패턴 (왼쪽 위 -> 오른쪽 아래) 먼저 체크
                 for (int j = 0; j <= COLS - 3; j++) {
-                    if (pattern.equals(RIGHT_DIAGONAL) && 
-                        results[0][j] == results[1][j+1] && results[1][j+1] == results[2][j+2]) {
-                        positions.add(new int[]{0, j});
-                        positions.add(new int[]{1, j+1});
-                        positions.add(new int[]{2, j+2});
-                        break;
-                    } else if (pattern.equals(LEFT_DIAGONAL) && 
-                               results[2][j] == results[1][j+1] && results[1][j+1] == results[0][j+2]) {
-                        positions.add(new int[]{2, j});
-                        positions.add(new int[]{1, j+1});
-                        positions.add(new int[]{0, j+2});
-                        break;
+                    if (results[0][j] == results[1][j+1] && results[1][j+1] == results[2][j+2]) {
+                        // 겹치는 패턴 체크
+                        boolean shouldExclude = false;
+                        // 재그 패턴 체크: [0,0],[1,1],[2,2] (j=0)
+                        if (hasZag && j == 0) shouldExclude = true;
+                        // 천상 패턴 체크: [0,0],[1,1],[2,2] (j=0)
+                        if (hasHeaven && j == 0) shouldExclude = true;
+                        // 지상 패턴 체크: [0,2],[1,3],[2,4] (j=2)
+                        if (hasGround && j == 2) shouldExclude = true;
+                        // 지그 패턴 체크: [0,2],[1,3],[2,4] (j=2)
+                        if (hasZig && j == 2) shouldExclude = true;
+                        
+                        if (!shouldExclude) {
+                            positions.add(new int[]{0, j});
+                            positions.add(new int[]{1, j+1});
+                            positions.add(new int[]{2, j+2});
+                            return positions; // 첫 번째 대각선만
+                        }
+                    }
+                }
+                // 왼쪽 대각선 패턴 (오른쪽 위 -> 왼쪽 아래) 체크
+                for (int j = 0; j <= COLS - 3; j++) {
+                    if (results[2][j] == results[1][j+1] && results[1][j+1] == results[0][j+2]) {
+                        // 겹치는 패턴 체크
+                        boolean shouldExclude = false;
+                        // 재그 패턴 체크: [2,2],[1,3],[0,4] (j=2)
+                        if (hasZag && j == 2) shouldExclude = true;
+                        // 천상 패턴 체크: [2,2],[1,3],[0,4] (j=2)
+                        if (hasHeaven && j == 2) shouldExclude = true;
+                        // 지상 패턴 체크: [2,0],[1,1],[0,2] (j=0)
+                        if (hasGround && j == 0) shouldExclude = true;
+                        // 지그 패턴 체크: [2,0],[1,1],[0,2] (j=0) 또는 [0,2],[1,3],[2,4]는 RIGHT_DIAGONAL이므로 j=2는 제외하지 않음
+                        if (hasZig && j == 0) shouldExclude = true;
+                        
+                        if (!shouldExclude) {
+                            positions.add(new int[]{2, j});
+                            positions.add(new int[]{1, j+1});
+                            positions.add(new int[]{0, j+2});
+                            return positions; // 첫 번째 대각선만
+                        }
                     }
                 }
                 break;
@@ -677,6 +1133,60 @@ public class Roulette {
         }
         
         return positions;
+    }
+    
+    /**
+     * 눈 패턴이 존재하는지 확인합니다.
+     */
+    private boolean checkEyePattern(int[][] results) {
+        int eyeSymbol = results[0][1];
+        return (results[0][1] == eyeSymbol && results[0][2] == eyeSymbol && results[0][3] == eyeSymbol &&
+                results[1][0] == eyeSymbol && results[1][1] == eyeSymbol && results[1][3] == eyeSymbol && results[1][4] == eyeSymbol &&
+                results[2][1] == eyeSymbol && results[2][2] == eyeSymbol && results[2][3] == eyeSymbol);
+    }
+    
+    /**
+     * 천상 패턴이 존재하는지 확인합니다.
+     */
+    private boolean checkHeavenPattern(int[][] results) {
+        int heavenSymbol = results[0][0];
+        return (results[0][0] == heavenSymbol && results[0][1] == heavenSymbol &&
+                results[0][2] == heavenSymbol && results[0][3] == heavenSymbol && 
+                results[0][4] == heavenSymbol &&
+                results[1][1] == heavenSymbol && results[1][3] == heavenSymbol && 
+                results[2][2] == heavenSymbol);
+    }
+    
+    /**
+     * 지상 패턴이 존재하는지 확인합니다.
+     */
+    private boolean checkGroundPattern(int[][] results) {
+        int groundSymbol = results[0][2];
+        return (results[0][2] == groundSymbol && results[1][1] == groundSymbol && 
+                results[1][3] == groundSymbol &&
+                results[2][0] == groundSymbol && results[2][1] == groundSymbol &&
+                results[2][2] == groundSymbol && results[2][3] == groundSymbol && 
+                results[2][4] == groundSymbol);
+    }
+    
+    /**
+     * 지그 패턴이 존재하는지 확인합니다.
+     */
+    private boolean checkZigPattern(int[][] results) {
+        int zigSymbol = results[0][2];
+        return (results[0][2] == zigSymbol && 
+                results[1][1] == zigSymbol && results[1][3] == zigSymbol && 
+                results[2][0] == zigSymbol && results[2][4] == zigSymbol);
+    }
+    
+    /**
+     * 재그 패턴이 존재하는지 확인합니다.
+     */
+    private boolean checkZagPattern(int[][] results) {
+        int zagSymbol = results[0][0];
+        return (results[0][0] == zagSymbol && results[0][4] == zagSymbol &&
+                results[1][1] == zagSymbol && results[1][3] == zagSymbol && 
+                results[2][2] == zagSymbol);
     }
     
     /**
@@ -873,112 +1383,117 @@ public class Roulette {
             
         }
             
-            boolean secPenta = (results[1][0] == results[1][1] && 
-                                results[1][1] == results[1][2] && 
-                                results[1][2] == results[1][3] && 
-                                results[1][3] == results[1][4]);
-
-            if (secPenta) {
-                    detectedPattern = SECPENTA;
-                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                        2, SECPENTA, SYMBOL_NAMES[results[1][0]]));
-                    roulette_money += user.getSymbolSum(results[1][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                    hasWin = true;
-            }else if (results[1][0] == results[1][1] && results[1][1] == results[1][2] && results[1][2] == results[1][3]) {
-                detectedPattern = QUADRA;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    2, QUADRA, SYMBOL_NAMES[results[1][0]]));
-                roulette_money += user.getSymbolSum(results[1][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                hasWin = true;
-            }
-            else if (results[1][1] == results[1][2] && results[1][2] == results[1][3] && results[1][3] == results[1][4]) {
-                detectedPattern = QUADRA;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    2, QUADRA, SYMBOL_NAMES[results[1][1]]));
-                roulette_money += user.getSymbolSum(results[1][1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                hasWin = true;
-            }
-            // TRIPLE (3개 일치)
-            else if (results[1][0] == results[1][1] && results[1][1] == results[1][2]) {
-                detectedPattern = TRIPLE;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    2, TRIPLE, SYMBOL_NAMES[results[1][0]]));
-                roulette_money += user.getSymbolSum(results[1][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                hasWin = true;
-            }
-            else if (results[1][1] == results[1][2] && results[1][2] == results[1][3]) {
-                detectedPattern = TRIPLE;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    2, TRIPLE, SYMBOL_NAMES[results[1][1]]));
-                roulette_money += user.getSymbolSum(results[1][1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                hasWin = true;
-            }
-            else if (results[1][2] == results[1][3] && results[1][3] == results[1][4]) {
-                detectedPattern = TRIPLE;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    2, TRIPLE, SYMBOL_NAMES[results[1][2]]));
-                roulette_money += user.getSymbolSum(results[1][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                hasWin = true;
-            }
-        
-            
-            
-            
-            // 천상/지상 패턴이 없고 눈 패턴이 없을 때만 트리플 체크
-            if (!isGround && !isHeaven && !isEye) {
-                // 가로 라인 체크 - PENTA (5개 일치)
+            // 모든 행에서 트리플/쿼드라/펜타 패턴 체크 (겹치는 패턴 제외)
+            for (int i = 0; i < ROWS; i++) {
+                int[] row = results[i];
                 
-
-                for (int i = 0; i < ROWS; i++) {
-                    int[] row = results[i];
-                    
-                    if(secPenta){
+                // PENTA (5개 일치)
+                if (row[0] == row[1] && row[1] == row[2] && row[2] == row[3] && row[3] == row[4]) {
+                    // 천상 패턴이 있으면 0행의 펜타 제외
+                    if (isHeaven && i == 0) {
                         continue;
                     }
-                    if (row[0] == row[1] && row[1] == row[2] && row[2] == row[3] && row[3] == row[4]) {
+                    // 지상 패턴이 있으면 2행의 펜타 제외
+                    if (isGround && i == 2) {
+                        continue;
+                    }
+                    // 1행의 펜타는 SECPENTA로 처리
+                    if (i == 1) {
+                        detectedPattern = SECPENTA;
+                        winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                            i + 1, SECPENTA, SYMBOL_NAMES[row[0]]));
+                        roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                        hasWin = true;
+                    } else {
                         detectedPattern = PENTA;
                         winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
                             i + 1, PENTA, SYMBOL_NAMES[row[0]]));
                         roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                         hasWin = true;
-                    } 
-                    // QUADRA (4개 일치)
-                    if (row[0] == row[1] && row[1] == row[2] && row[2] == row[3]) {
-                        detectedPattern = QUADRA;
-                        winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                            i + 1, QUADRA, SYMBOL_NAMES[row[0]]));
-                        roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                        hasWin = true;
                     }
-                    else if (row[1] == row[2] && row[2] == row[3] && row[3] == row[4]) {
-                        detectedPattern = QUADRA;
-                        winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                            i + 1, QUADRA, SYMBOL_NAMES[row[1]]));
-                        roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                        hasWin = true;
+                } 
+                // QUADRA (4개 일치)
+                else if (row[0] == row[1] && row[1] == row[2] && row[2] == row[3]) {
+                    // 천상 패턴이 있으면 0행의 쿼드라 제외
+                    if (isHeaven && i == 0) {
+                        continue;
                     }
-                    // TRIPLE (3개 일치)
-                    else if (row[0] == row[1] && row[1] == row[2]) {
-                        detectedPattern = TRIPLE;
-                        winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                            i + 1, TRIPLE, SYMBOL_NAMES[row[0]]));
-                        roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                        hasWin = true;
+                    // 지상 패턴이 있으면 2행의 쿼드라 제외
+                    if (isGround && i == 2) {
+                        continue;
                     }
-                    else if (row[1] == row[2] && row[2] == row[3]) {
-                        detectedPattern = TRIPLE;
-                        winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                            i + 1, TRIPLE, SYMBOL_NAMES[row[1]]));
-                        roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                        hasWin = true;
+                    detectedPattern = QUADRA;
+                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                        i + 1, QUADRA, SYMBOL_NAMES[row[0]]));
+                    roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    hasWin = true;
+                }
+                else if (row[1] == row[2] && row[2] == row[3] && row[3] == row[4]) {
+                    // 천상 패턴이 있으면 0행의 쿼드라 제외
+                    if (isHeaven && i == 0) {
+                        continue;
                     }
-                    else if (row[2] == row[3] && row[3] == row[4]) {
-                        detectedPattern = TRIPLE;
-                        winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                            i + 1, TRIPLE, SYMBOL_NAMES[row[2]]));
-                        roulette_money += user.getSymbolSum(row[2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
-                        hasWin = true;
+                    // 지상 패턴이 있으면 2행의 쿼드라 제외
+                    if (isGround && i == 2) {
+                        continue;
                     }
+                    detectedPattern = QUADRA;
+                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                        i + 1, QUADRA, SYMBOL_NAMES[row[1]]));
+                    roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    hasWin = true;
+                }
+                // TRIPLE (3개 일치)
+                else if (row[0] == row[1] && row[1] == row[2]) {
+                    // 천상 패턴이 있으면 0행의 트리플 제외
+                    if (isHeaven && i == 0) {
+                        continue;
+                    }
+                    // 지상 패턴이 있으면 2행의 트리플 제외
+                    if (isGround && i == 2) {
+                        continue;
+                    }
+                    // 눈 패턴이 있을 때 0행과 2행의 [0,1,2] 열 트리플은 눈 패턴과 겹치지 않으므로 체크
+                    // 하지만 [1,2,3] 열 트리플은 눈 패턴과 겹침
+                    detectedPattern = TRIPLE;
+                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                        i + 1, TRIPLE, SYMBOL_NAMES[row[0]]));
+                    roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    hasWin = true;
+                }
+                else if (row[1] == row[2] && row[2] == row[3]) {
+                    // 천상 패턴이 있으면 0행의 트리플 제외
+                    if (isHeaven && i == 0) {
+                        continue;
+                    }
+                    // 지상 패턴이 있으면 2행의 트리플 제외
+                    if (isGround && i == 2) {
+                        continue;
+                    }
+                    // 눈 패턴이 있을 때 0행과 2행의 [1,2,3] 열 트리플 제외 (눈 패턴과 겹침)
+                    if (isEye && (i == 0 || i == 2)) {
+                        continue;
+                    }
+                    detectedPattern = TRIPLE;
+                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                        i + 1, TRIPLE, SYMBOL_NAMES[row[1]]));
+                    roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    hasWin = true;
+                }
+                else if (row[2] == row[3] && row[3] == row[4]) {
+                    // 천상 패턴이 있으면 0행의 트리플 제외
+                    if (isHeaven && i == 0) {
+                        continue;
+                    }
+                    // 지상 패턴이 있으면 2행의 트리플 제외
+                    if (isGround && i == 2) {
+                        continue;
+                    }
+                    detectedPattern = TRIPLE;
+                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
+                        i + 1, TRIPLE, SYMBOL_NAMES[row[2]]));
+                    roulette_money += user.getSymbolSum(row[2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
+                    hasWin = true;
                 }
             }
             

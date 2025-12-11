@@ -14,7 +14,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private Roulette roulette;
     private JLabel[][] slots;
     private boolean isSpinning = false;
-    private boolean[][] winningSlots; // 패턴 완성된 슬롯 위치 추적
     private Timer spinTimer;
     private int spinCount = 0;
     private static final int MAX_SPIN_COUNT = 30;
@@ -294,7 +293,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
      */
     private void initializeRouletteBoard() {
         slots = new JLabel[roulette.getRows()][roulette.getCols()];
-        winningSlots = new boolean[roulette.getRows()][roulette.getCols()];
         
         for (int i = 0; i < roulette.getRows(); i++) {
             for (int j = 0; j < roulette.getCols(); j++) {
@@ -313,7 +311,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 );
                 setRandomSymbol(slots[i][j]);
                 add(slots[i][j]);
-                winningSlots[i][j] = false;
             }
         }
     }
@@ -693,52 +690,11 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         }
         
         // 변형자 정보를 포함하여 패턴 체크 (변형자 효과 적용)
-        Roulette.PatternResult patternResult = roulette.checkResults(results, symbolResults);
-        
-        // 패턴 완성된 슬롯 위치 업데이트
-        updateWinningSlots(patternResult, results);
-        
+        roulette.checkResults(results, symbolResults);
         soundManager.stopSpinSound();
         isSpinning = false;
         user.setRoulatte_money(user.getRoulatte_money() + roulette.roulette_money);
         roulette.roulette_money = 0;
-    }
-    
-    /**
-     * 패턴 완성된 슬롯의 테두리를 업데이트합니다.
-     * @param patternResult 패턴 결과
-     * @param results 문양 인덱스 배열
-     */
-    private void updateWinningSlots(Roulette.PatternResult patternResult, int[][] results) {
-        // 모든 슬롯의 테두리를 기본으로 초기화
-        for (int i = 0; i < roulette.getRows(); i++) {
-            for (int j = 0; j < roulette.getCols(); j++) {
-                winningSlots[i][j] = false;
-                slots[i][j].setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(200, 200, 200), 3),
-                    BorderFactory.createEmptyBorder(5, 5, 5, 5)
-                ));
-            }
-        }
-        
-        // 패턴이 완성되었으면 해당 슬롯들의 테두리를 빛나게 설정
-        if (patternResult.hasWin()) {
-            String pattern = patternResult.getPattern();
-            java.util.ArrayList<int[]> patternPositions = roulette.getPatternPositions(pattern, results);
-            
-            for (int[] pos : patternPositions) {
-                int i = pos[0];
-                int j = pos[1];
-                if (i >= 0 && i < roulette.getRows() && j >= 0 && j < roulette.getCols()) {
-                    winningSlots[i][j] = true;
-                    // 빛나는 테두리 설정 (금색, 두꺼운 테두리)
-                    slots[i][j].setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(new Color(255, 215, 0), 5), // 금색 테두리
-                        BorderFactory.createEmptyBorder(3, 3, 3, 3)
-                    ));
-                }
-            }
-        }
     }
     
     /**
