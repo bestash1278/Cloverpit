@@ -496,9 +496,40 @@ public class Roulette {
             }
         }
         
-        // 각 변형자 효과 적용 (같은 변형자가 여러 개 있으면 개수만큼 발동)
+        // 반복 변형자의 개수 세기
+        int repeatCount = 0;
         for (String modifier : modifiersInPattern) {
-            applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
+            if (modifier.equals(MODIFIER_REPEAT)) {
+                repeatCount++;
+            }
+        }
+        
+        // 각 변형자 효과 적용
+        // 반복 변형자가 있으면 다른 변형자들의 효과도 반복 변형자 개수만큼 추가 발동
+        for (String modifier : modifiersInPattern) {
+            if (modifier.equals(MODIFIER_REPEAT)) {
+                // 반복 변형자 자체는 원래 개수만큼만 발동 (패턴 보상 추가)
+                applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
+            } else {
+                // 다른 변형자는 원래 개수만큼 발동
+                applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
+            }
+        }
+        
+        // 반복 변형자가 있으면 다른 변형자들의 효과를 반복 변형자 개수만큼 추가 발동
+        if (repeatCount > 0) {
+            java.util.Set<String> otherModifiers = new java.util.HashSet<>();
+            for (String modifier : modifiersInPattern) {
+                if (!modifier.equals(MODIFIER_REPEAT)) {
+                    otherModifiers.add(modifier);
+                }
+            }
+            // 각 다른 변형자를 반복 변형자 개수만큼 추가 발동
+            for (int i = 0; i < repeatCount; i++) {
+                for (String modifier : otherModifiers) {
+                    applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
+                }
+            }
         }
     }
     
@@ -508,7 +539,7 @@ public class Roulette {
      * @param results 문양 인덱스 배열
      * @return 패턴에 포함된 위치들의 리스트 (각 위치는 [i, j] 형태)
      */
-    private java.util.ArrayList<int[]> getPatternPositions(String pattern, int[][] results) {
+    public java.util.ArrayList<int[]> getPatternPositions(String pattern, int[][] results) {
         java.util.ArrayList<int[]> positions = new java.util.ArrayList<>();
         
         if (pattern == null || pattern.isEmpty()) {
