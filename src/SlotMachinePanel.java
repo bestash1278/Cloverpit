@@ -104,6 +104,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
 	private ItemShop_Screen currentPanel;	//유물화면 보관용
 	private Call_Screen callScreen;	//전화 화면
 
+	private OwnItem ownItem;
+	private OwnItem_Screen ownItemScreen;
+
     
     public SlotMachinePanel() {
         SaveManagerCsv tempSaveManager = new SaveManagerCsv();
@@ -131,7 +134,12 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         // ⭐⭐ 이 부분이 누락되었을 가능성이 90% 이상입니다. ⭐⭐
         this.roulatte = new RoulatteInfo();
 
+
+        this.ownItem = new OwnItem(user, this::updateStatusBar);
+        this.roulatte = new RoulatteInfo();
+
         this.itemShop = new ItemShop(user);
+        this.ownItemScreen = new OwnItem_Screen(this.ownItem);
         this.call = new Call(user, roundManager);
         this.callScreen = new Call_Screen(this.call);
         Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
@@ -438,8 +446,18 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 width = 800;
                 height = 600;
                 break;
+                
+            case "소지 유물 버튼 화면":
+                contentPanel = this.ownItemScreen;
+                width = 800;
+                height = 600;
+                if (this.ownItemScreen != null) {
+                    this.ownItemScreen.updateUI(); 
+                    System.out.println("SlotMachinePanel: 소지 유물 화면 갱신 요청 성공."); // 디버그 출력
+                }
+                break;
 
-            // 다른 메뉴 버튼 (무늬, 패턴, 소지 유물)은 임시 패널을 사용 //필요시 밑으로 추가
+            // 다른 메뉴 버튼 (무늬, 패턴)은 임시 패널을 사용 //필요시 밑으로 추가
             default:
                 contentPanel = createPlaceholderPanel(title);
                 width = 400;

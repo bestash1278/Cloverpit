@@ -4,7 +4,8 @@ import java.util.List;
 public class User {
 
     private String user_name;  
-    private List<String> user_call;     
+    private List<String> user_call;
+    private List<String> user_item = new ArrayList<>();     
 
     private int roulatte_money = 0;  
     private double interest = 0.1;  
@@ -22,6 +23,7 @@ public class User {
     private int call_count = 0;	//전화를 걸 수 있는 기회
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
+    private int freeItemReroll_count = 0; //무료 상점 리롤 횟수
     private int[] symbol_original = {2,2,3,3,5,5,7};
     private int[] pattern_original = {1,2,3,1,1,4,4,7,7,8,10};
     // 문양 가격 "레몬", "체리", "클로버", "종", "다이아", "보물", "7"
@@ -317,4 +319,49 @@ public class User {
             this.pattern_sum[index] = value;
         }
     }
+
+    
+    //--------유저 유물-----------
+    public void addOwnItem_List(String itemName) {
+        this.user_item.add(itemName);
+    }
+
+    public List<String> getOwnItem_List() {
+        return user_item;
+    }
+    
+    public void setItemReroll_count(int itemReroll_count) {
+    	this.itemReroll_count = itemReroll_count;
+    }
+
+    public int getFreeItemReroll_count() {
+    	return freeItemReroll_count;
+    }
+    
+    public void setFreeItemReroll_count(int freeItemReroll_count) {
+    	this.freeItemReroll_count = freeItemReroll_count;
+    }
+    
+    public int addFreeItemReroll_count(int addFreeItemReroll_count) {
+    	this.freeItemReroll_count += addFreeItemReroll_count;
+    	return freeItemReroll_count;
+    }
+    
+    public void addUserItem_List(String itemName) {
+    	this.user_item.add(itemName);
+    }
+    
+    public List<String> getUserItem_List() {
+        return this.user_item;
+    }
+    
+    public boolean removeUserItem_List(String itemName) {
+        // List의 remove(Object) 메서드는 첫 번째로 일치하는 항목을 제거하고 성공 여부를 반환합니다.
+        if (itemName == null) {
+            return false;
+        }
+        return this.user_item.remove(itemName);
+    }
+    //--------------------------
 }
+
