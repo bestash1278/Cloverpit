@@ -49,7 +49,8 @@ public class OwnItem_Screen extends JPanel {
         int row1Width = 3 * ITEM_SIZE + 2 * H_GAP;
         int startX1 = (panelWidth - row1Width) / 2;
         for (int i = 0; i < 3; i++) {
-            ITEM_AREAS[i] = new Rectangle(startX1 + i * (ITEM_SIZE + H_GAP), startY, ITEM_SIZE, ITEM_SIZE);
+
+            ITEM_AREAS[i] = new Rectangle(startX1 + i * (ITEM_SIZE + H_GAP), startY - 60, ITEM_SIZE, ITEM_SIZE);
         }
         startY += ITEM_SIZE + V_GAP;
 
@@ -65,29 +66,19 @@ public class OwnItem_Screen extends JPanel {
         int row3Width = 4 * ITEM_SIZE + 3 * H_GAP;
         int startX3 = (panelWidth - row3Width) / 2;
         for (int i = 0; i < 4; i++) {
-            ITEM_AREAS[i + 7] = new Rectangle(startX3 + i * (ITEM_SIZE + H_GAP), startY, ITEM_SIZE, ITEM_SIZE);
+            ITEM_AREAS[i + 7] = new Rectangle(startX3 + i * (ITEM_SIZE + H_GAP), startY + 60, ITEM_SIZE, ITEM_SIZE);
         }
         
-     // ⭐ 중앙 유물 전체 영역 CENTRAL_ARTIFACT_AREA 계산
-        int minX = Integer.MAX_VALUE;
-        int minY = ITEM_AREAS[0].y; // 첫 번째 행의 Y 시작점
-        int maxX = Integer.MIN_VALUE;
-        int maxY = ITEM_AREAS[10].y + ITEM_AREAS[10].height; // 마지막 행의 Y 끝점
-        
-        // X 경계를 계산합니다.
-        for (int i = 0; i < TOTAL_SLOTS; i++) {
-            minX = Math.min(minX, ITEM_AREAS[i].x);
-            maxX = Math.max(maxX, ITEM_AREAS[i].x + ITEM_AREAS[i].width);
-        }
-        
-        // 중앙 배경에 약간의 여백(Padding)을 추가합니다. (선택 사항)
-        int padding = 20; 
+        final int FIXED_X = 100;
+        final int FIXED_Y = 50;
+        final int FIXED_WIDTH = 600;
+        final int FIXED_HEIGHT = 450;
         
         CENTRAL_ARTIFACT_AREA = new Rectangle(
-            minX - padding,
-            minY - padding,
-            (maxX - minX) + 2 * padding,
-            (maxY - minY) + 2 * padding
+            FIXED_X,
+            FIXED_Y,
+            FIXED_WIDTH,
+            FIXED_HEIGHT
         );
         
     }
@@ -133,10 +124,10 @@ public class OwnItem_Screen extends JPanel {
         if (centralBackgroundImage != null) {
             g2d.drawImage(
                 centralBackgroundImage,
-                CENTRAL_ARTIFACT_AREA.x,
-                CENTRAL_ARTIFACT_AREA.y,
-                CENTRAL_ARTIFACT_AREA.width,
-                CENTRAL_ARTIFACT_AREA.height,
+                CENTRAL_ARTIFACT_AREA.x	- 50,
+                CENTRAL_ARTIFACT_AREA.y + 5,
+                CENTRAL_ARTIFACT_AREA.width + 100,
+                CENTRAL_ARTIFACT_AREA.height + 100,
                 this
             );
         } else {
@@ -174,8 +165,8 @@ public class OwnItem_Screen extends JPanel {
             }
 
             // 테두리
-            g2d.setColor(Color.WHITE);
-            g2d.drawRect(area.x, area.y, area.width, area.height);
+//            g2d.setColor(Color.WHITE);
+//            g2d.drawRect(area.x, area.y, area.width, area.height);
         }
     }
 
@@ -238,7 +229,8 @@ public class OwnItem_Screen extends JPanel {
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         descriptionArea.setBackground(new Color(50, 50, 50, 0));
-        descriptionArea.setForeground(Color.WHITE);
+        descriptionArea.setForeground(Color.BLACK);
+
         descriptionArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         itemDetailPanel.add(new JScrollPane(descriptionArea), BorderLayout.CENTER);
 

@@ -28,14 +28,42 @@ public class SymbolIcon implements Icon {
         "res/sybols_seven.png"
     };
     
+    // 문양 이름 배열 (파일명 생성용)
+    private static final String[] SYMBOL_NAMES = {
+        "lemon", "cherry", "clover", "bell", "diamond", "treasure", "seven"
+    };
+    
+    // 변형자 이름 한글-영어 매핑 (이미지 파일명 생성용)
+    private static final Map<String, String> MODIFIER_NAME_MAP = new HashMap<>();
+    static {
+        MODIFIER_NAME_MAP.put("사슬", "chain");
+        MODIFIER_NAME_MAP.put("반복", "repeat");
+        MODIFIER_NAME_MAP.put("토큰", "token");
+        MODIFIER_NAME_MAP.put("티켓", "ticket");
+        // 영어 이름도 지원 (대소문자 무시)
+        MODIFIER_NAME_MAP.put("chain", "chain");
+        MODIFIER_NAME_MAP.put("repeat", "repeat");
+        MODIFIER_NAME_MAP.put("token", "token");
+        MODIFIER_NAME_MAP.put("ticket", "ticket");
+    }
+    
     // 이미지 캐시 (한 번 로드한 이미지를 저장)
     private static final Map<Integer, BufferedImage> imageCache = new HashMap<>();
+    private static final Map<String, BufferedImage> modifierImageCache = new HashMap<>();
     
     private int symbolType;
+    private String modifier; // 변형자 이름 (null이면 일반 문양)
     private int size;
     
     public SymbolIcon(int symbolType, int size) {
         this.symbolType = symbolType;
+        this.modifier = null;
+        this.size = size;
+    }
+    
+    public SymbolIcon(int symbolType, String modifier, int size) {
+        this.symbolType = symbolType;
+        this.modifier = modifier;
         this.size = size;
     }
     
@@ -44,7 +72,36 @@ public class SymbolIcon implements Icon {
      * 이미지가 캐시에 있으면 캐시에서 반환하고, 없으면 파일에서 로드합니다.
      */
     private BufferedImage loadSymbolImage(int symbolType) {
-        // 캐시에 이미 있으면 반환
+        // 변형자가 있는 경우 문양+변형자 조합 이미지 로드
+        if (modifier != null && !modifier.isEmpty() && symbolType >= 0 && symbolType < SYMBOL_NAMES.length) {
+            String cacheKey = symbolType + "_" + modifier;
+            if (modifierImageCache.containsKey(cacheKey)) {
+                return modifierImageCache.get(cacheKey);
+            }
+            
+            // 변형자 이름을 영어로 변환 (한글 -> 영어)
+            String modifierEnglish = MODIFIER_NAME_MAP.getOrDefault(modifier, modifier.toLowerCase());
+            
+            // 변형자 이미지 파일 경로 생성 (예: res/sybols_lemon_ticket.png)
+            String imagePath = "res/sybols_" + SYMBOL_NAMES[symbolType] + "_" + modifierEnglish + ".png";
+            try {
+                File imageFile = new File(imagePath);
+                if (imageFile.exists()) {
+                    BufferedImage image = ImageIO.read(imageFile);
+                    if (image != null) {
+                        modifierImageCache.put(cacheKey, image);
+                        return image;
+                    }
+                } else {
+                    // 변형자 이미지가 없으면 일반 문양 이미지로 대체
+                    System.err.println("경고: 변형자 이미지 파일을 찾을 수 없습니다. 경로: " + imagePath + " - 일반 문양 이미지 사용");
+                }
+            } catch (IOException e) {
+                System.err.println("변형자 이미지 로드 중 오류 발생: " + imagePath + " - " + e.getMessage());
+            }
+        }
+        
+        // 일반 문양 이미지 로드 (변형자가 없거나 변형자 이미지를 찾을 수 없는 경우)
         if (imageCache.containsKey(symbolType)) {
             return imageCache.get(symbolType);
         }
@@ -102,6 +159,21 @@ public class SymbolIcon implements Icon {
         
         int centerX = x + size / 2;
         int centerY = y + size / 2;
+        
+        // 변형자만 있는 경우 (symbolType == -1)
+        if (symbolType == -1 && modifier != null) {
+            g2d.setColor(new Color(200, 200, 200));
+            g2d.fillRect(x, y, size, size);
+            g2d.setColor(Color.BLACK);
+            g2d.setFont(new Font("Arial", Font.BOLD, size / 3));
+            FontMetrics fm = g2d.getFontMetrics();
+            String text = modifier;
+            int textX = centerX - fm.stringWidth(text) / 2;
+            int textY = centerY + fm.getAscent() / 2;
+            g2d.drawString(text, textX, textY);
+            g2d.dispose();
+            return;
+        }
         
         switch (symbolType) {
             case LEMON:

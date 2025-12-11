@@ -107,6 +107,7 @@ public abstract class ItemInfo {
     public static class pattern_train extends ItemInfo {
         public pattern_train() {
             super("패턴 기차", 0, "res/pattern_train.png", "1번 패턴이 안나오면 패턴 가격이 원래 가격만큼 상승합니다"); 
+
         }
         @Override
         public void applyEffect(User userInfo) {
@@ -118,6 +119,41 @@ public abstract class ItemInfo {
     public static class symbol_chain extends ItemInfo {
         public symbol_chain() {
             super("사슬 변형자 ", 0, "res/symbol_chain.png", "사슬 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다."); 
+
+        }
+        @Override
+        public void applyEffect(User userInfo) {
+            for (int i = 0; i < 11; i++) {
+                userInfo.setPatternSum(i,userInfo.getPatternSum(i) + userInfo.getPatternOriginal(i));
+            }
+        }
+    }
+
+
+    public static class symbol_repeat extends ItemInfo {
+        public symbol_repeat() {
+            super("반복 변형자 ", 0, "res/symbol_repeat.png", "반복 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다."); 
+        }
+        @Override
+        public void applyEffect(User userInfo) {
+            // 효과 없음
+        }
+    }
+
+    public static class symbol_ticket extends ItemInfo {
+        public symbol_ticket() {
+            super("티켓 변형자 ", 0, "res/symbol_ticket.png", "티켓 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다."); 
+        }
+        @Override
+        public void applyEffect(User userInfo) {
+            // 효과 없음
+        }
+    }
+
+    public static class symbol_token extends ItemInfo {
+        public symbol_token() {
+            super("토큰 변형자 ", 0, "res/symbol_token.png", "토큰 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다."); 
+
         }
         @Override
         public void applyEffect(User userInfo) {

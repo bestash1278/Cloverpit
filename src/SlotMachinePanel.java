@@ -131,21 +131,27 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.saveManager = new SaveManagerCsv();
         this.roundManager = new RoundManager(user);
         
-        // ⭐⭐ 이 부분이 누락되었을 가능성이 90% 이상입니다. ⭐⭐
         this.roulatte = new RoulatteInfo();
-
 
         this.ownItem = new OwnItem(user, this::updateStatusBar);
-        this.roulatte = new RoulatteInfo();
 
-        this.itemShop = new ItemShop(user);
         this.ownItemScreen = new OwnItem_Screen(this.ownItem);
         this.call = new Call(user, roundManager);
         this.callScreen = new Call_Screen(this.call);
+        this.itemShop = new ItemShop(
+                user, 
+                this::updateStatusBar, // 메인 상태바 갱신
+                this.ownItemScreen::updateOwnedItemsUI // ⭐ 구매 후 소유 유물 화면 갱신
+            );
+        this.itemShopScreen = new ItemShop_Screen(this.itemShop);
+        
         Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
         		this.itemShop, this::updateStatusBar,this::updateShopScreen, this.call, this::updateCallScreen);
         this.paymentScreen = new Payment_Screen(paymentLogic);
-        this.itemShopScreen = new ItemShop_Screen(this.itemShop, this::updateStatusBar);
+
+        
+        this.roulatte = new RoulatteInfo();
+        this.paymentScreen = new Payment_Screen(paymentLogic);
 
         
         if (user.getRound() <= 0) {
@@ -323,6 +329,23 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         int symbolIndex = roulette.generateRandomSymbol();
         int[] symbolTypes = roulette.getSymbolTypes();
         slot.setIcon(new SymbolIcon(symbolTypes[symbolIndex], SLOT_SIZE - 20));
+    }
+    
+    /**
+     * SymbolInfo를 사용하여 슬롯에 아이콘을 설정합니다.
+     * 변형자가 있으면 문양+변형자 조합 이미지를 표시합니다.
+     */
+    private void setSymbolWithModifier(JLabel slot, Roulette.SymbolInfo symbolInfo) {
+        if (symbolInfo == null) {
+            return;
+        }
+        
+        int[] symbolTypes = roulette.getSymbolTypes();
+        int symbolType = symbolTypes[symbolInfo.getSymbolIndex()];
+        String modifier = symbolInfo.getModifier();
+        
+        // 변형자가 있으면 문양+변형자 조합 이미지 사용, 없으면 일반 문양 이미지 사용
+        slot.setIcon(new SymbolIcon(symbolType, modifier, SLOT_SIZE - 20));
     }
     
     private void initializeStatusLabels() {
@@ -628,17 +651,31 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     }
     
     private void finishSpin() {
-        int[][] results = roulette.generateResults();
-        int[] symbolTypes = roulette.getSymbolTypes();
+
+        // 변형자를 포함한 결과 생성
+        Roulette.SymbolInfo[][] symbolResults = roulette.generateResultsWithModifiers();
+        
+        // 화면에 표시
 
         for (int i = 0; i < roulette.getRows(); i++) {
             for (int j = 0; j < roulette.getCols(); j++) {
-                slots[i][j].setIcon(new SymbolIcon(symbolTypes[results[i][j]], SLOT_SIZE - 20));
+                setSymbolWithModifier(slots[i][j], symbolResults[i][j]);
             }
         }
 
-        // 패턴 체크 & 당첨 금액 계산
-        roulette.checkResults(results);
+        
+        // 패턴 체크를 위한 일반 결과 배열 생성 (원래 문양 인덱스 사용)
+        int[][] results = new int[roulette.getRows()][roulette.getCols()];
+        for (int i = 0; i < roulette.getRows(); i++) {
+            for (int j = 0; j < roulette.getCols(); j++) {
+                // 변형자가 있어도 원래 문양 인덱스를 사용하여 패턴 체크
+                results[i][j] = symbolResults[i][j].getSymbolIndex();
+            }
+        }
+        
+        // 변형자 정보를 포함하여 패턴 체크 (변형자 효과 적용)
+        roulette.checkResults(results, symbolResults);
+
         soundManager.stopSpinSound();
         isSpinning = false;
 
@@ -762,6 +799,11 @@ public class SlotMachinePanel extends JPanel implements Runnable {
 
         user.setRound(user.getRound() + 1);
         user.setRound_spin_left(0);
+        
+        //라운드 끝날 때마다 저장
+        if (saveManager != null && user != null) {
+        	saveManager.save(user);
+        }
     }
     
     /**

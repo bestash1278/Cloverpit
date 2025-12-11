@@ -21,9 +21,47 @@ public class Roulette {
     private static final String HEAVEN = "heaven";
     private static final String EYE = "eye";
     private static final String JACKPOT = "jackpot";
- 
     
+    // 변형자 상수
+    private static final String MODIFIER_CHAIN = "사슬";
+    private static final String MODIFIER_REPEAT = "반복";
+    private static final String MODIFIER_TOKEN = "토큰";
+    private static final String MODIFIER_TICKET = "티켓";
+    private static final String[] MODIFIERS = {MODIFIER_CHAIN, MODIFIER_REPEAT, MODIFIER_TOKEN, MODIFIER_TICKET};
+    
+    // 문양 정보를 담는 내부 클래스
+    public static class SymbolInfo {
+        private int symbolIndex; // 문양 인덱스 (항상 유효한 값)
+        private String modifier; // 변형자 이름 (null이면 변형자 없음)
+        
+        public SymbolInfo(int symbolIndex, String modifier) {
+            this.symbolIndex = symbolIndex;
+            this.modifier = modifier;
+        }
+        
+        public int getSymbolIndex() {
+            return symbolIndex;
+        }
+        
+        public String getModifier() {
+            return modifier;
+        }
+        
+        public void setModifier(String modifier) {
+            this.modifier = modifier;
+        }
+        
+        /**
+         * 이 위치에 변형자가 적용되었는지 확인합니다.
+         * @return 변형자가 있으면 true, 없으면 false
+         */
+        public boolean hasModifier() {
+            return modifier != null && !modifier.isEmpty();
+        }
+    }
+ 
 
+    
     
     
     private int what_pattern(String pattern) {
@@ -92,6 +130,22 @@ public class Roulette {
     public String[] getSymbolNames() {
         return SYMBOL_NAMES;
     }
+    
+    /**
+     * 변형자 이름 배열을 반환합니다.
+     * @return 변형자 이름 배열
+     */
+    public String[] getModifiers() {
+        return MODIFIERS.clone();
+    }
+    
+    /**
+     * 변형자 상수들을 반환합니다.
+     */
+    public static String getModifierChain() { return MODIFIER_CHAIN; }
+    public static String getModifierRepeat() { return MODIFIER_REPEAT; }
+    public static String getModifierToken() { return MODIFIER_TOKEN; }
+    public static String getModifierTicket() { return MODIFIER_TICKET; }
     
     public int generateRandomSymbol() {
         double randomValue = random.nextDouble() * 100.0;
@@ -283,7 +337,113 @@ public class Roulette {
         normalizeProbabilities();
     }
 
+    /**
+     * 보유한 아이템에 해당하는 변형자 목록을 반환합니다.
+     * @return 사용 가능한 변형자 배열
+     */
+    private java.util.ArrayList<String> getAvailableModifiers() {
+        java.util.ArrayList<String> availableModifiers = new java.util.ArrayList<>();
+        
+        if (user == null || user.getUserItem_List() == null) {
+            return availableModifiers;
+        }
+        
+        for (String itemName : user.getUserItem_List()) {
+            // 아이템 이름에서 변형자 이름 추출 (예: "사슬 변형자 " -> "사슬")
+            String trimmedName = itemName != null ? itemName.trim() : "";
+            
+            // "변형자"가 포함된 경우 변형자 이름만 추출
+            if (trimmedName.contains("변형자")) {
+                String modifierName = trimmedName.replace(" 변형자", "").replace("변형자", "").trim();
+                
+                if (modifierName.equals("사슬")) {
+                    availableModifiers.add(MODIFIER_CHAIN);
+                } else if (modifierName.equals("반복")) {
+                    availableModifiers.add(MODIFIER_REPEAT);
+                } else if (modifierName.equals("토큰")) {
+                    availableModifiers.add(MODIFIER_TOKEN);
+                } else if (modifierName.equals("티켓")) {
+                    availableModifiers.add(MODIFIER_TICKET);
+                }
+            } else {
+                // 직접 변형자 이름과 비교 (기존 호환성)
+                if (trimmedName.equals(MODIFIER_CHAIN)) {
+                    availableModifiers.add(MODIFIER_CHAIN);
+                } else if (trimmedName.equals(MODIFIER_REPEAT)) {
+                    availableModifiers.add(MODIFIER_REPEAT);
+                } else if (trimmedName.equals(MODIFIER_TOKEN)) {
+                    availableModifiers.add(MODIFIER_TOKEN);
+                } else if (trimmedName.equals(MODIFIER_TICKET)) {
+                    availableModifiers.add(MODIFIER_TICKET);
+                }
+            }
+        }
+        
+        return availableModifiers;
+    }
     
+    /**
+     * 변형자 조건을 체크합니다.
+     * @param modifier 변형자 이름
+     * @return 조건을 만족하면 true, 아니면 false
+     */
+    public boolean checkModifierCondition(String modifier) {
+        if (modifier == null || user == null || user.getUserItem_List() == null) {
+            return false;
+        }
+        
+        return user.getUserItem_List().contains(modifier);
+    }
+    
+    /**
+     * 문양 정보 배열을 생성합니다. (변형자 포함)
+     * 아이템이 있는 경우 일정 확률로 문양에 변형자를 적용합니다.
+     * 변형자가 적용되어도 원래 문양 정보는 유지됩니다.
+     * @return SymbolInfo 2차원 배열
+     */
+    public SymbolInfo[][] generateResultsWithModifiers() {
+        SymbolInfo[][] results = new SymbolInfo[ROWS][COLS];
+        java.util.ArrayList<String> availableModifiers = getAvailableModifiers();
+        
+        // 변형자 적용 확률 (70% 확률로 변형자 적용)
+        double modifierApplyProbability = 0.7;
+        
+        // 디버깅: 사용 가능한 변형자 확인
+        if (availableModifiers.isEmpty()) {
+            System.out.println("DEBUG: 사용 가능한 변형자가 없습니다. 보유 아이템: " + 
+                (user != null && user.getUserItem_List() != null ? user.getUserItem_List() : "null"));
+        } else {
+            System.out.println("DEBUG: 사용 가능한 변형자: " + availableModifiers);
+        }
+        
+        int modifierCount = 0;
+        for (int i = 0; i < ROWS; i++) {
+            for (int j = 0; j < COLS; j++) {
+                // 먼저 확률 기반으로 문양 생성
+                int symbolIndex = generateRandomSymbol();
+                String modifier = null;
+                
+                // 사용 가능한 변형자가 있고, 확률에 따라 변형자 적용
+                if (!availableModifiers.isEmpty() && random.nextDouble() < modifierApplyProbability) {
+                    // 사용 가능한 변형자 중 랜덤 선택
+                    int modifierIndex = random.nextInt(availableModifiers.size());
+                    modifier = availableModifiers.get(modifierIndex);
+                    modifierCount++;
+                    // 원래 문양 정보는 유지 (symbolIndex는 그대로)
+                }
+                
+                results[i][j] = new SymbolInfo(symbolIndex, modifier);
+            }
+        }
+        
+        System.out.println("DEBUG: 총 " + modifierCount + "개의 변형자가 적용되었습니다.");
+        return results;
+    }
+    
+    /**
+     * 기존 호환성을 위한 메서드 (변형자 없이 문양 인덱스만 반환)
+     * @return 문양 인덱스 2차원 배열
+     */
     public int[][] generateResults() {
         int[][] results = new int[ROWS][COLS];
         for (int i = 0; i < ROWS; i++) {
@@ -295,6 +455,280 @@ public class Roulette {
         return results;
     }
     
+    /**
+     * 변형자 정보를 포함한 패턴 체크 (변형자 효과 적용)
+     * @param results 문양 인덱스 배열
+     * @param symbolInfos 변형자 정보 배열
+     * @return 패턴 결과
+     */
+    public PatternResult checkResults(int[][] results, SymbolInfo[][] symbolInfos) {
+        PatternResult result = checkResults(results);
+        
+        // 패턴이 완성되었고 변형자가 있는 경우 효과 적용
+        if (result.hasWin() && symbolInfos != null) {
+            applyModifierEffects(result, symbolInfos, results);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 패턴 완성 시 변형자 효과를 적용합니다.
+     * @param patternResult 패턴 결과
+     * @param symbolInfos 변형자 정보 배열
+     * @param results 문양 인덱스 배열
+     */
+    private void applyModifierEffects(PatternResult patternResult, SymbolInfo[][] symbolInfos, int[][] results) {
+        if (!patternResult.hasWin() || symbolInfos == null) {
+            return;
+        }
+        
+        String pattern = patternResult.getPattern();
+        java.util.ArrayList<int[]> patternPositions = getPatternPositions(pattern, results);
+        
+        // 패턴에 포함된 위치들의 변형자 확인 (중복 허용 - 같은 변형자가 여러 개 있으면 모두 발동)
+        java.util.ArrayList<String> modifiersInPattern = new java.util.ArrayList<>();
+        for (int[] pos : patternPositions) {
+            int i = pos[0];
+            int j = pos[1];
+            if (symbolInfos[i][j].hasModifier()) {
+                modifiersInPattern.add(symbolInfos[i][j].getModifier());
+            }
+        }
+        
+        // 각 변형자 효과 적용 (같은 변형자가 여러 개 있으면 개수만큼 발동)
+        for (String modifier : modifiersInPattern) {
+            applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
+        }
+    }
+    
+    /**
+     * 패턴 타입에 따라 패턴에 포함된 위치들을 반환합니다.
+     * @param pattern 패턴 타입
+     * @param results 문양 인덱스 배열
+     * @return 패턴에 포함된 위치들의 리스트 (각 위치는 [i, j] 형태)
+     */
+    private java.util.ArrayList<int[]> getPatternPositions(String pattern, int[][] results) {
+        java.util.ArrayList<int[]> positions = new java.util.ArrayList<>();
+        
+        if (pattern == null || pattern.isEmpty()) {
+            return positions;
+        }
+        
+        switch (pattern) {
+            case TRIPLE:
+                // 중간 행의 트리플 패턴 위치 찾기
+                for (int j = 0; j <= COLS - 3; j++) {
+                    if (results[1][j] == results[1][j+1] && results[1][j+1] == results[1][j+2]) {
+                        positions.add(new int[]{1, j});
+                        positions.add(new int[]{1, j+1});
+                        positions.add(new int[]{1, j+2});
+                        break; // 첫 번째 트리플만
+                    }
+                }
+                break;
+                
+            case QUADRA:
+                // 중간 행의 쿼드라 패턴 위치 찾기
+                for (int j = 0; j <= COLS - 4; j++) {
+                    if (results[1][j] == results[1][j+1] && results[1][j+1] == results[1][j+2] && 
+                        results[1][j+2] == results[1][j+3]) {
+                        positions.add(new int[]{1, j});
+                        positions.add(new int[]{1, j+1});
+                        positions.add(new int[]{1, j+2});
+                        positions.add(new int[]{1, j+3});
+                        break;
+                    }
+                }
+                break;
+                
+            case PENTA:
+                // PENTA와 SECPENTA는 같은 값이므로 하나의 case로 처리
+                // 중간 행 전체
+                for (int j = 0; j < COLS; j++) {
+                    positions.add(new int[]{1, j});
+                }
+                break;
+                
+            case VERTICAL:
+                // 세로 패턴 위치 찾기
+                for (int j = 0; j < COLS; j++) {
+                    if (results[0][j] == results[1][j] && results[1][j] == results[2][j]) {
+                        positions.add(new int[]{0, j});
+                        positions.add(new int[]{1, j});
+                        positions.add(new int[]{2, j});
+                        break; // 첫 번째 세로 패턴만
+                    }
+                }
+                break;
+                
+            case RIGHT_DIAGONAL:
+                // RIGHT_DIAGONAL과 LEFT_DIAGONAL은 같은 값이므로 하나의 case로 처리
+                // 대각선 패턴 위치 찾기
+                for (int j = 0; j <= COLS - 3; j++) {
+                    if (pattern.equals(RIGHT_DIAGONAL) && 
+                        results[0][j] == results[1][j+1] && results[1][j+1] == results[2][j+2]) {
+                        positions.add(new int[]{0, j});
+                        positions.add(new int[]{1, j+1});
+                        positions.add(new int[]{2, j+2});
+                        break;
+                    } else if (pattern.equals(LEFT_DIAGONAL) && 
+                               results[2][j] == results[1][j+1] && results[1][j+1] == results[0][j+2]) {
+                        positions.add(new int[]{2, j});
+                        positions.add(new int[]{1, j+1});
+                        positions.add(new int[]{0, j+2});
+                        break;
+                    }
+                }
+                break;
+                
+            case ZIG:
+                positions.add(new int[]{0, 2});
+                positions.add(new int[]{1, 1});
+                positions.add(new int[]{1, 3});
+                positions.add(new int[]{2, 0});
+                positions.add(new int[]{2, 4});
+                break;
+                
+            case ZAG:
+                positions.add(new int[]{0, 0});
+                positions.add(new int[]{0, 4});
+                positions.add(new int[]{1, 1});
+                positions.add(new int[]{1, 3});
+                positions.add(new int[]{2, 2});
+                break;
+                
+            case GROUND:
+                // 지그 패턴 + 아래 행 전체
+                positions.add(new int[]{0, 2});
+                positions.add(new int[]{1, 1});
+                positions.add(new int[]{1, 3});
+                positions.add(new int[]{2, 0});
+                positions.add(new int[]{2, 1});
+                positions.add(new int[]{2, 2});
+                positions.add(new int[]{2, 3});
+                positions.add(new int[]{2, 4});
+                break;
+                
+            case HEAVEN:
+                // 재그 패턴 + 윗 행 전체
+                positions.add(new int[]{0, 0});
+                positions.add(new int[]{0, 1});
+                positions.add(new int[]{0, 2});
+                positions.add(new int[]{0, 3});
+                positions.add(new int[]{0, 4});
+                positions.add(new int[]{1, 1});
+                positions.add(new int[]{1, 3});
+                positions.add(new int[]{2, 2});
+                break;
+                
+            case EYE:
+                positions.add(new int[]{0, 1});
+                positions.add(new int[]{0, 2});
+                positions.add(new int[]{0, 3});
+                positions.add(new int[]{1, 0});
+                positions.add(new int[]{1, 1});
+                positions.add(new int[]{1, 3});
+                positions.add(new int[]{1, 4});
+                positions.add(new int[]{2, 1});
+                positions.add(new int[]{2, 2});
+                positions.add(new int[]{2, 3});
+                break;
+                
+            case JACKPOT:
+                // 전체 보드
+                for (int i = 0; i < ROWS; i++) {
+                    for (int j = 0; j < COLS; j++) {
+                        positions.add(new int[]{i, j});
+                    }
+                }
+                break;
+        }
+        
+        return positions;
+    }
+    
+    /**
+     * 개별 변형자 효과를 적용합니다.
+     * @param modifier 변형자 이름
+     * @param pattern 패턴 타입
+     * @param patternResult 패턴 결과
+     * @param results 문양 인덱스 배열
+     * @param patternPositions 패턴에 포함된 위치들
+     */
+    private void applyModifierEffect(String modifier, String pattern, PatternResult patternResult, 
+                                     int[][] results, java.util.ArrayList<int[]> patternPositions) {
+        if (modifier == null || user == null) {
+            return;
+        }
+        
+        if (modifier.equals(MODIFIER_CHAIN)) {
+            // 사슬: 해당 패턴의 가치 상승 (pattern_sum)
+            int patternIndex = getPatternIndex(pattern);
+            if (patternIndex >= 0) {
+                int currentValue = user.getPatternSum(patternIndex);
+                int originalValue = user.getPatternOriginal(patternIndex);
+                // 원래 가치만큼 증가
+                user.setPatternSum(patternIndex, currentValue + originalValue);
+                System.out.println("사슬 변형자 효과: " + pattern + " 패턴 가치가 " + originalValue + " 증가했습니다.");
+            }
+            
+        } else if (modifier.equals(MODIFIER_REPEAT)) {
+            // 반복: 해당 패턴 한번 더
+            int patternIndex = getPatternIndex(pattern);
+            if (patternIndex >= 0 && !patternPositions.isEmpty()) {
+                // 패턴 위치에서 문양 인덱스 가져오기
+                int[] firstPos = patternPositions.get(0);
+                int symbolIndex = results[firstPos[0]][firstPos[1]];
+                // 패턴 보상을 한 번 더 지급
+                int additionalReward = user.getSymbolSum(symbolIndex) * what_pattern(pattern) * symbol_mul * pattern_mul;
+                roulette_money += additionalReward;
+                System.out.println("반복 변형자 효과: " + pattern + " 패턴 보상을 한 번 더 받았습니다. (+" + additionalReward + "원)");
+            }
+            
+        } else if (modifier.equals(MODIFIER_TICKET)) {
+            // 티켓: 티켓 +1
+            user.addTicket(1);
+            System.out.println("티켓 변형자 효과: 티켓이 1개 증가했습니다.");
+            
+        } else if (modifier.equals(MODIFIER_TOKEN)) {
+            // 토큰: 현재 이자만큼 돈 추가
+            int interestAmount = (int)(user.getTotal_money() * user.getInterest());
+            roulette_money += interestAmount;
+            System.out.println("토큰 변형자 효과: 현재 이자(" + (user.getInterest() * 100) + "%)만큼 돈이 추가되었습니다. (+" + interestAmount + "원)");
+        }
+    }
+    
+    /**
+     * 패턴 타입을 인덱스로 변환합니다.
+     * @param pattern 패턴 타입
+     * @return 패턴 인덱스 (0~10)
+     */
+    private int getPatternIndex(String pattern) {
+        if (pattern == null) return -1;
+        switch (pattern) {
+            case TRIPLE: return 0;
+            case QUADRA: return 1;
+            case PENTA: return 2;
+            case VERTICAL: return 3;
+            case RIGHT_DIAGONAL:
+                // RIGHT_DIAGONAL과 LEFT_DIAGONAL은 같은 값이므로 하나의 case로 처리
+                return 4;
+            case ZIG: return 5;
+            case ZAG: return 6;
+            case GROUND: return 7;
+            case HEAVEN: return 8;
+            case EYE: return 9;
+            case JACKPOT: return 10;
+            default: return -1;
+        }
+    }
+    
+    /**
+     * 기존 호환성을 위한 메서드 (변형자 효과 없이 패턴만 체크)
+     * @param results 문양 인덱스 배열
+     * @return 패턴 결과
+     */
     public PatternResult checkResults(int[][] results) {
         StringBuilder winMessage = new StringBuilder();
         boolean hasWin = false;

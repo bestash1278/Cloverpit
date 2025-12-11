@@ -16,7 +16,7 @@ public class User {
     private int total_money = 30;
     private int total_spin = 0;
     private int round_spin_left = 7;
-    private int item_max = 6;
+    private int item_max = 11;
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
 
@@ -319,8 +319,6 @@ public class User {
             this.pattern_sum[index] = value;
         }
     }
-
-    
     //--------유저 유물-----------
     public void addOwnItem_List(String itemName) {
         this.user_item.add(itemName);
@@ -348,8 +346,13 @@ public class User {
     }
     
     public void addUserItem_List(String itemName) {
-    	this.user_item.add(itemName);
-    }
+            if (this.user_item.size() < this.item_max) { // item_max 제한 확인 (선택 사항)
+                this.user_item.add(itemName);
+                System.out.println("DEBUG: 유물 [" + itemName + "] 획득. 현재 " + this.user_item.size() + "개 소유.");
+            } else {
+                System.out.println("DEBUG: 유물 최대 소유 개수를 초과하여 획득 실패.");
+            }
+        }
     
     public List<String> getUserItem_List() {
         return this.user_item;
@@ -363,5 +366,52 @@ public class User {
         return this.user_item.remove(itemName);
     }
     //--------------------------
+    // ====== 새 아이템 게터 / 세터 (기존 메서드와 별도 사용) ======
+    /**
+     * 소유 유물 이름 리스트를 "읽을 때" 사용하는 메서드.
+     * 내부 리스트를 그대로 노출하지 않기 위해 복사본을 반환합니다.
+     */
+    public List<String> getOwnedItemNames() {
+        if (user_item == null) {
+            user_item = new ArrayList<>();
+        }
+        return new ArrayList<>(user_item);
+    }
+
+    /**
+     * 소유 유물 이름 리스트를 통째로 설정합니다.
+     * CSV 로드 등에서 사용됩니다.
+     */
+    public void setOwnedItemNames(List<String> ownedNames) {
+        if (user_item == null) {
+            user_item = new ArrayList<>();
+        } else {
+            user_item.clear();
+        }
+        if (ownedNames != null) {
+            user_item.addAll(ownedNames);
+        }
+    }
+
+    /**
+     * 소유 유물에 이름 하나를 추가합니다.
+     */
+    public void addOwnedItemName(String itemName) {
+        if (itemName == null || itemName.isEmpty()) return;
+        if (user_item == null) {
+            user_item = new ArrayList<>();
+        }
+        user_item.add(itemName);
+    }
+
+    /**
+     * 소유 유물에서 이름 하나를 제거합니다.
+     * 제거에 성공하면 true, 없으면 false를 반환합니다.
+     */
+    public boolean removeOwnedItemName(String itemName) {
+        if (user_item == null || itemName == null) return false;
+        return user_item.remove(itemName);
+    }
+
 }
 

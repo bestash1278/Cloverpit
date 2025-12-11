@@ -9,8 +9,6 @@ import java.util.List;
 
 public class ItemShop_Screen extends JPanel {
     private final ItemShop itemShopLogic; // ItemShop 객체에 의존성 주입
-    private final Runnable updateMainStatus; // 메인패널 스테이터스바
-
     private Image backgroundImage;
     private List<ItemInfo> displayedItems;
     
@@ -30,10 +28,9 @@ public class ItemShop_Screen extends JPanel {
     // 💡 리롤 버튼 영역 좌표 (아이템 UI 크기 기준: 너비 150, 높이 100, 가운데 아래 배치)
     private static final Rectangle REROLL_AREA = new Rectangle(325, 450, 150, 100); 
     
-    public ItemShop_Screen(ItemShop itemShopLogic, Runnable updateMainStatus) {
+    public ItemShop_Screen(ItemShop itemShopLogic) {
         this.itemShopLogic = itemShopLogic;
-        this.updateMainStatus = updateMainStatus; // ⭐ 필드 초기화
-        
+
         // 초기 아이템 목록 가져오기
         this.displayedItems = itemShopLogic.getCurrentItems();
 
@@ -267,12 +264,7 @@ public class ItemShop_Screen extends JPanel {
             	// 2. 결과에 따라 처리 분기
                 switch (result) {
                     case SUCCESS:
-                        // 구매 성공
-                        // UI 갱신 (구매된 슬롯을 '판매 완료'로 표시)
-                        updateShopUI(itemShopLogic.getCurrentItems());
-                        // SlotMachinePanel의 상태 표시줄 갱신 (티켓 차감 반영)
-                        updateMainStatus.run(); 
-                        
+                    	updateShopUI(itemShopLogic.getCurrentItems()); // ⭐ ItemShop_Screen 자신의 화면만 갱신
                         javax.swing.JOptionPane.showMessageDialog(this, selectedItem.getName() + " 구매 성공!", "알림", javax.swing.JOptionPane.INFORMATION_MESSAGE);
                         break;
                         
@@ -284,6 +276,14 @@ public class ItemShop_Screen extends JPanel {
                     case ALREADY_SOLD:
                         // 이미 판매된 유물을 재구매 시도
                         javax.swing.JOptionPane.showMessageDialog(this, "이미 판매된 유물입니다!", "구매 실패", javax.swing.JOptionPane.WARNING_MESSAGE);
+                        break;
+                        
+                    case INVENTORY_FULL: // ⭐ 인벤토리 가득 찼을 경우 메시지
+                        JOptionPane.showMessageDialog(this, 
+                            "유물 소유 개수가 최대치에 도달하여 더 이상 구매할 수 없습니다.", 
+                            "구매 실패", 
+                            JOptionPane.WARNING_MESSAGE
+                        );
                         break;
                 }
             }
@@ -309,13 +309,22 @@ public class ItemShop_Screen extends JPanel {
                 return;
             }
 
-            // 1. 리롤 버튼 클릭 처리
+         // 1. 리롤 버튼 클릭 처리
             if (REROLL_AREA.contains(clickedPoint)) {
-                List<ItemInfo> newItems = itemShopLogic.rerollItems();
-                updateShopUI(newItems);
-                // TODO: 리롤 결과에 따른 알림 메시지 (예: 비용 부족) 처리
+                // ⭐ 이 부분에 List<ItemInfo> newItems = ... 할당이 필요합니다.
+                List<ItemInfo> newItems = itemShopLogic.rerollItems(); 
                 
-            } 
+                if (newItems != null) {
+                    // 리롤 성공 (비용 차감 성공)
+                    updateShopUI(newItems);
+                } else {
+                    // 리롤 실패 (비용 부족 등 useItemForReroll()이 false를 반환한 경우)
+//                    JOptionPane.showMessageDialog(this, "리롤 비용이 부족하거나 리롤 조건이 충족되지 않았습니다.", "리롤 실패", JOptionPane.WARNING_MESSAGE);
+                }
+                // TODO: 리롤 결과에 따른 알림 메시지 (예: 비용 부족) 처리는 if/else 블록에서 처리되었습니다.
+                
+            }
+            
             
             
             // 2. 아이템 박스 클릭 처리

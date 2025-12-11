@@ -11,7 +11,7 @@ public class SaveManagerCsv {
 
     private static final String SAVE_FILE = "data/user_save.csv";
 
-    // 새 헤더 (필드 25개)
+    // 새 헤더 (기존 + 추가 필드)
     private static final String HEADER =
             "round,round_spin_left,deadline,roulatte_money,"
           + "total_money,ticket,interest,item_max,deadline_money,"
@@ -27,7 +27,6 @@ public class SaveManagerCsv {
                 if (parent != null && !parent.exists()) {
                     parent.mkdirs();
                 }
-                // 최초 생성 시 헤더만 써둠
                 try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
                     bw.write(HEADER);
                     bw.newLine();
@@ -38,20 +37,20 @@ public class SaveManagerCsv {
         }
     }
 
-    // -------------------- SAVE --------------------
+    // ========== SAVE ==========
 
     public void save(User user) {
         File file = new File(SAVE_FILE);
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
-            // 항상 헤더 + 한 줄만 쓰는 구조
+            // 한 번 저장할 때마다 헤더 + 한 줄 갱신
             bw.write(HEADER);
             bw.newLine();
 
-            // 리스트 / 배열 → 문자열로 변환
-            String userItemsStr = joinStringList(user.getUserItem_List());
-            String userCallStr = joinStringList(user.getUser_call());
+            // 🔹 새 아이템 게터 사용
+            String userItemsStr = joinStringList(user.getOwnedItemNames());
+            String userCallStr  = joinStringList(user.getUser_call());
 
-            String symbolSumStr = joinIntArray(user.getSymbolSum());
+            String symbolSumStr  = joinIntArray(user.getSymbolSum());
             String patternSumStr = joinIntArray(user.getPatternSum());
 
             StringBuilder sb = new StringBuilder();
@@ -93,7 +92,7 @@ public class SaveManagerCsv {
         }
     }
 
-    // -------------------- LOAD --------------------
+    // ========== LOAD ==========
 
     public User load() {
         File file = new File(SAVE_FILE);
@@ -115,7 +114,7 @@ public class SaveManagerCsv {
 
             int idx = 0;
 
-            // 기존 필드들
+            // 기본 진행/돈/티켓/이자/목표
             user.setRound(getInt(arr, idx++, user.getRound()));
             user.setRound_spin_left(getInt(arr, idx++, user.getRound_spin_left()));
             user.setDeadline(getInt(arr, idx++, user.getDeadline()));
@@ -126,27 +125,24 @@ public class SaveManagerCsv {
             user.setItem_max(getInt(arr, idx++, user.getItem_max()));
             user.setDeadline_money(getInt(arr, idx++, user.getDeadline_money()));
 
-            // 새로 추가한 필드들
+            // 스핀 / 전화 / 리롤
             user.setTotal_spin(getInt(arr, idx++, user.getTotal_spin()));
             user.setCall_count(getInt(arr, idx++, user.getCall_count()));
 
-            // callReroll_count : setter가 없고 add만 있으므로 루프로 복원
-            int savedCallReroll = getInt(arr, idx++, -1);
+            int savedCallReroll = getInt(arr, idx++, user.getCallReroll_count());
             if (savedCallReroll >= 0) {
                 for (int i = 0; i < savedCallReroll; i++) {
                     user.addCallReroll_count();
                 }
             }
 
-            // itemReroll_count : setter 있음
             int savedItemReroll = getInt(arr, idx++, user.getItemReroll_count());
             user.setItemReroll_count(savedItemReroll);
 
-            // freeItemReroll_count : setter 있음
             int savedFreeItemReroll = getInt(arr, idx++, user.getFreeItemReroll_count());
             user.setFreeItemReroll_count(savedFreeItemReroll);
 
-            // 문양 확률들
+            // 문양 확률
             double lemonProb    = getDouble(arr, idx++, user.getLemonProbability());
             double cherryProb   = getDouble(arr, idx++, user.getCherryProbability());
             double cloverProb   = getDouble(arr, idx++, user.getCloverProbability());
@@ -177,13 +173,11 @@ public class SaveManagerCsv {
                 user.setPatternSum(savedPattern);
             }
 
-            // user_items (유물 목록)
+            // user_items (소유 유물 이름들) - 🔹 새 세터 사용
             String userItemsStr = getString(arr, idx++, "");
             if (!userItemsStr.isEmpty()) {
                 List<String> items = parseStringList(userItemsStr);
-                for (String itemName : items) {
-                    user.addUserItem_List(itemName);
-                }
+                user.setOwnedItemNames(items);
             }
 
             // user_call (전화 내역)
@@ -210,7 +204,7 @@ public class SaveManagerCsv {
         }
     }
 
-    // -------------------- 유틸 메서드들 --------------------
+    // ========== 유틸 함수들 ==========
 
     private int getInt(String[] arr, int index, int defaultValue) {
         if (index < arr.length) {
@@ -219,7 +213,7 @@ public class SaveManagerCsv {
                 try {
                     return Integer.parseInt(v);
                 } catch (NumberFormatException e) {
-                    // 무시하고 defaultValue 사용
+                    // 무시하고 기본값 사용
                 }
             }
         }
@@ -233,7 +227,7 @@ public class SaveManagerCsv {
                 try {
                     return Double.parseDouble(v);
                 } catch (NumberFormatException e) {
-                    // 무시하고 defaultValue 사용
+                    // 무시하고 기본값 사용
                 }
             }
         }
@@ -260,6 +254,8 @@ public class SaveManagerCsv {
 
     private int[] parseIntArray(String value, int length) {
         int[] result = new int[length];
+        if (value == null || value.isEmpty()) return result;
+
         String[] parts = value.split("\\|");
         for (int i = 0; i < length && i < parts.length; i++) {
             try {
@@ -278,7 +274,7 @@ public class SaveManagerCsv {
         for (String s : list) {
             if (s == null) continue;
             if (!first) sb.append("|");
-            sb.append(s.replace("\n", "\\n")); // 혹시 모를 개행 보호
+            sb.append(s.replace("\n", "\\\\n")); // 개행 보호
             first = false;
         }
         return sb.toString();
@@ -287,10 +283,11 @@ public class SaveManagerCsv {
     private List<String> parseStringList(String value) {
         List<String> list = new ArrayList<>();
         if (value == null || value.isEmpty()) return list;
+
         String[] parts = value.split("\\|");
         for (String p : parts) {
             if (p != null && !p.isEmpty()) {
-                list.add(p.replace("\\n", "\n"));
+                list.add(p.replace("\\\\n", "\n"));
             }
         }
         return list;
