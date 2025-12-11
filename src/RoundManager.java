@@ -18,7 +18,6 @@ public class RoundManager {
     public void startNewRound() {
         user.setRound(user.getRound() + 1);
         user.setRound_spin_left(baseSpinsPerRound);
-        user.setItemReroll_count(0); //라운드 증가시 리롤횟수 초기화
 
         if (user.getDeadline() > 0) {
             user.setDeadline(user.getDeadline() - 1);

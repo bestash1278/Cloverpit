@@ -46,8 +46,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int LEVER_HEAD_SIZE = 60; 
     private static final int LEVER_BAR_THICKNESS = 18; 
 
-    private static final int TARGET_WIDTH = 1000;
-    private static final int TARGET_HEIGHT = 650;
+    private static final int TARGET_WIDTH = 1600;
+    private static final int TARGET_HEIGHT = 900;
     
     private static final int SLOT_SIZE = 120;
     private static final int SLOT_SPACING = 15;
@@ -101,7 +101,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
 	private Call_Screen callScreen;	//전화 화면
 	private OwnItem ownItem;
 	private OwnItem_Screen ownItemScreen;
-	
+
     
     public SlotMachinePanel() {
         SaveManagerCsv tempSaveManager = new SaveManagerCsv();
@@ -124,19 +124,25 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.soundManager = new SoundManager();
         this.saveManager = new SaveManagerCsv();
         this.roundManager = new RoundManager(user);
-        this.ownItem = new OwnItem(user, this::updateStatusBar);
         
         this.roulatte = new RoulatteInfo();
-        this.itemShop = new ItemShop(user, this::updateStatusBar);
+        this.ownItem = new OwnItem(user, this::updateStatusBar);
         this.ownItemScreen = new OwnItem_Screen(this.ownItem);
-
         this.call = new Call(user, roundManager);
         this.callScreen = new Call_Screen(this.call);
-
+        this.itemShop = new ItemShop(
+                user, 
+                this::updateStatusBar, // 메인 상태바 갱신
+                this.ownItemScreen::updateOwnedItemsUI // ⭐ 구매 후 소유 유물 화면 갱신
+            );
+        this.itemShopScreen = new ItemShop_Screen(this.itemShop);
+        
         Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
         		this.itemShop, this::updateStatusBar,this::updateShopScreen, this.call, this::updateCallScreen);
         this.paymentScreen = new Payment_Screen(paymentLogic);
-        this.itemShopScreen = new ItemShop_Screen(this.itemShop);
+        
+        this.roulatte = new RoulatteInfo();
+        this.paymentScreen = new Payment_Screen(paymentLogic);
         
         if (user.getRound() <= 0) {
             user.setRound(1);
@@ -220,8 +226,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 }
             }
         });
-        
-        
 
         leverButton = new LeverHeadButton(); 
         leverButton.setBounds(0, 0, LEVER_HEAD_SIZE, LEVER_HEAD_SIZE);
@@ -315,6 +319,23 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         int symbolIndex = roulette.generateRandomSymbol();
         int[] symbolTypes = roulette.getSymbolTypes();
         slot.setIcon(new SymbolIcon(symbolTypes[symbolIndex], SLOT_SIZE - 20));
+    }
+    
+    /**
+     * SymbolInfo를 사용하여 슬롯에 아이콘을 설정합니다.
+     * 변형자가 있으면 문양+변형자 조합 이미지를 표시합니다.
+     */
+    private void setSymbolWithModifier(JLabel slot, Roulette.SymbolInfo symbolInfo) {
+        if (symbolInfo == null) {
+            return;
+        }
+        
+        int[] symbolTypes = roulette.getSymbolTypes();
+        int symbolType = symbolTypes[symbolInfo.getSymbolIndex()];
+        String modifier = symbolInfo.getModifier();
+        
+        // 변형자가 있으면 문양+변형자 조합 이미지 사용, 없으면 일반 문양 이미지 사용
+        slot.setIcon(new SymbolIcon(symbolType, modifier, SLOT_SIZE - 20));
     }
     
     private void initializeStatusLabels() {
@@ -437,18 +458,18 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 width = 800;
                 height = 600;
                 break;
-               
+                
             case "소지 유물 버튼 화면":
                 contentPanel = this.ownItemScreen;
                 width = 800;
                 height = 600;
                 if (this.ownItemScreen != null) {
                     this.ownItemScreen.updateUI(); 
-                    System.out.println("SlotMachinePanel: 소지 유물 화면 갱신 요청 성공."); // 확인용 출력
+                    System.out.println("SlotMachinePanel: 소지 유물 화면 갱신 요청 성공."); // 디버그 출력
                 }
                 break;
 
-            // 다른 메뉴 버튼 (무늬, 패턴, 소지 유물)은 임시 패널을 사용 //필요시 밑으로 추가
+            // 다른 메뉴 버튼 (무늬, 패턴)은 임시 패널을 사용 //필요시 밑으로 추가
             default:
                 contentPanel = createPlaceholderPanel(title);
                 width = 400;
@@ -464,8 +485,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         // 3. 생성된 패널을 프레임에 추가하고 크기 설정
         if (contentPanel != null) {
             frame.add(contentPanel);
-            contentPanel.revalidate();
-            contentPanel.repaint();
         }
 
         
@@ -651,16 +670,27 @@ public class SlotMachinePanel extends JPanel implements Runnable {
      * 최종 결과 생성, 패턴 체크, 사운드 중지
      */
     private void finishSpin() {
-        int[][] results = roulette.generateResults();
-        int[] symbolTypes = roulette.getSymbolTypes();
+        // 변형자를 포함한 결과 생성
+        Roulette.SymbolInfo[][] symbolResults = roulette.generateResultsWithModifiers();
         
+        // 화면에 표시
         for (int i = 0; i < roulette.getRows(); i++) {
             for (int j = 0; j < roulette.getCols(); j++) {
-                slots[i][j].setIcon(new SymbolIcon(symbolTypes[results[i][j]], SLOT_SIZE - 20));
+                setSymbolWithModifier(slots[i][j], symbolResults[i][j]);
             }
         }
         
-        roulette.checkResults(results);
+        // 패턴 체크를 위한 일반 결과 배열 생성 (원래 문양 인덱스 사용)
+        int[][] results = new int[roulette.getRows()][roulette.getCols()];
+        for (int i = 0; i < roulette.getRows(); i++) {
+            for (int j = 0; j < roulette.getCols(); j++) {
+                // 변형자가 있어도 원래 문양 인덱스를 사용하여 패턴 체크
+                results[i][j] = symbolResults[i][j].getSymbolIndex();
+            }
+        }
+        
+        // 변형자 정보를 포함하여 패턴 체크 (변형자 효과 적용)
+        roulette.checkResults(results, symbolResults);
         soundManager.stopSpinSound();
         isSpinning = false;
         user.setRoulatte_money(user.getRoulatte_money() + roulette.roulette_money);

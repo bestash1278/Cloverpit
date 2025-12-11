@@ -4,8 +4,8 @@ import java.util.List;
 public class User {
 
     private String user_name;  
-    private List<String> user_call;    
-    private List<String> user_item = new ArrayList<>();
+    private List<String> user_call;
+    private List<String> user_item = new ArrayList<>();     
 
     private int roulatte_money = 10000;  
     private double interest = 0.1;  
@@ -16,14 +16,13 @@ public class User {
     private int total_money = 30;
     private int total_spin = 0;
     private int round_spin_left = 7;
-    private int item_max = 6;
+    private int item_max = 11;
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
     private int call_count = 0;	//전화를 걸 수 있는 기회
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
-    private int freeItemReroll_count = 0; //무료 상점 리롤 횟숫
-    
+    private int freeItemReroll_count = 0; //무료 상점 리롤 횟수
     private int[] symbol_original = {2,2,3,3,5,5,7};
     private int[] pattern_original = {1,2,3,1,1,4,4,7,7,8,10};
     // 문양 가격 "레몬", "체리", "클로버", "종", "다이아", "보물", "7"
@@ -318,9 +317,7 @@ public class User {
             this.pattern_sum[index] = value;
         }
     }
-
-    
-    /*--------유저 유물-----------*/
+    //--------유저 유물-----------
     public void addOwnItem_List(String itemName) {
         this.user_item.add(itemName);
     }
@@ -328,7 +325,7 @@ public class User {
     public List<String> getOwnItem_List() {
         return user_item;
     }
-    /*--------------*/
+    
     public void setItemReroll_count(int itemReroll_count) {
     	this.itemReroll_count = itemReroll_count;
     }
@@ -337,7 +334,7 @@ public class User {
     	return freeItemReroll_count;
     }
     
-    public void setFreeItemReroll_count(int freeItemReroll_count ) {
+    public void setFreeItemReroll_count(int freeItemReroll_count) {
     	this.freeItemReroll_count = freeItemReroll_count;
     }
     
@@ -347,8 +344,13 @@ public class User {
     }
     
     public void addUserItem_List(String itemName) {
-    	this.user_item.add(itemName);
-    }
+            if (this.user_item.size() < this.item_max) { // item_max 제한 확인 (선택 사항)
+                this.user_item.add(itemName);
+                System.out.println("DEBUG: 유물 [" + itemName + "] 획득. 현재 " + this.user_item.size() + "개 소유.");
+            } else {
+                System.out.println("DEBUG: 유물 최대 소유 개수를 초과하여 획득 실패.");
+            }
+        }
     
     public List<String> getUserItem_List() {
         return this.user_item;
@@ -361,5 +363,5 @@ public class User {
         }
         return this.user_item.remove(itemName);
     }
-    /*--------------------------*/
+    //--------------------------
 }

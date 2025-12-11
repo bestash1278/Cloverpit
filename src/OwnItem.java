@@ -1,7 +1,4 @@
-// OwnItem.java (OwnedItems 클래스를 사용하셨다면 파일명을 맞춰주세요)
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class OwnItem {
     private final User user;
@@ -54,3 +51,4 @@ public class OwnItem {
         return false;
     }
 }
+

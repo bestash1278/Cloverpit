@@ -56,7 +56,7 @@ public class Main {
             cardPanel.add(startScreen, "START");
             mainFrame.pack(); 
             mainFrame.add(cardPanel, BorderLayout.CENTER);
-            mainFrame.setSize(1000, 650);	//1600 900
+            mainFrame.setSize(1600, 900);
             mainFrame.setLocationRelativeTo(null);
             mainFrame.setResizable(false);
             mainFrame.setVisible(true);
