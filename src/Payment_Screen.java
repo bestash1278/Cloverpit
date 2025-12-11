@@ -24,7 +24,7 @@ public class Payment_Screen extends JPanel implements ActionListener {
     
     private Image backgroundImage;	//배경화면 이미지 변수 선언.
     // 클릭 영역 좌표 (예시: 화면의 특정 버튼 위치)
-    private static final Rectangle CLICK_AREA = new Rectangle(600, 220, 50, 50);
+    private static final Rectangle CLICK_AREA = new Rectangle(570, 270, 50, 50);
     
     private JLabel deadline_bonus_coin_lable;
     private JLabel deadline_bonus_tiket_lable;
@@ -127,28 +127,28 @@ public class Payment_Screen extends JPanel implements ActionListener {
         
         // 마감기한 보너스 코인 영역 설정
         deadline_bonus_coin_lable = new JLabel(" 코인 : " + result.deadline_bonus_coin() + "원");
-        deadline_bonus_coin_lable.setBounds(50, 100, 300, 30); // 좌표 지정
+        deadline_bonus_coin_lable.setBounds(95, 275, 300, 30); // 좌표 지정
         deadline_bonus_coin_lable.setForeground(Color.WHITE);
         deadline_bonus_coin_lable.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         add(deadline_bonus_coin_lable);
         
         // 마감기한 보너스 티켓 영역 설정
         deadline_bonus_tiket_lable = new JLabel("티켓 : " + result.deadline_bonus_tiket() + "개");
-        deadline_bonus_tiket_lable.setBounds(50, 140, 300, 30); // 좌표 지정
+        deadline_bonus_tiket_lable.setBounds(95, 315, 300, 30); // 좌표 지정
         deadline_bonus_tiket_lable.setForeground(Color.WHITE);
         deadline_bonus_tiket_lable.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         add(deadline_bonus_tiket_lable);
         
         // 현재 라운드 목표 금액
         get_round_money_lable = new JLabel("목표 금액: " + paymentLogic.get_deadline_money() + "원");
-        get_round_money_lable.setBounds(450, 100, 300, 30); // 좌표 지정
+        get_round_money_lable.setBounds(425, 200, 300, 30); // 좌표 지정
         get_round_money_lable.setForeground(Color.WHITE);
         get_round_money_lable.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         add(get_round_money_lable);
         
         // 총 납입액 영역 설정
         total_deposit_label = new JLabel("총 납입액: " + paymentLogic.get_total_money() + "원");
-        total_deposit_label.setBounds(450, 140, 300, 30); // 좌표 지정
+        total_deposit_label.setBounds(425, 240, 300, 30); // 좌표 지정
         total_deposit_label.setForeground(Color.WHITE);
         total_deposit_label.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         add(total_deposit_label);
@@ -156,7 +156,7 @@ public class Payment_Screen extends JPanel implements ActionListener {
         // 이자 값 출력 영역 설정 ()
         paymentLogic.interest_count();
         interestLabel = new JLabel("계산된 이자:" + paymentLogic.get_interest() + "원");	//초기값
-        interestLabel.setBounds(450, 180, 300, 30); // 총액 아래에 배치
+        interestLabel.setBounds(425, 280, 300, 30); // 총액 아래에 배치
         interestLabel.setForeground(Color.YELLOW);
         interestLabel.setFont(new Font("맑은 고딕", Font.BOLD, 16));
         add(interestLabel);
@@ -208,28 +208,27 @@ public class Payment_Screen extends JPanel implements ActionListener {
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         }
         
-        if (paymentMachineImage != null) {
-            int x = 100;    // 시작 X 좌표 (조정 필요)
-            int y = 150;    // 시작 Y 좌표 (조정 필요)
+        if (bonusMachineImage != null) {
+            int x = 50;    // 시작 X 좌표 (조정 필요)
+            int y = 200;    // 시작 Y 좌표 (조정 필요)
             int width = 250;  // 너비 (조정 필요)
             int height = 350; // 높이 (조정 필요)
-            g.drawImage(paymentMachineImage, x, y, width, height, this);
+            g.drawImage(bonusMachineImage, x, y, width, height, this);
         }
         
-        // ⭐ 3. 보너스 기계 이미지 그리기
-        if (bonusMachineImage != null) {
-            int x = 450;    // 시작 X 좌표 (조정 필요)
+        if (paymentMachineImage != null) {
+            int x = 350;    // 시작 X 좌표 (조정 필요)
             int y = 150;    // 시작 Y 좌표 (조정 필요)
             int width = 300;  // 너비 (조정 필요)
-            int height = 350; // 높이 (조정 필요)
-            g.drawImage(bonusMachineImage, x, y, width, height, this);
+            int height = 400; // 높이 (조정 필요)
+            g.drawImage(paymentMachineImage, x, y, width, height, this);
         }
         if (depositImage != null) {
-            int x = 600;    // 시작 X 좌표 (조정 필요)
-            int y = 220;    // 시작 Y 좌표 (조정 필요)
+            int x = 570;    // 시작 X 좌표 (조정 필요)
+            int y = 270;    // 시작 Y 좌표 (조정 필요)
             int width = 50;  // 너비 (조정 필요)
             int height = 50; // 높이 (조정 필요)
-            g.drawImage(bonusMachineImage, x, y, width, height, this);
+            g.drawImage(depositImage, x, y, width, height, this);
         }
         
         // 디버깅 용: 클릭 영역을 시각적으로 표시 (나중에 제거)
