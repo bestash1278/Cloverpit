@@ -39,6 +39,12 @@ public class User {
     private double diamond_probability = 100.0 / 7.0;
     private double treasure_probability = 100.0 / 7.0;
     private double seven_probability = 100.0 / 7.0;
+    
+    // 변형자별 적용 확률 (0.0 ~ 1.0)
+    private double chainModifierProbability = 0.3;
+    private double repeatModifierProbability = 0.3;
+    private double tokenModifierProbability = 0.3;
+    private double ticketModifierProbability = 0.3;
 
     public User() { }
 
@@ -231,6 +237,25 @@ public class User {
     public void setDiamondProbability(double prob) { this.diamond_probability = prob; }
     public void setTreasureProbability(double prob) { this.treasure_probability = prob; }
     public void setSevenProbability(double prob) { this.seven_probability = prob; }
+    
+    // 변형자 확률 getter/setter 메서드들
+    public double getChainModifierProbability() { return chainModifierProbability; }
+    public double getRepeatModifierProbability() { return repeatModifierProbability; }
+    public double getTokenModifierProbability() { return tokenModifierProbability; }
+    public double getTicketModifierProbability() { return ticketModifierProbability; }
+    
+    public void setChainModifierProbability(double prob) { 
+        this.chainModifierProbability = Math.max(0.0, Math.min(1.0, prob)); 
+    }
+    public void setRepeatModifierProbability(double prob) { 
+        this.repeatModifierProbability = Math.max(0.0, Math.min(1.0, prob)); 
+    }
+    public void setTokenModifierProbability(double prob) { 
+        this.tokenModifierProbability = Math.max(0.0, Math.min(1.0, prob)); 
+    }
+    public void setTicketModifierProbability(double prob) { 
+        this.ticketModifierProbability = Math.max(0.0, Math.min(1.0, prob)); 
+    }
     
     public int[] getSymbolOriginal() {
         return symbol_original.clone();

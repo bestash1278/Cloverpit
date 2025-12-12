@@ -383,6 +383,84 @@ public class Roulette {
     }
     
     /**
+     * 특정 변형자의 적용 확률을 반환합니다.
+     * @param modifier 변형자 이름
+     * @return 변형자 적용 확률 (0.0 ~ 1.0)
+     */
+    public double getModifierProbability(String modifier) {
+        if (modifier == null || user == null) {
+            return 0.0;
+        }
+        
+        if (modifier.equals(MODIFIER_CHAIN)) {
+            return user.getChainModifierProbability();
+        } else if (modifier.equals(MODIFIER_REPEAT)) {
+            return user.getRepeatModifierProbability();
+        } else if (modifier.equals(MODIFIER_TOKEN)) {
+            return user.getTokenModifierProbability();
+        } else if (modifier.equals(MODIFIER_TICKET)) {
+            return user.getTicketModifierProbability();
+        }
+        
+        return 0.0;
+    }
+    
+    /**
+     * 특정 변형자의 적용 확률을 설정합니다.
+     * @param modifier 변형자 이름
+     * @param probability 적용 확률 (0.0 ~ 1.0)
+     */
+    public void setModifierProbability(String modifier, double probability) {
+        if (modifier == null || user == null) {
+            return;
+        }
+        
+        if (modifier.equals(MODIFIER_CHAIN)) {
+            user.setChainModifierProbability(probability);
+        } else if (modifier.equals(MODIFIER_REPEAT)) {
+            user.setRepeatModifierProbability(probability);
+        } else if (modifier.equals(MODIFIER_TOKEN)) {
+            user.setTokenModifierProbability(probability);
+        } else if (modifier.equals(MODIFIER_TICKET)) {
+            user.setTicketModifierProbability(probability);
+        }
+    }
+    
+    /**
+     * 모든 변형자의 적용 확률을 한 번에 설정합니다.
+     * @param chainProbability 사슬 변형자 확률
+     * @param repeatProbability 반복 변형자 확률
+     * @param tokenProbability 토큰 변형자 확률
+     * @param ticketProbability 티켓 변형자 확률
+     */
+    public void setAllModifierProbabilities(double chainProbability, double repeatProbability, 
+                                           double tokenProbability, double ticketProbability) {
+        if (user == null) {
+            return;
+        }
+        user.setChainModifierProbability(chainProbability);
+        user.setRepeatModifierProbability(repeatProbability);
+        user.setTokenModifierProbability(tokenProbability);
+        user.setTicketModifierProbability(ticketProbability);
+    }
+    
+    /**
+     * 모든 변형자의 적용 확률을 반환합니다.
+     * @return 변형자 확률 배열 [사슬, 반복, 토큰, 티켓]
+     */
+    public double[] getAllModifierProbabilities() {
+        if (user == null) {
+            return new double[] {0.0, 0.0, 0.0, 0.0};
+        }
+        return new double[] {
+            user.getChainModifierProbability(),
+            user.getRepeatModifierProbability(),
+            user.getTokenModifierProbability(),
+            user.getTicketModifierProbability()
+        };
+    }
+
+    /**
      * 변형자 조건을 체크합니다.
      * @param modifier 변형자 이름
      * @return 조건을 만족하면 true, 아니면 false
@@ -397,16 +475,13 @@ public class Roulette {
     
     /**
      * 문양 정보 배열을 생성합니다. (변형자 포함)
-     * 아이템이 있는 경우 일정 확률로 문양에 변형자를 적용합니다.
+     * 아이템이 있는 경우 각 변형자별 개별 확률로 문양에 변형자를 적용합니다.
      * 변형자가 적용되어도 원래 문양 정보는 유지됩니다.
      * @return SymbolInfo 2차원 배열
      */
     public SymbolInfo[][] generateResultsWithModifiers() {
         SymbolInfo[][] results = new SymbolInfo[ROWS][COLS];
         java.util.ArrayList<String> availableModifiers = getAvailableModifiers();
-        
-        // 변형자 적용 확률 (70% 확률로 변형자 적용)
-        double modifierApplyProbability = 0.7;
         
         // 디버깅: 사용 가능한 변형자 확인
         if (availableModifiers.isEmpty()) {
@@ -423,13 +498,17 @@ public class Roulette {
                 int symbolIndex = generateRandomSymbol();
                 String modifier = null;
                 
-                // 사용 가능한 변형자가 있고, 확률에 따라 변형자 적용
-                if (!availableModifiers.isEmpty() && random.nextDouble() < modifierApplyProbability) {
-                    // 사용 가능한 변형자 중 랜덤 선택
-                    int modifierIndex = random.nextInt(availableModifiers.size());
-                    modifier = availableModifiers.get(modifierIndex);
-                    modifierCount++;
-                    // 원래 문양 정보는 유지 (symbolIndex는 그대로)
+                // 사용 가능한 변형자가 있는 경우, 각 변형자별 개별 확률로 적용
+                if (!availableModifiers.isEmpty()) {
+                    // 각 변형자별로 개별 확률 체크
+                    for (String availableModifier : availableModifiers) {
+                        double modifierProbability = getModifierProbability(availableModifier);
+                        if (random.nextDouble() < modifierProbability) {
+                            modifier = availableModifier;
+                            modifierCount++;
+                            break; // 하나의 변형자만 적용
+                        }
+                    }
                 }
                 
                 results[i][j] = new SymbolInfo(symbolIndex, modifier);
