@@ -19,7 +19,7 @@ public class User {
     private int item_max = 11;
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
-    private int call_count = 0;	//전화를 걸 수 있는 기회
+    private boolean call_count = false;	//전화를 걸 수 있는 기회
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
     private int freeItemReroll_count = 0; //무료 상점 리롤 횟수
@@ -39,8 +39,131 @@ public class User {
     private double diamond_probability = 100.0 / 7.0;
     private double treasure_probability = 100.0 / 7.0;
     private double seven_probability = 100.0 / 7.0;
+    
+    /*--------------------------------------------------*/
+    //룰렛 돌릴때 매번 초기화 되는 값(룰렛 돌릴때 일회용으로 보너스처럼 적용되는 값.)
+    //문양 확률 변수 일회용으로 더해지는 변수선언
+    private double lemon_probability_sumBonus = 0.0;
+    private double cherry_probability_sumBonus = 0.0;
+    private double clover_probability_sumBonus = 0.0;
+    private double bell_probability_sumBonus = 0.0;
+    private double diamond_probability_sumBonus = 0.0;
+    private double treasure_probability_sumBonus = 0.0;
+    private double seven_probability_sumBonus = 0.0;
+    //문양 확률 변수 일회용으로 곱해지는 변수 선언
+    private double lemon_probability_multipBonus = 1.0;
+    private double cherry_probability_multipBonus = 1.0;
+    private double clover_probability_multipBonus = 1.0;
+    private double bell_probability_multipBonus = 1.0;
+    private double diamond_probability_multipBonus = 1.0;
+    private double treasure_probability_multipBonus = 1.0;
+    private double seven_probability_multipBonus = 1.0;
+    
+    //보너스 문양, 패턴 넣을 공간
+    private double[] tempSymbolBonus; // SymbolOriginal의 길이만큼 (기본값 1)
+    private double[] tempPatternBonus ; // PatternOriginal의 길이만큼 (기본값 1.0)
 
-    public User() { }
+    
+    public void resetTemporarySpinBonuses() {
+        // 1. 심볼/패턴 배열 보너스 초기화
+    	if (this.tempSymbolBonus != null) {
+            java.util.Arrays.fill(this.tempSymbolBonus, 1);
+        }
+    	if (this.tempPatternBonus != null) {
+            java.util.Arrays.fill(this.tempPatternBonus, 1.0);
+        }
+        
+        // 보너스 확률 초기화 코드(덧셈용) / 기본값
+        this.lemon_probability_sumBonus = 0.0;
+        this.cherry_probability_sumBonus = 0.0;
+        this.clover_probability_sumBonus = 0.0;
+        this.bell_probability_sumBonus = 0.0;
+        this.diamond_probability_sumBonus = 0.0;
+        this.treasure_probability_sumBonus = 0.0;
+        this.seven_probability_sumBonus = 0.0;
+        // 보너스 확률 초기화 코드(곱셈용) / 기본값
+        this.lemon_probability_multipBonus = 1.0;
+        this.cherry_probability_multipBonus = 1.0;
+        this.clover_probability_multipBonus = 1.0;
+        this.bell_probability_multipBonus = 1.0;
+        this.diamond_probability_multipBonus = 1.0;
+        this.treasure_probability_multipBonus = 1.0;
+        this.seven_probability_multipBonus = 1.0;
+
+        System.out.println("DEBUG: 단발성 스핀 보너스 초기화 완료.");
+    }
+    //문양 '가격'계산 보너스 계산식 geter/seter
+    public double getTempSymbolBonus(int index) { return tempSymbolBonus[index]; }//곱셈식으로 넘어갈 친구
+    public double setTempSymbolBonus(int index, double d) { return this.tempSymbolBonus[index] = d; }//요기도 곱셈식
+
+    //문양 등장 '확률' 보너스 계산식(덧셈용) geter/seter
+    public double getLemon_probability_sumBonus() { return lemon_probability_sumBonus; }
+    public void setLemon_probability_sumBonus(double tempLemonBonus) { 
+        this.lemon_probability_sumBonus	 = tempLemonBonus; 
+    }
+
+    public double getCherry_probability_sumBonus() { return cherry_probability_sumBonus; }
+    public void setCherry_probability_sumBonus(double tempCherryBonus) { 
+        this.cherry_probability_sumBonus = tempCherryBonus; 
+    }
+
+    public double getClover_probability_sumBonus() { return clover_probability_sumBonus; }
+    public void setClover_probability_sumBonus(double tempCloverBonus) { 
+        this.clover_probability_sumBonus = tempCloverBonus; 
+    }
+
+    public double getBell_probability_sumBonus() { return bell_probability_sumBonus; }
+    public void setBell_probability_sumBonus(double tempBellBonus) { 
+        this.bell_probability_sumBonus = tempBellBonus; 
+    }
+
+    public double getDiamond_probability_sumBonus() { return diamond_probability_sumBonus; }
+    public void setDiamond_probability_sumBonus(double tempDiamondBonus) { 
+        this.diamond_probability_sumBonus = tempDiamondBonus; 
+    }
+
+    public double getTreasure_probability_sumBonus() { return treasure_probability_sumBonus; }
+    public void setTreasure_probability_sumBonus(double tempTreasureBonus) { 
+        this.treasure_probability_sumBonus = tempTreasureBonus; 
+    }
+
+    public double getSeven_probability_sumBonus() { return seven_probability_sumBonus; }
+    public void setSeven_probability_sumBonus(double tempSevenBonus) { 
+        this.seven_probability_sumBonus = tempSevenBonus; 
+    }
+    
+    //문양 등장 '확률' 보너스 계산식(덧셈용) geter/seter
+    public double getLemon_probability_multipBonus() { return lemon_probability_multipBonus; }
+    public void setLemon_probability_multipBonus(double bonus) { this.lemon_probability_multipBonus = bonus; }
+    
+    public double getCherry_probability_multipBonus() { return cherry_probability_multipBonus; }
+    public void setCherry_probability_multipBonus(double bonus) { this.cherry_probability_multipBonus = bonus; }
+
+    public double getClover_probability_multipBonus() { return clover_probability_multipBonus; }
+    public void setClover_probability_multipBonus(double bonus) { this.clover_probability_multipBonus = bonus; }
+
+    public double getBell_probability_multipBonus() { return bell_probability_multipBonus; }
+    public void setBell_probability_multipBonus(double bonus) { this.bell_probability_multipBonus = bonus; }
+
+    public double getDiamond_probability_multipBonus() { return diamond_probability_multipBonus; }
+    public void setDiamond_probability_multipBonus(double bonus) { this.diamond_probability_multipBonus = bonus; }
+
+    public double getTreasure_probability_multipBonus() { return treasure_probability_multipBonus; }
+    public void setTreasure_probability_multipBonus(double bonus) { this.treasure_probability_multipBonus = bonus; }
+
+    public double getSeven_probability_multipBonus() { return seven_probability_multipBonus; }
+    public void setSeven_probability_multipBonus(double bonus) { this.seven_probability_multipBonus = bonus; }
+
+
+    public User() {
+    	
+        // 초기 값 설정
+    	this.tempSymbolBonus = new double[symbol_original.length];	//문양보너스(가격) 초기값
+        this.tempPatternBonus = new double[pattern_original.length]; //패턴 보너스(가격) 초기값
+        java.util.Arrays.fill(this.tempSymbolBonus, 1.0);	//문양 보너스(확률) 초기값
+        java.util.Arrays.fill(this.tempPatternBonus, 1.0);	//패턴 보너스(확률) 초기값
+    }
+    /*------------------------------*/
 
     public String getUser_name() {
         return user_name;
@@ -164,22 +287,20 @@ public class User {
         this.item_max = item_max;
     }
     
-    // 전화 관련 메서드
-    public int getCall_count() {
+    // 전화 관련 메서드----------------
+    public boolean getCall_count() {
     	return call_count;
     }
     
-    public void setCall_count(int call_count) {
-    	this.call_count = call_count;
+    public void setCall_count(boolean set) {
+    	if(set == true) {
+    		this.call_count = true;
+    	}
+    	else {
+    		this.call_count = false;
+    	}
     }
-    
-    public void addCall_count() {	//전화 기회 추가
-    	this.call_count += 1;
-    }
-    
-    public void minusCall_count() {	//전화 기회 빼기
-    	this.call_count -= 1;
-    }
+    //-------------------------------
     
     public int getRoulatte_cost() {
         return roulatte_cost;
@@ -215,15 +336,15 @@ public class User {
     	this.total_spin = total_spin;
     }
     
-    // 개별 확률 getter/setter 메서드들
-    public double getLemonProbability() { return lemon_probability; }
-    public double getCherryProbability() { return cherry_probability; }
-    public double getCloverProbability() { return clover_probability; }
-    public double getBellProbability() { return bell_probability; }
-    public double getDiamondProbability() { return diamond_probability; }
-    public double getTreasureProbability() { return treasure_probability; }
-    public double getSevenProbability() { return seven_probability; }
-    
+    // 개별 확률 getter/setter 메서드들--------------보너스 확률 계산식 추가--------------
+    public double getLemonProbability() { return (lemon_probability * lemon_probability_multipBonus) + lemon_probability_sumBonus; }
+    public double getCherryProbability() { return (cherry_probability * cherry_probability_multipBonus) + cherry_probability_sumBonus; }
+    public double getCloverProbability() { return (clover_probability * clover_probability_multipBonus) + clover_probability_sumBonus; }
+    public double getBellProbability() { return (bell_probability * bell_probability_multipBonus) + bell_probability_sumBonus; }
+    public double getDiamondProbability() { return (diamond_probability * diamond_probability_multipBonus) + diamond_probability_sumBonus; }
+    public double getTreasureProbability() { return (treasure_probability * treasure_probability_multipBonus) + treasure_probability_sumBonus; }
+    public double getSevenProbability() { return (seven_probability * seven_probability_multipBonus) + seven_probability_sumBonus; }
+    //--------------------------
     public void setLemonProbability(double prob) { this.lemon_probability = prob; }
     public void setCherryProbability(double prob) { this.cherry_probability = prob; }
     public void setCloverProbability(double prob) { this.clover_probability = prob; }
@@ -277,7 +398,8 @@ public class User {
     
     public int getSymbolSum(int index) {
         if (index >= 0 && index < symbol_sum.length) {
-            return symbol_sum[index];
+        	double finalValue = symbol_sum[index] * this.tempSymbolBonus[index];	//기본 계산식 + 단발성 유물 계산식--------------------------
+        	return (int) finalValue;
         }
         return 0;
     }
@@ -301,7 +423,8 @@ public class User {
     
     public int getPatternSum(int index) {
         if (index >= 0 && index < pattern_sum.length) {
-            return pattern_sum[index];
+        	double finalValue = (pattern_sum[index] * this.tempPatternBonus[index]);	//(기본 계산식 * 단발성 유물 배율) 계산식--------------------------
+            return (int) finalValue;
         }
         return 0;
     }
@@ -317,7 +440,7 @@ public class User {
             this.pattern_sum[index] = value;
         }
     }
-    //--------유저 유물-----------
+    
     public void addOwnItem_List(String itemName) {
         this.user_item.add(itemName);
     }
@@ -363,5 +486,4 @@ public class User {
         }
         return this.user_item.remove(itemName);
     }
-    //--------------------------
 }

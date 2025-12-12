@@ -20,24 +20,23 @@ public class ItemShop {
     
  // ItemShop.class (필드 및 초기화 블록)
 
- // 1. 모든 유물을 정의하는 마스터 풀을 선언
+    //상점에 나올 수 있는 유물 목록
     private static final java.util.List<ItemInfo> ALL_ARTIFACTS;
 
     static {
-        // ItemInfo.class에 정의된 '인수가 없는 기본 생성자'를 사용하여 유물을 생성합니다.
         ALL_ARTIFACTS = java.util.List.of(
-            // ⭐ 인수를 전달하지 않고 기본 생성자만 호출합니다.
             new ItemInfo.HealthPotionArtifact(),
             new ItemInfo.golden_compass(),  // 6번째 슬롯
             new ItemInfo.symbol_train(),  // 6번째 슬롯
             new ItemInfo.pattern_train(),  // 6번째 슬롯
-
-            // 여기에 다른 유물 클래스들의 기본 생성자 호출을 추가합니다.
+            new ItemInfo.PersistentBonusArtifact(),
+            new ItemInfo.NextSpinOnlyArtifact(),     // <--- 새로 만든 단발성 유물 (Type 2)
             new ItemInfo.HealthPotionArtifact(),
-            new ItemInfo.symbol_chain(),
-            new ItemInfo.symbol_repeat(),
-            new ItemInfo.symbol_ticket(),
-            new ItemInfo.symbol_token()
+            
+            //테스트 유물
+            new ItemInfo.TestPersistentArtifact(), 
+            new ItemInfo.TestTemporaryArtifact(),
+            new ItemInfo.pattern_train()
             // ... (모든 유물 정의)
         );
     }
@@ -60,8 +59,6 @@ public class ItemShop {
         
         // 2. 리스트를 무작위로 섞습니다.
         java.util.Collections.shuffle(itemsToShuffle);
-        
-        // 3. 섞인 리스트에서 최대 5개의 유물을 선택하여 반환합니다.
         int count = java.lang.Math.min(5, itemsToShuffle.size());
         
         return itemsToShuffle.subList(0, count);

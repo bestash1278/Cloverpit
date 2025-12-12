@@ -128,7 +128,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.roulatte = new RoulatteInfo();
         this.ownItem = new OwnItem(user, this::updateStatusBar);
         this.ownItemScreen = new OwnItem_Screen(this.ownItem);
-        this.call = new Call(user, roundManager);
+        this.call = new Call(user, roundManager, () -> callScreen.updateRerollButtonText());
         this.callScreen = new Call_Screen(this.call);
         this.itemShop = new ItemShop(
                 user, 
@@ -143,16 +143,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         
         this.roulatte = new RoulatteInfo();
         this.paymentScreen = new Payment_Screen(paymentLogic);
-        
-        if (user.getRound() <= 0) {
-            user.setRound(1);
-        }
-        if (user.getRound_spin_left() <= 0 || user.getRound_spin_left() == 7) {
-            user.setRound_spin_left(0);
-        }
-        if (user.getDeadline() <= 0) {
-            user.setDeadline(ROUNDS_PER_DEADLINE);
-        }
+        updatePhoneButtonState();
         
         roulette = new Roulette();
         roulette.setUser(this.user);
@@ -363,6 +354,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         spinLeftLabel.setText("남은 스핀:" + user.getRound_spin_left() + "/" + SPINS_PER_ROUND);
         deadlineMoneyLabel.setText("목표: " + user.getDeadline_money());
         totalMoneyLabel.setText("납입: " + user.getTotal_money());
+        updatePhoneButtonState();	//전화 버튼 활성화 여부확인 함수
     }
     
     private RectangularButton createMenuButton(String label, String frameTitle, Color color) {
@@ -385,115 +377,132 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         return button;
     }
 
-   /* ------ 화면 전환용 코드 -------*/
- // ItemShop_Screen이 현재 활성화된 화면이라면 즉시 갱신을 요청하는 메서드
-    public void updateShopScreen() {
-        // 현재 표시 중인 화면이 ItemShop_Screen인지 확인
-        if (this.currentPanel == null) {
-            // itemShopLogic에 저장된 최신 목록(리롤된 목록)으로 UI 갱신 요청
-            this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
-            
-            // 화면을 다시 그리도록 요청 (paintComponent 재호출)
-            this.itemShopScreen.revalidate();
-            this.itemShopScreen.repaint();
-            System.out.println("SlotMachinePanel: 라운드 전환으로 상점 화면 즉시 갱신 완료.");
-        }
-    }
-    
-    /**
-     * 전화 화면(Call_Screen)이 현재 열려 있다면 즉시 UI를 갱신합니다.
-     * Payment 클래스에서 라운드 전환 시 호출됩니다.
-     */
-    public void updateCallScreen() {
-        if (this.callScreen != null) {
-            this.callScreen.updateUI(); 
-            
-            // 팝업 창이 열려있다면 즉시 화면을 다시 그리도록 요청합니다.
-            this.callScreen.revalidate();
-            this.callScreen.repaint();
-            System.out.println("SlotMachinePanel: 라운드 전환으로 전화 화면 즉시 갱신 요청 완료.");
-        }
-    }
 
-    // 새로운 프레임 보여주는 함수
-    private void showNewFrame(String title) {
-        // 1. JFrame 기본 설정
-        JFrame frame = new JFrame(title);
-        
-        // UI 컴포넌트(JPanel)를 담을 변수 선언
-        JPanel contentPanel = null;
-        int width = 400; // 기본 너비
-        int height = 300; // 기본 높이
+    /* ------ 화면 전환용 코드 -------*/
+  // ItemShop_Screen이 현재 활성화된 화면이라면 즉시 갱신을 요청하는 메서드
+     public void updateShopScreen() {
+         // 현재 표시 중인 화면이 ItemShop_Screen인지 확인
+         if (this.currentPanel == null) {
+             // itemShopLogic에 저장된 최신 목록(리롤된 목록)으로 UI 갱신 요청
+             this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+             
+             // 화면을 다시 그리도록 요청 (paintComponent 재호출)
+             this.itemShopScreen.revalidate();
+             this.itemShopScreen.repaint();
+             System.out.println("SlotMachinePanel: 라운드 전환으로 상점 화면 즉시 갱신 완료.");
+         }
+     }
+     
+     /**
+      * 전화 화면(Call_Screen)이 현재 열려 있다면 즉시 UI를 갱신합니다.
+      * Payment 클래스에서 라운드 전환 시 호출됩니다.
+      */
+     public void updateCallScreen() {
+         if (this.callScreen != null) {
+             this.callScreen.updateUI(); 
+             
+             // 팝업 창이 열려있다면 즉시 화면을 다시 그리도록 요청합니다.
+             this.callScreen.revalidate();
+             this.callScreen.repaint();
+             System.out.println("SlotMachinePanel: 라운드 전환으로 전화 화면 즉시 갱신 요청 완료.");
+         }
+     }
+     
+     /**
+      * 사용자 call_count에 따라 전화 버튼의 활성화/비활성화 상태를 업데이트합니다.
+      */
+     private void updatePhoneButtonState() {
+         if (user != null && phoneButton != null) {
+             boolean isEnabled = user.getCall_count();
+             phoneButton.setEnabled(isEnabled);
+             
+             if (!isEnabled) {
+                 phoneButton.setToolTipText("남은 전화 기회(Call Count)가 없습니다.");
+             } else {
+                 phoneButton.setToolTipText(null);
+             }
+         }
+     }
 
-        // 2. 제목에 따라 적절한 UI 클래스 인스턴스화
-        switch (title) {
-            case "납입 버튼 화면":
-                // "납입 버튼 화면"에 해당하는 Payment_Screen 인스턴스 생성
-                contentPanel = this.paymentScreen; // User 객체와 상태바 업데이트 콜백 전달
-                width = 800;
-                height = 600;
-             // ⭐ 3. (중요) 상점 패널을 열 때, ItemShopLogic에 저장된 최신 목록으로 UI를 갱신
-                // ItemShop_Screen 내부에 updateShopUI(List<ItemInfo> items) 메서드가 있어야 합니다.
-                if (this.itemShopScreen != null) {
-                     this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
-                }
-                break;
-                
-            case "유물 상점 버튼 화면":
-                // "유물 상점 버튼 화면"에 해당하는 RelicShop_Screen 인스턴스 생성
-            	contentPanel = this.itemShopScreen;
-            	width = 800; 
-                height = 600;
-             // ItemShop Logic에 저장된 최신 목록(리롤된 목록)으로 UI를 갱신해야 합니다.
-                if (this.itemShopScreen != null) {
-                     this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
-                     System.out.println("SlotMachinePanel: 상점 화면 열면서 UI 갱신 요청 완료."); // 💡 디버깅 코드 추가
-                }
-                break;
-                
-                
-            case "전화":
-                // 전화기능에 해당하는 Phone_Screen 인스턴스 생성
-                contentPanel = this.callScreen;
-                width = 800;
-                height = 600;
-                break;
-                
-            case "소지 유물 버튼 화면":
-                contentPanel = this.ownItemScreen;
-                width = 800;
-                height = 600;
-                if (this.ownItemScreen != null) {
-                    this.ownItemScreen.updateUI(); 
-                    System.out.println("SlotMachinePanel: 소지 유물 화면 갱신 요청 성공."); // 디버그 출력
-                }
-                break;
+     // 새로운 프레임 보여주는 함수
+     private void showNewFrame(String title) {
+         // 1. JFrame 기본 설정
+         JFrame frame = new JFrame(title);
+         
+         // UI 컴포넌트(JPanel)를 담을 변수 선언
+         JPanel contentPanel = null;
+         int width = 400; // 기본 너비
+         int height = 300; // 기본 높이
 
-            // 다른 메뉴 버튼 (무늬, 패턴)은 임시 패널을 사용 //필요시 밑으로 추가
-            default:
-                contentPanel = createPlaceholderPanel(title);
-                width = 400;
-                height = 300;
-                break;
-        }
+         // 2. 제목에 따라 적절한 UI 클래스 인스턴스화
+         switch (title) {
+             case "납입 버튼 화면":
+                 // "납입 버튼 화면"에 해당하는 Payment_Screen 인스턴스 생성
+                 contentPanel = this.paymentScreen; // User 객체와 상태바 업데이트 콜백 전달
+                 width = 800;
+                 height = 600;
+              // ⭐ 3. (중요) 상점 패널을 열 때, ItemShopLogic에 저장된 최신 목록으로 UI를 갱신
+                 // ItemShop_Screen 내부에 updateShopUI(List<ItemInfo> items) 메서드가 있어야 합니다.
+                 if (this.itemShopScreen != null) {
+                      this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+                 }
+                 break;
+                 
+             case "유물 상점 버튼 화면":
+                 // "유물 상점 버튼 화면"에 해당하는 RelicShop_Screen 인스턴스 생성
+             	contentPanel = this.itemShopScreen;
+             	width = 800; 
+                 height = 600;
+              // ItemShop Logic에 저장된 최신 목록(리롤된 목록)으로 UI를 갱신해야 합니다.
+                 if (this.itemShopScreen != null) {
+                      this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+                      System.out.println("SlotMachinePanel: 상점 화면 열면서 UI 갱신 요청 완료."); // 💡 디버깅 코드 추가
+                 }
+                 break;
+                 
+                 
+             case "전화":
+                 // 전화기능에 해당하는 Phone_Screen 인스턴스 생성
+                 contentPanel = this.callScreen;
+                 width = 800;
+                 height = 600;
+                 break;
+                 
+             case "소지 유물 버튼 화면":
+                 contentPanel = this.ownItemScreen;
+                 width = 800;
+                 height = 600;
+                 if (this.ownItemScreen != null) {
+                     this.ownItemScreen.updateUI(); 
+                     System.out.println("SlotMachinePanel: 소지 유물 화면 갱신 요청 성공."); // 디버그 출력
+                 }
+                 break;
 
-        
-        frame.setSize(width, height);
-        frame.setLocationRelativeTo(null); // 화면 중앙에 표시
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
-        
-        // 3. 생성된 패널을 프레임에 추가하고 크기 설정
-        if (contentPanel != null) {
-            frame.add(contentPanel);
-        }
+             // 다른 메뉴 버튼 (무늬, 패턴)은 임시 패널을 사용 //필요시 밑으로 추가
+             default:
+                 contentPanel = createPlaceholderPanel(title);
+                 width = 400;
+                 height = 300;
+                 break;
+         }
 
-        
+         
+         frame.setSize(width, height);
+         frame.setLocationRelativeTo(null); // 화면 중앙에 표시
+         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
+         
+         // 3. 생성된 패널을 프레임에 추가하고 크기 설정
+         if (contentPanel != null) {
+             frame.add(contentPanel);
+         }
 
-        frame.setVisible(true);
-        
-        
-    }
+         
 
+         frame.setVisible(true);
+         
+         
+     }
+     
     // 임시 패널 생성 메서드 (기존 코드를 재사용/분리) //테스트용 더미 창 생성용.
     private JPanel createPlaceholderPanel(String title) {
         JPanel panel = new JPanel(new BorderLayout());
@@ -555,6 +564,37 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             JOptionPane.showMessageDialog(this, "라운드가 시작되었습니다!\n돌리기 횟수: 3회\n티켓 지급: 2개");
         }
     }
+    
+    
+    /*---------------------------------여기 부분 추가---------------------------------------*/
+    /**
+     * 룰렛을 돌리기 직전에 유저가 소유한 모든 유물의 '룰렛 효과'를 적용합니다.
+     */
+    private void applyArtifactEffectsBeforeSpin() {
+        java.util.List<String> ownedArtifactNames = user.getUserItem_List();
+        
+        for (String itemName : ownedArtifactNames) {
+            ItemInfo item = ItemInfo.getArtifactTemplateByName(itemName); 
+            
+            if (item != null) {
+                ItemEffect effect = item.getRouletteEffect(); 
+                
+                if (effect != null) {
+                    // 1. 유물에 정의된 로직을 가져와 실행합니다.
+                    ArtifactAction action = effect.getAction();
+                    action.execute(user); // ⭐ ItemInfo에서 정의된 계산식 실행
+                    
+                    // 2. 실행된 로직이 어떤 타입인지 확인합니다. (로그 등)
+                    DurationType type = effect.getDuration();
+                    System.out.println("DEBUG: [" + itemName + "] 효과 실행. 타입: " + type);
+                    
+                    // Note: TEMPORARY(Type 2) 효과는 여기서 User의 임시 필드를 수정했을 것입니다.
+                    // PERSISTENT(Type 3) 효과는 User의 지속 필드를 수정했을 것입니다.
+                }
+            }
+        }
+    }
+    /*---------------------------------------------------------*/
     
     /**
      * 스핀 버튼 클릭 처리
@@ -620,7 +660,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         }
         
         updateStatusBar();
-        
+        applyArtifactEffectsBeforeSpin();	//동작전에 유물아이템 능력 실행용--------------------------------------
         startSpin();
     }
     
