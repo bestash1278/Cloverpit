@@ -19,6 +19,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int MAX_SPIN_COUNT = 30;
     private boolean roundStarted = false;
     
+    //이번 스핀이 기한 내 마지막 스핀인지 확인
+    private boolean lastSpinOfDeadline = false;
+    
     private static final int START_X = 100;
     private static final int START_Y_SLOT = 120; 
     
@@ -582,7 +585,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     
     /**
      * 스핀 버튼 클릭 처리
-     * 사용자 금액 차감, 라운드 증가, 스핀 시작
+     * - 스핀 가능 여부만 체크하고
+     * - "이번 스핀이 기한 마지막 스핀인지" 표시만 해 둔다.
+     * - 실제 기한/탈락 여부는 finishSpin() → checkDeadlineAfterLastSpin()에서 처리한다.
      */
     private void handleSpinButtonClick() {
         if (isSpinning) return;
@@ -592,67 +597,69 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             return;
         }
         
+        lastSpinOfDeadline = false;
+        
         if (!roundManager.consumeSpin()) {
             JOptionPane.showMessageDialog(this,
                     "이번 라운드의 기회을 모두 사용했습니다.");
             roundStarted = false;
             leverButton.setEnabled(false);
             roundStartButton.setVisible(true);
+            updateStatusBar();
             return;
-        }
-        
-        if (user.getRound_spin_left() <= 0) {
-            roundStarted = false;
-            leverButton.setEnabled(false);
-            roundStartButton.setVisible(true);
-            user.setTotal_spin(user.getTotal_spin() + 1);
-
-            if (user.getRound() < ROUNDS_PER_DEADLINE) {
-
-                user.setRound(user.getRound() + 1);
-
-            } else {
-
-                int total = user.getTotal_money();
-                int target = user.getDeadline_money();
-
-                if (total < target) {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "기한 " + user.getDeadline() + " 동안 목표 금액을 채우지 못했습니다.\n"
-                                    + "납입: " + total + " / 목표: " + target + "\n"
-                                    + "게임에서 탈락했습니다."
-                    );
-
-                    saveOnExit();
-                    Main.exitGame();
-                    return;
-
-                } else {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "기한 " + user.getDeadline()
-                                    + "의 3라운드를 모두 사용했습니다.\n"
-                                    + "목표 금액을 달성했습니다! 다음 기한으로 진행합니다."
-                    );
-
-                    user.setDeadline(user.getDeadline() + 1);
-                    user.setRound(1);
-
-                }
-            }
         }
         
         updateStatusBar();
         
+        int spinsLeft    = user.getRound_spin_left();
+        int currentRound = user.getRound();
+        
+        boolean isLastRoundOfDeadline = (currentRound == ROUNDS_PER_DEADLINE);
+        boolean isLastSpinOfRound     = (spinsLeft == 0);
+        
+        lastSpinOfDeadline = (isLastRoundOfDeadline && isLastSpinOfRound);
+        
         startSpin();
     }
+    
     
     /**
      * 룰렛 스핀 시작
      * 레버 애니메이션 시작, 스핀 사운드 재생, 슬롯 랜덤 변경
      */
+    /**
+     * 스핀 전에 유물 효과를 적용합니다.
+     * ItemEffect가 있는 유물들의 효과를 실행합니다.
+     */
+    private void applyArtifactEffectsBeforeSpin() {
+        java.util.List<String> ownedArtifactNames = user.getUserItem_List();
+        
+        for (String itemName : ownedArtifactNames) {
+            ItemInfo item = ItemInfo.getArtifactTemplateByName(itemName); 
+            
+            if (item != null) {
+                ItemEffect effect = item.getRouletteEffect(); 
+                
+                if (effect != null) {
+                    // 1. 유물에 정의된 로직을 가져와 실행합니다.
+                    ArtifactAction action = effect.getAction();
+                    action.execute(user); // ⭐ ItemInfo에서 정의된 계산식 실행
+                    
+                    // 2. 실행된 로직이 어떤 타입인지 확인합니다. (로그 등)
+                    DurationType type = effect.getDuration();
+                    System.out.println("DEBUG: [" + itemName + "] 효과 실행. 타입: " + type);
+                    
+                    // Note: TEMPORARY(Type 2) 효과는 여기서 User의 임시 필드를 수정했을 것입니다.
+                    // PERSISTENT(Type 3) 효과는 User의 지속 필드를 수정했을 것입니다.
+                }
+            }
+        }
+    }
+    
     private void startSpin() {
+        // 스핀 전에 유물 효과 적용
+        applyArtifactEffectsBeforeSpin();
+        
         isSpinning = true;
         spinCount = 0;
         soundManager.playSpinSound();
@@ -719,6 +726,128 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         isSpinning = false;
         user.setRoulatte_money(user.getRoulatte_money() + roulette.roulette_money);
         roulette.roulette_money = 0;
+        
+        // 스핀 완료 후 TEMPORARY 타입 효과 리셋
+        user.resetTemporarySpinBonuses();
+        
+        // 상태 UI 갱신
+        updateStatusBar();
+        
+        // ❗ "이번 스핀 이후"에 라운드/기한/탈락 여부를 판정
+        checkDeadlineAfterLastSpin();
+    }
+    
+    /**
+     * 스핀이 모두 끝난 뒤 호출되는 메서드.
+     *
+     * - lastSpinOfDeadline == false 인 경우:
+     *   ▷ "기한 마지막 스핀"이 아니므로, 라운드 종료만 처리(onRoundFinished)하고 끝.
+     *
+     * - lastSpinOfDeadline == true 인 경우:
+     *   ▷ "기한 마지막 라운드의 마지막 스핀"이므로
+     *      · 남은 납입 필요 금액 계산
+     *      · 보유 금액으로 채울 수 있으면 납입 기회 제공
+     *      · 부족하거나, 납입 거부 시 탈락 처리
+     */
+    private void checkDeadlineAfterLastSpin() {
+        // 이 스핀이 마지막 스핀이 아닌 경우
+        if (!lastSpinOfDeadline) {
+            if (user.getRound_spin_left() == 0 &&
+                user.getRound() < ROUNDS_PER_DEADLINE) {
+                onRoundFinished();
+            }
+            return; 
+        }
+
+        // 기한 내 마지막 스핀 시
+        int target = user.getDeadline_money(); 
+        int paid   = user.getTotal_money();
+        int have   = user.getRoulatte_money();
+        int remain = target - paid;
+
+        // 이미 납입 완료했다면 다음 기한으로
+        if (remain <= 0) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "기한 " + user.getDeadline() + "의 목표 금액을 이미 달성했습니다.\n" +
+                    "다음 기한으로 진행합니다."
+            );
+            goNextDeadline();
+            return;
+        }
+
+        // 보유 금액이 납입 불가 시 탈락
+        if (have < remain) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "보유 금액이 부족하여 목표 금액을 채울 수 없습니다.\n" +
+                    "남은 납입 필요 금액 : " + remain + "\n" +
+                    "현재 보유 금액     : " + have + "\n\n" +
+                    "게임에서 탈락했습니다."
+            );
+            saveOnExit();
+            Main.exitGameWithLose();
+            return;
+        }
+
+        // 보유 금액으로 납입 가능 시 납입 기회
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "이번 기한의 남은 납입 필요 금액은 " + remain + "원입니다.\n" +
+                "현재 보유 금액은 " + have + "원입니다.\n\n" +
+                "지금 바로 납입하여 다음 기한으로 진행하시겠습니까?",
+                "마지막 납입 기회",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (choice == JOptionPane.YES_OPTION) {
+            // 보유 금액에서 차감하고 납입 금액에 더함
+            user.addRoulatte_money(-remain);
+            user.addTotal_money(remain);
+            updateStatusBar();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "납입을 완료했습니다!\n" +
+                    "다음 기한으로 진행합니다."
+            );
+            goNextDeadline();
+        } else {
+            // 플레이어가 납입을 선택하지 않음 → 탈락 처리
+            JOptionPane.showMessageDialog(
+                    this,
+                    "납입을 하지 않아 목표 금액을 달성하지 못했습니다.\n" +
+                    "게임에서 탈락했습니다."
+            );
+            saveOnExit();
+            Main.exitGameWithLose();
+        }
+    }
+    
+    /**
+     * 다음 기한으로 진행하는 메서드
+     */
+    private void goNextDeadline() {
+        user.setDeadline(user.getDeadline() + 1);
+        user.setRound(1);
+        roundStarted = false;
+        leverButton.setEnabled(false);
+        roundStartButton.setVisible(true);
+        updateStatusBar();
+    }
+    
+    /**
+     * 라운드 종료 처리
+     */
+    private void onRoundFinished() {
+        user.setTotal_spin(user.getTotal_spin() + 1);
+        if (user.getRound() < ROUNDS_PER_DEADLINE) {
+            user.setRound(user.getRound() + 1);
+        }
+        roundStarted = false;
+        leverButton.setEnabled(false);
+        roundStartButton.setVisible(true);
+        updateStatusBar();
     }
     
     /**

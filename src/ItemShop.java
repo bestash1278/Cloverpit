@@ -31,9 +31,16 @@ public class ItemShop {
             new ItemInfo.golden_compass(),  // 6번째 슬롯
             new ItemInfo.symbol_train(),  // 6번째 슬롯
             new ItemInfo.pattern_train(),  // 6번째 슬롯
+            new ItemInfo.PersistentBonusArtifact(),
+            new ItemInfo.NextSpinOnlyArtifact(),     // <--- 새로 만든 단발성 유물 (Type 2)
+            new ItemInfo.HealthPotionArtifact(),
+            
+            //테스트 유물
+            new ItemInfo.TestPersistentArtifact(), 
+            new ItemInfo.TestTemporaryArtifact(),
+            new ItemInfo.pattern_train(),
 
             // 여기에 다른 유물 클래스들의 기본 생성자 호출을 추가합니다.
-            new ItemInfo.HealthPotionArtifact(),
             new ItemInfo.symbol_chain(),
             new ItemInfo.symbol_repeat(),
             new ItemInfo.symbol_ticket(),
@@ -123,7 +130,7 @@ public class ItemShop {
         }
         
         // ⭐ 2. 소유 유물 목록 가져오기 (ItemInfo 이름 목록)
-        List<String> ownedItemNames = userInfo.getUserItem_List();
+        List<String> ownedItemNames = userInfo.getOwnedItemNames();
         
         // ⭐ 3. 새로운 상점 목록 후보 (구매 가능 유물) 생성
         List<ItemInfo> availableArtifacts = new ArrayList<>();
@@ -201,7 +208,7 @@ public class ItemShop {
             // 3. 티켓 차감 성공: 유물 효과 적용
             item.applyEffect(userInfo);
             
-            userInfo.addUserItem_List(item.getName());
+            userInfo.addOwnedItemName(item.getName());
             // 4. 상점 UI 업데이트: '판매된 유물' 객체로 교체
             ItemInfo soldItem = new ItemInfo.SoldArtifact();
             currentItems.set(itemIndex, soldItem);
