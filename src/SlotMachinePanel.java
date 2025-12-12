@@ -101,7 +101,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
 	private Call_Screen callScreen;	//전화 화면
 	private OwnItem ownItem;
 	private OwnItem_Screen ownItemScreen;
-
+	private SymbolPrice_Screen symbolPriceScreen;	//무늬 가격 화면
+	private PatternPrice_Screen patternPriceScreen;	//패턴 가격 화면
     
     public SlotMachinePanel() {
         SaveManagerCsv tempSaveManager = new SaveManagerCsv();
@@ -130,6 +131,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.ownItemScreen = new OwnItem_Screen(this.ownItem);
         this.call = new Call(user, roundManager, () -> callScreen.updateRerollButtonText());
         this.callScreen = new Call_Screen(this.call);
+        this.symbolPriceScreen = new SymbolPrice_Screen(user);
+        this.patternPriceScreen = new PatternPrice_Screen(user);
         this.itemShop = new ItemShop(
                 user, 
                 this::updateStatusBar, // 메인 상태바 갱신
@@ -478,6 +481,26 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                  }
                  break;
 
+             case "무늬 버튼 화면":
+                 contentPanel = this.symbolPriceScreen;
+                 width = 1200;
+                 height = 800;
+                 if (this.symbolPriceScreen != null) {
+                     this.symbolPriceScreen.updatePriceInfo();
+                     System.out.println("SlotMachinePanel: 무늬 가격 화면 열기 성공.");
+                 }
+                 break;
+                 
+             case "패턴 버튼 화면":
+                 contentPanel = this.patternPriceScreen;
+                 width = 1200;
+                 height = 800;
+                 if (this.patternPriceScreen != null) {
+                     this.patternPriceScreen.updatePriceInfo();
+                     System.out.println("SlotMachinePanel: 패턴 가격 화면 열기 성공.");
+                 }
+                 break;
+                 
              // 다른 메뉴 버튼 (무늬, 패턴)은 임시 패널을 사용 //필요시 밑으로 추가
              default:
                  contentPanel = createPlaceholderPanel(title);
