@@ -96,6 +96,12 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static int SPINS_PER_ROUND = 7;
     private static final int ROUNDS_PER_DEADLINE = 3;
     
+    // 패턴 완성 슬롯 빛나는 효과
+    private java.util.Set<String> glowingSlots = new java.util.HashSet<>(); // "row,col" 형식으로 저장
+    private Timer glowTimer;
+    private float glowAlpha = 0.0f;
+    private boolean glowIncreasing = true;
+    
     private RoulatteInfo roulatte; // TODO 감자 :  룰렛정보클래스 만들어지면 그때 변경
 	private ItemShop itemShop;
     private ItemShop_Screen itemShopScreen;	//유물화면 보관용
@@ -280,6 +286,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         initializeStatusLabels();
         
         updateStatusBar();
+        
+        // 빛나는 효과 타이머 초기화
+        initializeGlowEffect();
 
         gameThread = new Thread(this);
         gameThread.start();
@@ -660,6 +669,10 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         // 스핀 전에 유물 효과 적용
         applyArtifactEffectsBeforeSpin();
         
+        // 스핀 시작 시 빛나는 효과 초기화
+        glowingSlots.clear();
+        glowAlpha = 0.0f;
+        
         isSpinning = true;
         spinCount = 0;
         soundManager.playSpinSound();
@@ -721,7 +734,19 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         }
         
         // 변형자 정보를 포함하여 패턴 체크 (변형자 효과 적용)
-        roulette.checkResults(results, symbolResults);
+        Roulette.PatternResult patternResult = roulette.checkResults(results, symbolResults);
+        
+        // 패턴이 완성된 슬롯 위치 저장 (빛나는 효과용) - 모든 패턴의 위치 수집
+        if (patternResult.hasWin()) {
+            java.util.ArrayList<int[]> allPatternPositions = roulette.getAllDetectedPatternPositions(results);
+            glowingSlots.clear();
+            for (int[] pos : allPatternPositions) {
+                glowingSlots.add(pos[0] + "," + pos[1]);
+            }
+        } else {
+            glowingSlots.clear();
+        }
+        
         soundManager.stopSpinSound();
         isSpinning = false;
         user.setRoulatte_money(user.getRoulatte_money() + roulette.roulette_money);
@@ -730,8 +755,21 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         // 스핀 완료 후 TEMPORARY 타입 효과 리셋
         user.resetTemporarySpinBonuses();
         
-        // 상태 UI 갱신
+        // 총 스핀 횟수 증가
+        user.setTotal_spin(user.getTotal_spin() + 1);
+        
+        // 상태 UI 갱신 (즉시 반영되도록 EDT에서 실행)
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                updateStatusBar();
+                repaint();
+            }
+        });
+        
+        // 동기적으로도 한 번 업데이트 (즉시 반영)
         updateStatusBar();
+        repaint();
         
         // ❗ "이번 스핀 이후"에 라운드/기한/탈락 여부를 판정
         checkDeadlineAfterLastSpin();
@@ -900,6 +938,11 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         int statusBarY = TOTAL_HEIGHT - SOUTH_PANEL_HEIGHT - 40;
         g.drawImage(bufferImage, 0, 0, getWidth(), statusBarY, null);
         
+        // 빛나는 효과 그리기 (스핀 중이 아닐 때만)
+        if (!isSpinning && !glowingSlots.isEmpty()) {
+            drawGlowEffect(g);
+        }
+        
         drawStatusBar(g);
     }
     
@@ -977,6 +1020,68 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         g2d.fillRect(rightPanelX, NORTH_PANEL_HEIGHT, EAST_PANEL_WIDTH, TOTAL_HEIGHT - NORTH_PANEL_HEIGHT - SOUTH_PANEL_HEIGHT);
         
         drawLeverBar(g2d); 
+    }
+    
+    /**
+     * 빛나는 효과 초기화
+     */
+    private void initializeGlowEffect() {
+        glowTimer = new Timer(50, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!isSpinning && !glowingSlots.isEmpty()) {
+                    // 알파 값 애니메이션 (0.3 ~ 0.8 사이를 왕복)
+                    if (glowIncreasing) {
+                        glowAlpha += 0.05f;
+                        if (glowAlpha >= 0.8f) {
+                            glowAlpha = 0.8f;
+                            glowIncreasing = false;
+                        }
+                    } else {
+                        glowAlpha -= 0.05f;
+                        if (glowAlpha <= 0.3f) {
+                            glowAlpha = 0.3f;
+                            glowIncreasing = true;
+                        }
+                    }
+                    repaint();
+                }
+            }
+        });
+        glowTimer.start();
+    }
+    
+    /**
+     * 패턴 완성 슬롯에 빛나는 효과 그리기
+     */
+    private void drawGlowEffect(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // 알파 블렌딩 설정
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glowAlpha));
+        
+        for (String slotKey : glowingSlots) {
+            String[] parts = slotKey.split(",");
+            int row = Integer.parseInt(parts[0]);
+            int col = Integer.parseInt(parts[1]);
+            
+            // 슬롯 위치 계산
+            int x = START_X + BOARD_PADDING + col * (SLOT_SIZE + SLOT_SPACING);
+            int y = START_Y_SLOT + BOARD_PADDING + row * (SLOT_SIZE + SLOT_SPACING);
+            
+            // 빛나는 효과 (노란색/금색 글로우)
+            g2d.setColor(new Color(255, 255, 0, (int)(255 * glowAlpha)));
+            g2d.setStroke(new BasicStroke(4.0f));
+            g2d.drawRect(x - 2, y - 2, SLOT_SIZE + 4, SLOT_SIZE + 4);
+            
+            // 더 밝은 외곽 효과
+            g2d.setColor(new Color(255, 215, 0, (int)(180 * glowAlpha)));
+            g2d.setStroke(new BasicStroke(2.0f));
+            g2d.drawRect(x - 4, y - 4, SLOT_SIZE + 8, SLOT_SIZE + 8);
+        }
+        
+        g2d.dispose();
     }
     
     private void drawLeverBar(Graphics2D g2d) {

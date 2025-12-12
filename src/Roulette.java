@@ -998,6 +998,266 @@ public class Roulette {
     }
     
     /**
+     * 모든 감지된 패턴의 위치를 반환합니다.
+     * @param results 문양 인덱스 배열
+     * @return 모든 패턴에 포함된 위치들의 리스트 (각 위치는 [row, col] 형식)
+     */
+    public java.util.ArrayList<int[]> getAllDetectedPatternPositions(int[][] results) {
+        java.util.ArrayList<int[]> allPositions = new java.util.ArrayList<>();
+        java.util.Set<String> addedPositions = new java.util.HashSet<>(); // 중복 제거용
+        
+        // 먼저 겹치는 패턴들을 확인
+        boolean hasEye = checkEyePattern(results);
+        boolean hasHeaven = checkHeavenPattern(results);
+        boolean hasGround = checkGroundPattern(results);
+        boolean hasZig = checkZigPattern(results);
+        boolean hasZag = checkZagPattern(results);
+        
+        // 눈 패턴 체크
+        if (hasEye) {
+            java.util.ArrayList<int[]> positions = getPatternPositions(EYE, results);
+            for (int[] pos : positions) {
+                String key = pos[0] + "," + pos[1];
+                if (!addedPositions.contains(key)) {
+                    allPositions.add(pos);
+                    addedPositions.add(key);
+                }
+            }
+        }
+        
+        // 천상 패턴 체크
+        if (hasHeaven) {
+            java.util.ArrayList<int[]> positions = getPatternPositions(HEAVEN, results);
+            for (int[] pos : positions) {
+                String key = pos[0] + "," + pos[1];
+                if (!addedPositions.contains(key)) {
+                    allPositions.add(pos);
+                    addedPositions.add(key);
+                }
+            }
+        }
+        
+        // 지상 패턴 체크
+        if (hasGround) {
+            java.util.ArrayList<int[]> positions = getPatternPositions(GROUND, results);
+            for (int[] pos : positions) {
+                String key = pos[0] + "," + pos[1];
+                if (!addedPositions.contains(key)) {
+                    allPositions.add(pos);
+                    addedPositions.add(key);
+                }
+            }
+        }
+        
+        // 지그 패턴 체크 (지상이 아닐 때만)
+        if (hasZig && !hasGround) {
+            java.util.ArrayList<int[]> positions = getPatternPositions(ZIG, results);
+            for (int[] pos : positions) {
+                String key = pos[0] + "," + pos[1];
+                if (!addedPositions.contains(key)) {
+                    allPositions.add(pos);
+                    addedPositions.add(key);
+                }
+            }
+        }
+        
+        // 재그 패턴 체크 (천상이 아닐 때만)
+        if (hasZag && !hasHeaven) {
+            java.util.ArrayList<int[]> positions = getPatternPositions(ZAG, results);
+            for (int[] pos : positions) {
+                String key = pos[0] + "," + pos[1];
+                if (!addedPositions.contains(key)) {
+                    allPositions.add(pos);
+                    addedPositions.add(key);
+                }
+            }
+        }
+        
+        // 대각선 패턴 체크 (지그재그 패턴이 없을 때만)
+        if (!hasZig && !hasZag && !hasGround && !hasHeaven) {
+            // RIGHT_DIAGONAL 체크
+            for (int j = 0; j <= COLS - 3; j++) {
+                if (results[0][j] == results[1][j+1] && results[1][j+1] == results[2][j+2]) {
+                    int[] pos1 = new int[]{0, j};
+                    int[] pos2 = new int[]{1, j+1};
+                    int[] pos3 = new int[]{2, j+2};
+                    String key1 = pos1[0] + "," + pos1[1];
+                    String key2 = pos2[0] + "," + pos2[1];
+                    String key3 = pos3[0] + "," + pos3[1];
+                    if (!addedPositions.contains(key1)) {
+                        allPositions.add(pos1);
+                        addedPositions.add(key1);
+                    }
+                    if (!addedPositions.contains(key2)) {
+                        allPositions.add(pos2);
+                        addedPositions.add(key2);
+                    }
+                    if (!addedPositions.contains(key3)) {
+                        allPositions.add(pos3);
+                        addedPositions.add(key3);
+                    }
+                }
+            }
+            // LEFT_DIAGONAL 체크
+            for (int j = 0; j <= COLS - 3; j++) {
+                if (results[2][j] == results[1][j+1] && results[1][j+1] == results[0][j+2]) {
+                    int[] pos1 = new int[]{2, j};
+                    int[] pos2 = new int[]{1, j+1};
+                    int[] pos3 = new int[]{0, j+2};
+                    String key1 = pos1[0] + "," + pos1[1];
+                    String key2 = pos2[0] + "," + pos2[1];
+                    String key3 = pos3[0] + "," + pos3[1];
+                    if (!addedPositions.contains(key1)) {
+                        allPositions.add(pos1);
+                        addedPositions.add(key1);
+                    }
+                    if (!addedPositions.contains(key2)) {
+                        allPositions.add(pos2);
+                        addedPositions.add(key2);
+                    }
+                    if (!addedPositions.contains(key3)) {
+                        allPositions.add(pos3);
+                        addedPositions.add(key3);
+                    }
+                }
+            }
+        }
+        
+        // 모든 행에서 트리플/쿼드라/펜타 패턴 체크 (겹치는 패턴 제외)
+        for (int i = 0; i < ROWS; i++) {
+            int[] row = results[i];
+            
+            // PENTA (5개 일치)
+            if (row[0] == row[1] && row[1] == row[2] && row[2] == row[3] && row[3] == row[4]) {
+                if (hasHeaven && i == 0) continue;
+                if (hasGround && i == 2) continue;
+                
+                for (int j = 0; j < COLS; j++) {
+                    int[] pos = new int[]{i, j};
+                    String key = pos[0] + "," + pos[1];
+                    if (!addedPositions.contains(key)) {
+                        allPositions.add(pos);
+                        addedPositions.add(key);
+                    }
+                }
+            }
+            // QUADRA (4개 일치)
+            else if (row[0] == row[1] && row[1] == row[2] && row[2] == row[3]) {
+                if (hasHeaven && i == 0) continue;
+                if (hasGround && i == 2) continue;
+                
+                for (int j = 0; j < 4; j++) {
+                    int[] pos = new int[]{i, j};
+                    String key = pos[0] + "," + pos[1];
+                    if (!addedPositions.contains(key)) {
+                        allPositions.add(pos);
+                        addedPositions.add(key);
+                    }
+                }
+            }
+            else if (row[1] == row[2] && row[2] == row[3] && row[3] == row[4]) {
+                if (hasHeaven && i == 0) continue;
+                if (hasGround && i == 2) continue;
+                
+                for (int j = 1; j < 5; j++) {
+                    int[] pos = new int[]{i, j};
+                    String key = pos[0] + "," + pos[1];
+                    if (!addedPositions.contains(key)) {
+                        allPositions.add(pos);
+                        addedPositions.add(key);
+                    }
+                }
+            }
+            // TRIPLE (3개 일치)
+            else if (row[0] == row[1] && row[1] == row[2]) {
+                if (hasHeaven && i == 0) continue;
+                if (hasGround && i == 2) continue;
+                
+                for (int j = 0; j < 3; j++) {
+                    int[] pos = new int[]{i, j};
+                    String key = pos[0] + "," + pos[1];
+                    if (!addedPositions.contains(key)) {
+                        allPositions.add(pos);
+                        addedPositions.add(key);
+                    }
+                }
+            }
+            else if (row[1] == row[2] && row[2] == row[3]) {
+                if (hasHeaven && i == 0) continue;
+                if (hasGround && i == 2) continue;
+                if (hasEye && (i == 0 || i == 2)) continue;
+                
+                for (int j = 1; j < 4; j++) {
+                    int[] pos = new int[]{i, j};
+                    String key = pos[0] + "," + pos[1];
+                    if (!addedPositions.contains(key)) {
+                        allPositions.add(pos);
+                        addedPositions.add(key);
+                    }
+                }
+            }
+            else if (row[2] == row[3] && row[3] == row[4]) {
+                if (hasHeaven && i == 0) continue;
+                if (hasGround && i == 2) continue;
+                
+                for (int j = 2; j < 5; j++) {
+                    int[] pos = new int[]{i, j};
+                    String key = pos[0] + "," + pos[1];
+                    if (!addedPositions.contains(key)) {
+                        allPositions.add(pos);
+                        addedPositions.add(key);
+                    }
+                }
+            }
+        }
+        
+        // 세로 라인 체크 - VERTICAL
+        for (int j = 0; j < COLS; j++) {
+            if((hasEye && j==1) || (hasEye && j==3)) {
+                continue;
+            }
+            if (results[0][j] == results[1][j] && results[1][j] == results[2][j]) {
+                for (int i = 0; i < ROWS; i++) {
+                    int[] pos = new int[]{i, j};
+                    String key = pos[0] + "," + pos[1];
+                    if (!addedPositions.contains(key)) {
+                        allPositions.add(pos);
+                        addedPositions.add(key);
+                    }
+                }
+            }
+        }
+        
+        // 잭팟 패턴 체크
+        boolean isJackpot = true;
+        int jackpotSymbol = results[0][0];
+        for (int i = 0; i < ROWS; i++) {
+            for (int j = 0; j < COLS; j++) {
+                if (results[i][j] != jackpotSymbol) {
+                    isJackpot = false;
+                    break;
+                }
+            }
+            if (!isJackpot) break;
+        }
+        
+        if (isJackpot) {
+            for (int i = 0; i < ROWS; i++) {
+                for (int j = 0; j < COLS; j++) {
+                    int[] pos = new int[]{i, j};
+                    String key = pos[0] + "," + pos[1];
+                    if (!addedPositions.contains(key)) {
+                        allPositions.add(pos);
+                        addedPositions.add(key);
+                    }
+                }
+            }
+        }
+        
+        return allPositions;
+    }
+    
+    /**
      * 패턴 타입에 따라 패턴에 포함된 위치들을 반환합니다.
      * @param pattern 패턴 타입
      * @param results 문양 인덱스 배열

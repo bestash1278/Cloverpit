@@ -32,13 +32,13 @@ public class User {
     private int[] pattern_sum = {1,2,3,1,1,4,4,7,7,8,10};
     
     //문양 확률 변수
-    private double lemon_probability = 100.0 / 7.0;
-    private double cherry_probability = 100.0 / 7.0;
-    private double clover_probability = 100.0 / 7.0;
-    private double bell_probability = 100.0 / 7.0;
-    private double diamond_probability = 100.0 / 7.0;
-    private double treasure_probability = 100.0 / 7.0;
-    private double seven_probability = 100.0 / 7.0;
+    private double lemon_probability = 100.0/7.0;
+    private double cherry_probability = 100.0/7.0;
+    private double clover_probability = 100.0/7.0;
+    private double bell_probability = 100.0/7.0;
+    private double diamond_probability = 100.0/7.0;
+    private double treasure_probability = 100.0/7.0;
+    private double seven_probability = 100.0/7.0;
     
     // 변형자별 적용 확률 (0.0 ~ 1.0)
     private double chainModifierProbability = 0.3;
