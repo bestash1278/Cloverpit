@@ -8,8 +8,8 @@ public abstract class ItemInfo {
     private final String imagePath;	//이미지가 저장되는 경로 필드
     private final String description; // 유물설명
     private final ItemEffect rouletteEffect;	//룻렛에 영향을 주는 효과필드 저장용
+    private int maxStack = 1;	//스택형 유물이 기본으로 상점에서 등장하는 갯수
 
-    
     private static final Map<String, ItemInfo> ARTIFACT_TEMPLATES = new HashMap<>();
     private static final Map<String, String> ITEM_PATH_MAP = new HashMap<>();
 
@@ -22,11 +22,9 @@ public abstract class ItemInfo {
         ARTIFACT_TEMPLATES.put(name, this); 
         ITEM_PATH_MAP.put(name, imagePath);
     }
-    
     // 모든 유물이 반드시 구현해야 하는 고유 기능
     public abstract void applyEffect(User userInfo); 
 
-    // 공통 Getter (UI/Shop 로직에서 사용)
     public String getName() { return name; }
     public int getTicketCost() { return ticketCost; }
     public String getImagePath() { return imagePath; }
@@ -40,16 +38,21 @@ public abstract class ItemInfo {
     public ItemEffect getRouletteEffect() {
     	return rouletteEffect;
     }
-    /**
-     * 유물 이름으로 해당 유물의 템플릿 인스턴스를 가져옵니다.
-     * @param name 유물 이름
-     * @return ItemInfo 템플릿 인스턴스
-     */
+
     public static ItemInfo getArtifactTemplateByName(String name) {
         return ARTIFACT_TEMPLATES.get(name);
     }
     
-    
+    //.......스택형 유물
+    public DurationType getDurationType() {
+        // 효과(rouletteEffect)가 없는 아이템(예: SoldArtifact)일 경우를 대비해 null 체크
+        if (this.rouletteEffect == null) {
+            return DurationType.PERSISTENT; // 또는 TEMPORARY, 기본값 설정
+        }
+        return this.rouletteEffect.getDuration();
+    }
+    public void setMaxStack(int max) { this.maxStack = max; }
+    public int getMaxStack() { return maxStack; }
     
     
     
@@ -271,6 +274,45 @@ public abstract class ItemInfo {
         public void applyEffect(User userInfo) { /* 구매 시 즉발 효과 없음 */ }
     }
     
-    
+    //신비한 레몬
+    public static class LemonStackArtifact extends ItemInfo {
+        
+        // 생성자
+        public LemonStackArtifact() {
+            super(
+                "신비한 레몬",    // 이름
+                2,              // 가격 (티켓)
+                "res/dummy.png", // 이미지 경로
+                "레몬 등장 확률이 증가합니다. (중첩 가능: 개당 +5%)", // 설명
+                
+                // ⭐ 핵심: 람다식으로 효과 정의
+                new ItemEffect(
+                    (user) -> { 
+                        // 1. 현재 이 유물을 몇 개 가지고 있는지 확인
+                        int stacks = user.getItemStackCount("신비한 레몬");
+                        
+                        // 2. 스택에 따른 보너스 계산 (1개: 5%, 2개: 10%, 3개: 15%)
+                        double bonusChance = stacks * 5.0; 
+
+                        // 3. User 객체에 확률 적용 (매 스핀마다 갱신됨)
+                        double a = user.getLemonProbability();
+                        user.setLemonProbability(bonusChance + a);
+                        
+                        System.out.println("DEBUG: [LemonArtifact] 현재 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
+                    },
+                    DurationType.STACKABLE // ⭐ 타입 지정
+                )
+            );
+            
+            // 이 유물의 최대 스택 설정
+            this.setMaxStack(3); 
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {
+            // 구매 '즉시' 발동하는 효과는 없음 (스택 증가는 상점 로직에서 처리)
+            // 필요하다면 "구매해주셔서 감사합니다" 메시지 출력 등
+        }
+    }
 }
 

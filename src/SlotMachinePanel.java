@@ -49,8 +49,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int LEVER_HEAD_SIZE = 60; 
     private static final int LEVER_BAR_THICKNESS = 18; 
 
-    private static final int TARGET_WIDTH = 1600;
-    private static final int TARGET_HEIGHT = 900;
+    private static final int TARGET_WIDTH = 1000;
+    private static final int TARGET_HEIGHT = 650;
     
     private static final int SLOT_SIZE = 120;
     private static final int SLOT_SPACING = 15;
@@ -155,6 +155,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.roulatte = new RoulatteInfo();
         this.paymentScreen = new Payment_Screen(paymentLogic);
         updatePhoneButtonState();	//------------------------------------------------------------------
+        this.symbolPriceScreen = new SymbolPrice_Screen(user);
+        this.patternPriceScreen = new PatternPrice_Screen(user);
         
         roulette = new Roulette();
         roulette.setUser(this.user);
@@ -512,6 +514,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                     System.out.println("SlotMachinePanel: 패턴 가격 화면 열기 성공.");
                 }
                 break;
+                
+
 
             // 다른 메뉴 버튼은 임시 패널을 사용
             default:
