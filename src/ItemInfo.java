@@ -295,8 +295,8 @@ public abstract class ItemInfo {
                         double bonusChance = stacks * 5.0; 
 
                         // 3. User 객체에 확률 적용 (매 스핀마다 갱신됨)
-                        double a = user.getLemonProbability();
-                        user.setLemonProbability(bonusChance + a);
+                        double lemonProbability_original = user.getLemonProbability_original();
+                        user.setLemonProbability(lemonProbability_original + bonusChance);
                         
                         System.out.println("DEBUG: [LemonArtifact] 현재 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
                     },
@@ -310,8 +310,10 @@ public abstract class ItemInfo {
 
         @Override
         public void applyEffect(User userInfo) {
-            // 구매 '즉시' 발동하는 효과는 없음 (스택 증가는 상점 로직에서 처리)
-            // 필요하다면 "구매해주셔서 감사합니다" 메시지 출력 등
+            if (this.getRouletteEffect() != null) {
+                this.getRouletteEffect().getAction().execute(userInfo);
+                System.out.println("DEBUG: [applyEffect] 레몬 효과 로직 강제 실행됨.");
+            }
         }
     }
 }

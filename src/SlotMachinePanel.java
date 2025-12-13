@@ -49,7 +49,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int LEVER_HEAD_SIZE = 60; 
     private static final int LEVER_BAR_THICKNESS = 18; 
 
-    private static final int TARGET_WIDTH = 1000;
+    private static final int TARGET_WIDTH = 1200;
     private static final int TARGET_HEIGHT = 650;
     
     private static final int SLOT_SIZE = 120;
@@ -617,6 +617,10 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             JOptionPane.showMessageDialog(this, "먼저 라운드를 시작해주세요.");
             return;
         }
+        System.out.println(user.getLemonProbability());
+        System.out.println(user.getLemon_probability_multipBonus());
+        System.out.println(user.getLemon_probability_sumBonus());
+
         
         lastSpinOfDeadline = false;
         
@@ -662,18 +666,20 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 ItemEffect effect = item.getRouletteEffect(); 
                 
                 if (effect != null) {
-                    // 1. 유물에 정의된 로직을 가져와 실행합니다.
-                    ArtifactAction action = effect.getAction();
-                    action.execute(user); // ⭐ ItemInfo에서 정의된 계산식 실행
-                    
-                    // 2. 실행된 로직이 어떤 타입인지 확인합니다. (로그 등)
                     DurationType type = effect.getDuration();
-                    System.out.println("DEBUG: [" + itemName + "] 효과 실행. 타입: " + type);
+
+                    if (type == DurationType.STACKABLE) {
+                        continue; 
+                    }
+
+                    ArtifactAction action = effect.getAction();
+                    action.execute(user); 
                     
-                    // Note: TEMPORARY(Type 2) 효과는 여기서 User의 임시 필드를 수정했을 것입니다.
-                    // PERSISTENT(Type 3) 효과는 User의 지속 필드를 수정했을 것입니다.
+                    // System.out.println("DEBUG: [" + itemName + "] 효과 실행. 타입: " + type);
                 }
             }
+                
+            
         }
     }
     

@@ -43,6 +43,14 @@ public class User {
     private double diamond_probability = 100.0/7.0;
     private double treasure_probability = 100.0/7.0;
     private double seven_probability = 100.0/7.0;
+    //문양 초기값 확률 변수
+    private double lemon_probability_original = 100.0/7.0;
+    private double cherry_probability_original = 100.0/7.0;
+    private double clover_probability_original = 100.0/7.0;
+    private double bell_probability_original = 100.0/7.0;
+    private double diamond_probability_original = 100.0/7.0;
+    private double treasure_probability_original = 100.0/7.0;
+    private double seven_probability_original = 100.0/7.0;
     
     // 변형자별 적용 확률 (0.0 ~ 1.0)
     private double chainModifierProbability = 0.3;
@@ -330,6 +338,14 @@ public class User {
     public double getDiamondProbability() { return (diamond_probability * diamond_probability_multipBonus) + diamond_probability_sumBonus; }
     public double getTreasureProbability() { return (treasure_probability * treasure_probability_multipBonus) + treasure_probability_sumBonus; }
     public double getSevenProbability() { return (seven_probability * seven_probability_multipBonus) + seven_probability_sumBonus; }
+    
+    public double getLemonProbability_original() { return lemon_probability_original; }
+    public double getCherryProbability_original() { return cherry_probability_original; }
+    public double getCloverProbability_original() { return clover_probability_original; }
+    public double getBellProbability_original() { return bell_probability_original; }
+    public double getDiamondProbability_original() { return diamond_probability_original; }
+    public double getTreasureProbability_original() { return treasure_probability_original; }
+    public double getSevenProbability_original() { return seven_probability_original; }
     
     public void setLemonProbability(double prob) { this.lemon_probability = prob; }
     public void setCherryProbability(double prob) { this.cherry_probability = prob; }

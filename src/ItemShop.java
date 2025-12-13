@@ -205,10 +205,12 @@ public class ItemShop {
         
         // 2. UserInfo에서 티켓 차감 시도
         if (userInfo.minusTicket(cost)) {
-            // 3. 티켓 차감 성공: 유물 효과 적용
-            item.applyEffect(userInfo);
+
             //해당 아이템 스택 +1
             userInfo.addItemStack(item.getName());
+            // 3. 티켓 차감 성공: 유물 효과 적용
+            item.applyEffect(userInfo);
+            System.out.println("DEBUG: 스택 증가 완료 -> " + userInfo.getItemStackCount(item.getName()));
             //기본아이템들은 구매하면 더 이상 상점에서 안나옴
             boolean shouldRemoveFromPool = true; // 기본적으로는 구매하면 목록에서 제거
             //스택형 유물이라면
