@@ -245,6 +245,8 @@ public class User {
 
     public void setDeadline(int deadline) {
         this.deadline = deadline;
+        // 기한별 데드라인 머니 계산: 75 * deadline * deadline * deadline
+        this.deadline_money = 75 * deadline * deadline * deadline;
     }
 
     public int getRound() {
