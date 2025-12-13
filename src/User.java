@@ -19,7 +19,7 @@ public class User {
     private int item_max = 11;
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
-    private int call_count = 0;	//전화를 걸 수 있는 기회
+    private boolean call_count = false;	//전화를 걸 수 있는 여부
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
     private int freeItemReroll_count = 0; //무료 상점 리롤 횟수
@@ -266,22 +266,20 @@ public class User {
         this.item_max = item_max;
     }
     
-    // 전화 관련 메서드
-    public int getCall_count() {
+    // 전화 관련 메서드-------------------------------------
+    public boolean getCall_count() {
     	return call_count;
     }
     
-    public void setCall_count(int call_count) {
-    	this.call_count = call_count;
+    public void setCall_count(boolean set) {
+    	if(set == true) {
+    		this.call_count = true;
+    	}
+    	else {
+    		this.call_count = false;
+    	}
     }
-    
-    public void addCall_count() {	//전화 기회 추가
-    	this.call_count += 1;
-    }
-    
-    public void minusCall_count() {	//전화 기회 빼기
-    	this.call_count -= 1;
-    }
+    //-------------------------------------------------
     
     public int getRoulatte_cost() {
         return roulatte_cost;
