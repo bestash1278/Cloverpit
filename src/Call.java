@@ -9,7 +9,7 @@ public class Call {
     private static final int SELECTION_COUNT = 3; // 한 번에 보여줄 선택지 개수
     
     private int callRerollTiket_count;
-    private final Runnable updateCallScreen; // ⭐ 새로 추가: Call_Screen 갱신용 Runnable
+    private final Runnable updateCallScreen;
 
     // 생성자 (필요한 로직 객체 주입)
     public Call(User user, RoundManager roundManager ,Runnable updateCallScreen) {
@@ -52,21 +52,31 @@ public class Call {
     	
     	return callRerollTiket_count;
     }
- // ⭐ 새로 추가: 리롤만 할 때 티켓을 차감하는 함수 (핵심)
+
+    //전화 리롤사용함수
     public boolean useCallForReroll() {
     	int Reroll_cost = getCallReroll_cost();
-        if (user.getTicket() > Reroll_cost) {
-        	user.minusTicket(Reroll_cost);	//계산식 : (전화 리롤 횟수 * 2)
-        	rerollAbilities(); //리롤사용
-        	user.addCallReroll_count();	//전화 리롤 카운트 증가
-        	if (this.updateCallScreen != null) {
-                this.updateCallScreen.run(); // Call_Screen 갱신 (버튼 텍스트 변경)
-            }
-            
-            System.out.println("리롤 사용 성공. 남은 티켓: " + user.getTicket());
+    	
+        // 무료 리롤 횟수 확인 및 사용
+        if (user.getFreeCallReroll_count() > 0) {
+            user.addFreeCallReroll_count(-1); 
+            System.out.println("무료 리롤 사용 성공. 남은 무료 리롤횟수: " + user.getFreeCallReroll_count());
             return true;
         }
-        return false;
+        else {
+	        if (user.getTicket() > Reroll_cost) {
+	        	user.minusTicket(Reroll_cost);	//계산식 : (전화 리롤 횟수 * 2)
+	        	rerollAbilities(); //리롤사용
+	        	user.addCallReroll_count();	//전화 리롤 카운트 증가
+	        	if (this.updateCallScreen != null) {
+	                this.updateCallScreen.run(); // Call_Screen 갱신 (버튼 텍스트 변경)
+	            }
+	            
+	            System.out.println("리롤 사용 성공. 남은 티켓: " + user.getTicket());
+	            return true;
+	        }
+	        return false;
+        }
     }
     
     public int getCallReroll_cost() {
@@ -90,8 +100,9 @@ public class Call {
             String callHistory = selectedAbility.getName() + " - " + selectedAbility.getDescription();
             user.addUser_call(callHistory);
             
-            // 4. 사용 후 다음 사용을 위해 선택지 리롤
-            rerollAbilities(); 
+            if (this.updateCallScreen != null) {
+                this.updateCallScreen.run(); 
+           }
             
             System.out.println("전화 사용 성공: [" + selectedAbility.getName() + "]");
             return true;

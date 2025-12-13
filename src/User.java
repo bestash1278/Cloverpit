@@ -23,6 +23,7 @@ public class User {
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
     private int freeItemReroll_count = 0; //무료 상점 리롤 횟수
+    private int freeCallReroll_count = 0; //무료 전화 리롤 횟수
     private int[] symbol_original = {2,2,3,3,5,5,7};
     private int[] pattern_original = {1,2,3,1,1,4,4,7,7,8,10};
     // 문양 가격 "레몬", "체리", "클로버", "종", "다이아", "보물", "7"
@@ -296,6 +297,9 @@ public class User {
     public int getCallReroll_count() {
     	return callReroll_count;
     }
+    public void setCallReroll_count(int set) {
+    	this.callReroll_count = set;
+    }
     
     public int addCallReroll_count() {
     	return callReroll_count += 1;
@@ -521,7 +525,20 @@ public class User {
     	this.freeItemReroll_count += addFreeItemReroll_count;
     	return freeItemReroll_count;
     }
+    //--------------------------------------------
+    public int getFreeCallReroll_count() {
+    	return freeCallReroll_count;
+    }
     
+    public void setFreeCallReroll_count(int freeItemReroll_count) {
+    	this.freeCallReroll_count = freeItemReroll_count;
+    }
+    
+    public int addFreeCallReroll_count(int addFreeItemReroll_count) {
+    	this.freeCallReroll_count += addFreeItemReroll_count;
+    	return freeCallReroll_count;
+    }
+    //---------------------------------------------------------------------------
     public void addUserItem_List(String itemName) {
             if (this.user_item.size() < this.item_max) { // item_max 제한 확인 (선택 사항)
                 this.user_item.add(itemName);

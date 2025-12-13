@@ -75,7 +75,7 @@ public class Call_Screen extends JPanel {
     public void updateRerollButtonText() {
         // callLogic은 Call_Screen 생성자에서 받은 Call 객체라고 가정합니다.
         int cost = callLogic.getCallReroll_cost();
-        rerollButton.setText("리롤 (" + cost + "티켓 사용)");
+        rerollButton.setText("리롤");
     }
     
  // ⭐ 리롤 버튼 동작 처리 함수 (핵심)
@@ -87,7 +87,7 @@ public class Call_Screen extends JPanel {
             // 2. UI 갱신 (남은 기회 및 능력 목록 갱신)
             updateUI(); 
             
-            JOptionPane.showMessageDialog(this, "능력을 리롤했습니다! 남은 티켓 수: " + callLogic.getTicket() + "개");
+            JOptionPane.showMessageDialog(this, "능력을 리롤했습니다! 남은 티켓 수: " + callLogic.getTicket() + "개" + "\n다음 리롤 비용 : "+ callLogic.getCallReroll_cost());
         } else {
             JOptionPane.showMessageDialog(this, "리롤을 사용할 티켓이 남아있지 않습니다.", "사용 불가", JOptionPane.WARNING_MESSAGE);
         }
@@ -96,18 +96,20 @@ public class Call_Screen extends JPanel {
     // ⭐ 능력 선택 처리 함수 (버튼 클릭 시 호출)
     private void handleAbilitySelection(int index) {
         if (callLogic.useCall(index)) {
-            JOptionPane.showMessageDialog(this, "능력 [" + callLogic.getCurrentSelections().get(index).getName() + "]을 사용했습니다!");
-            updateUI(); // 사용 후 UI 갱신 (남은 기회, 새로운 선택지)
-        } else {
+        	JOptionPane.showMessageDialog(this, 
+                    "능력 [" + callLogic.getCurrentSelections().get(index).getName() + "]을 사용했습니다!");
+        	updateUI();
+        }
+        else {
             JOptionPane.showMessageDialog(this, "전화를 사용할 기회가 남아있지 않습니다.", "사용 불가", JOptionPane.WARNING_MESSAGE);
         }
     }
 
-    // ⭐ 화면 UI 갱신 함수 (핵심)
+    //화면 UI 갱신 함수 (핵심)
     public void updateUI() {
     	if (callLogic == null) return; 
     	boolean chances = callLogic.getCall_count();
-        chanceLabel.setText("전화 가능 여부 : " + chances);
+    	chanceLabel.setText("전화 가능 여부 : " + (chances ? "가능" : "불가능"));
         
         List<CallInfo> selections = callLogic.getCurrentSelections();
         for (int i = 0; i < abilityButtons.length; i++) {
@@ -116,13 +118,15 @@ public class Call_Screen extends JPanel {
                 // 버튼 텍스트를 능력 이름과 설명으로 설정
                 abilityButtons[i].setText("<html><center>" + info.getName() + "<br><font size='3'>" + info.getDescription() + "</font></center></html>");
                 abilityButtons[i].setEnabled(chances);
-            } else {
+                }
+            else {
                 abilityButtons[i].setText("선택지 없음");
                 abilityButtons[i].setEnabled(false);
             }
         }
-     // ⭐ 리롤 버튼 활성화/비활성화 (기회가 있어야 리롤 가능)
+     //리롤 버튼 활성화/비활성화 (기회가 있어야 리롤 가능)
         rerollButton.setEnabled(chances);
+        updateRerollButtonText();
         revalidate();
         repaint();
     }
