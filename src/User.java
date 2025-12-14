@@ -12,7 +12,7 @@ public class User {
 
     private int roulatte_money = 10000;  
     private double interest = 0.1;  
-    private int ticket = 5;
+    private int ticket = 3;
     private int deadline = 1;
     private int round = 1;               
     private int deadline_money = 75;
@@ -22,7 +22,7 @@ public class User {
     private int item_max = 11;
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
-    private boolean call_count = false;	//전화를 걸 수 있는 여부
+    private boolean call_count = false;	//전화를 걸 수 있는 기회
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
     private int freeItemReroll_count = 0; //무료 상점 리롤 횟수
@@ -36,21 +36,21 @@ public class User {
     private int[] pattern_sum = {1,2,3,1,1,4,4,7,7,8,10};
     
     //문양 확률 변수
-    private double lemon_probability = 100.0/7.0;
-    private double cherry_probability = 100.0/7.0;
-    private double clover_probability = 100.0/7.0;
-    private double bell_probability = 100.0/7.0;
-    private double diamond_probability = 100.0/7.0;
-    private double treasure_probability = 100.0/7.0;
-    private double seven_probability = 100.0/7.0;
+    private double lemon_probability = 100.0 / 7.0;
+    private double cherry_probability = 100.0 / 7.0;
+    private double clover_probability = 100.0 / 7.0;
+    private double bell_probability = 100.0 / 7.0;
+    private double diamond_probability = 100.0 / 7.0;
+    private double treasure_probability = 100.0 / 7.0;
+    private double seven_probability = 100.0 / 7.0;
     //문양 초기값 확률 변수
-    private double lemon_probability_original = 100.0/7.0;
-    private double cherry_probability_original = 100.0/7.0;
-    private double clover_probability_original = 100.0/7.0;
-    private double bell_probability_original = 100.0/7.0;
-    private double diamond_probability_original = 100.0/7.0;
-    private double treasure_probability_original = 100.0/7.0;
-    private double seven_probability_original = 100.0/7.0;
+    private double lemon_probability_original = 100.0 / 7.0;
+    private double cherry_probability_original = 100.0 / 7.0;
+    private double clover_probability_original = 100.0 / 7.0;
+    private double bell_probability_original = 100.0 / 7.0;
+    private double diamond_probability_original = 100.0 / 7.0;
+    private double treasure_probability_original = 100.0 / 7.0;
+    private double seven_probability_original = 100.0 / 7.0;
     
     // 변형자별 적용 확률 (0.0 ~ 1.0)
     private double chainModifierProbability = 0.3;
@@ -92,7 +92,7 @@ public class User {
     public void resetTemporarySpinBonuses() {
         // 1. 심볼/패턴 배열 보너스 초기화
         if (this.tempSymbolBonus != null) {
-            java.util.Arrays.fill(this.tempSymbolBonus, 1.0);
+            java.util.Arrays.fill(this.tempSymbolBonus, 1);
         }
         if (this.tempPatternBonus != null) {
             java.util.Arrays.fill(this.tempPatternBonus, 1.0);
@@ -118,24 +118,9 @@ public class User {
         System.out.println("DEBUG: 단발성 스핀 보너스 초기화 완료.");
     }
     
-    //문양 '가격'계산 보너스 계산식 getter/setter
-    public double getTempSymbolBonus(int index) { 
-        if (tempSymbolBonus == null || index < 0 || index >= tempSymbolBonus.length) {
-            return 1.0;
-        }
-        return tempSymbolBonus[index];
-    }
-    
-    public double setTempSymbolBonus(int index, double value) { 
-        if (tempSymbolBonus == null) {
-            tempSymbolBonus = new double[symbol_original.length];
-            java.util.Arrays.fill(tempSymbolBonus, 1.0);
-        }
-        if (index >= 0 && index < tempSymbolBonus.length) {
-            this.tempSymbolBonus[index] = value;
-        }
-        return this.tempSymbolBonus[index];
-    }
+    //문양 '가격'계산 보너스 계산식 geter/seter
+    public double getTempSymbolBonus(int index) { return tempSymbolBonus[index]; }//곱셈식으로 넘어갈 친구
+    public double setTempSymbolBonus(int index, double d) { return this.tempSymbolBonus[index] = d; }//요기도 곱셈식
     
     //패턴 '가격'계산 보너스 계산식 getter/setter
     public double getTempPatternBonus(int index) { 
