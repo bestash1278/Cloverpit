@@ -127,7 +127,7 @@ public class SaveManagerCsv {
 
             // 스핀 / 전화 / 리롤
             user.setTotal_spin(getInt(arr, idx++, user.getTotal_spin()));
-            user.setCall_count(getInt(arr, idx++, user.getCall_count()));
+            user.setCall_count(getBoolean(arr, idx++, user.getCall_count()));	//------------------------
 
             int savedCallReroll = getInt(arr, idx++, user.getCallReroll_count());
             if (savedCallReroll >= 0) {
@@ -205,6 +205,18 @@ public class SaveManagerCsv {
     }
 
     // ========== 유틸 함수들 ==========
+    
+    private boolean getBoolean(String[] arr, int index, boolean defaultValue) {	//-----------------------------
+        if (index < arr.length) {
+            String v = arr[index];
+            if (v != null && !v.isEmpty()) {
+                return v.trim().equalsIgnoreCase("true");
+            }
+            return defaultValue;
+        }
+        return defaultValue;
+    }
+    
 
     private int getInt(String[] arr, int index, int defaultValue) {
         if (index < arr.length) {

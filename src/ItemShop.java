@@ -9,12 +9,13 @@ public class ItemShop {
     private List<ItemInfo> currentItems; // 현재 상점에 표시되는 5개 아이템 목록
     private Runnable updateMainStatus; // 상태바 업데이트를 위한 Runnable 인터페이스
     private final Runnable updateOwnItemScreen;
-
+    private List<ItemInfo> availableItems;//등장 가능한 유물 목록
 
     public ItemShop(User userInfo,Runnable updateMainStatus, Runnable updateOwnItemScreen) {
         this.userInfo = userInfo;
         this.updateMainStatus = updateMainStatus;
         this.updateOwnItemScreen = updateOwnItemScreen;
+        this.availableItems = new ArrayList<>(ALL_ARTIFACTS);//등장 가능한 유물 초기화
         initializeShop(); // 초기 아이템 목록 설정
     }
     
@@ -44,7 +45,8 @@ public class ItemShop {
             new ItemInfo.symbol_chain(),
             new ItemInfo.symbol_repeat(),
             new ItemInfo.symbol_ticket(),
-            new ItemInfo.symbol_token()
+            new ItemInfo.symbol_token(),
+            new ItemInfo.LemonStackArtifact()
             // ... (모든 유물 정의)
         );
     }
@@ -104,49 +106,44 @@ public class ItemShop {
     }
     
     
-    
-    // 리롤 버튼 클릭 시 호출될 함수
-//    public List<ItemInfo> rerollItems() {
-//        // TODO: 리롤 비용(예: 1 티켓)을 차감하는 로직 구현
-//        useItemForReroll();
-//        // 새로운 아이템 목록으로 갱신
-//    	this.currentItems = createRandomItems(); // 새로운 아이템 생성
-//    	System.out.println("ItemShop: 리롤 성공. 새 목록 크기: " + this.currentItems.size()); //디버깅용
-//    	
-//        // 갱신된 아이템 목록을 ItemShopScreen에 반환
-//        return this.currentItems;
-//    }
-    
     /**
      * 현재 상점 유물 목록을 리롤하고 새로운 목록을 반환합니다.
      * @return 새로 리롤된 5개의 유물 목록. (리롤 비용 부족 시 null)
      */
     public List<ItemInfo> rerollItems() {
         // 1. 리롤 비용 확인 및 차감
-    	// ⭐ 1. 리롤 비용 계산 및 차감 (사용자 제공 로직 통합)
         if (!tryRerollCost()) {
-            // 비용(돈 또는 무료 횟수) 차감 실패 시 리롤 중단
             return null; 
         }
-        
-        // ⭐ 2. 소유 유물 목록 가져오기 (ItemInfo 이름 목록)
+        // 2. 소유 유물 목록 가져오기 (ItemInfo 이름 목록)
         List<String> ownedItemNames = userInfo.getOwnedItemNames();
         
-        // ⭐ 3. 새로운 상점 목록 후보 (구매 가능 유물) 생성
+        // 3. 새로운 상점 목록 후보 (구매 가능 유물) 생성
         List<ItemInfo> availableArtifacts = new ArrayList<>();
         
         for (ItemInfo artifact : ALL_ARTIFACTS) {
-            // 소유 목록에 없는 유물만 후보로 추가
-            if (!ownedItemNames.contains(artifact.getName())) { // getName()으로 비교
+        	String name = artifact.getName();
+            boolean isOwned = ownedItemNames.contains(name);
+            if (!isOwned) {
                 availableArtifacts.add(artifact);
             }
+            else if (artifact.getDurationType() == DurationType.STACKABLE) {
+                // 현재 몇 개 가지고 있는지 확인 (User.java에 추가했던 메서드 활용)
+                int currentStack = userInfo.getItemStackCount(name);
+                
+                // 최대 스택보다 적게 가지고 있다면 다시 상점에 나올 수 있음
+                if (currentStack < artifact.getMaxStack()) {
+                    availableArtifacts.add(artifact);
+                    System.out.println("DEBUG: 스택형 유물 [" + name + "] 재등장 가능 (" + currentStack + "/" + artifact.getMaxStack() + ")");
+                }
+            }
+        
+            
         }
-        
-        // 4. 새로운 5개 아이템을 무작위로 선택
-        int itemsToSelect = Math.min(5, availableArtifacts.size());
-        
         // 리스트를 섞고, 앞에서 itemsToSelect 개를 선택
         Collections.shuffle(availableArtifacts, new Random());
+        // 4. 새로운 5개 아이템을 무작위로 선택
+        int itemsToSelect = Math.min(5, availableArtifacts.size());
         
         List<ItemInfo> newItems = new ArrayList<>(availableArtifacts.subList(0, itemsToSelect));
         
@@ -180,35 +177,60 @@ public class ItemShop {
      * @return 구매 성공 시 true, 실패 시 (티켓 부족 등) false
      */
     public PurchaseResult buy_item(int itemIndex) {
+    	//유물 상점이 비어있지 않고 보여줄수있는 만큼 보여주기
         if (currentItems == null || itemIndex < 0 || itemIndex >= currentItems.size()) {
-            return PurchaseResult.ALREADY_SOLD; // 유효하지 않은 인덱스
+            return PurchaseResult.ALREADY_SOLD;
         }
-
+        //상점에 보여주기 위해 생성한 아이템들 목록
         ItemInfo item = (ItemInfo) currentItems.get(itemIndex);
 
         // 1. 판매된 유물인지 확인 (SoldArtifact는 재구매 불가)
         if (item instanceof ItemInfo.SoldArtifact) {
             return PurchaseResult.ALREADY_SOLD;
         }
+
+        // 최대유물 갯수를 넘지 않는지
+        boolean isStackable = (item.getDurationType() == DurationType.STACKABLE);
+        boolean hasItem = userInfo.getItemStackCount(item.getName()) > 0;
         
-        int currentItemsCount = userInfo.getUserItem_List().size();
-        int maxItemsCount = userInfo.getItem_max();
-        
-        if (currentItemsCount >= maxItemsCount) {
-            // 인벤토리가 가득 찼을 경우, 구매 불가 반환
-            System.out.println("DEBUG: 인벤토리가 가득 찼습니다. 현재: " + currentItemsCount + "/" + maxItemsCount);
-            return PurchaseResult.INVENTORY_FULL; 
+        // "스택형이면서 이미 가지고 있는 경우"가 아니라면, 인벤토리 공간을 확인해야 함
+        if (!(isStackable && hasItem)) {
+            int currentItemsCount = userInfo.getUserItem_List().size();
+            if (currentItemsCount >= userInfo.getItem_max()) {
+                return PurchaseResult.INVENTORY_FULL;
+            }
         }
-        
+        //아이템 가격 가져오기
         int cost = item.getTicketCost();
         
         // 2. UserInfo에서 티켓 차감 시도
-        // userInfo 필드는 ItemShop.class에 선언되어 있습니다.
         if (userInfo.minusTicket(cost)) {
+
+            //해당 아이템 스택 +1
+            userInfo.addItemStack(item.getName());
             // 3. 티켓 차감 성공: 유물 효과 적용
             item.applyEffect(userInfo);
-            
-            userInfo.addOwnedItemName(item.getName());
+            System.out.println("DEBUG: 스택 증가 완료 -> " + userInfo.getItemStackCount(item.getName()));
+            //기본아이템들은 구매하면 더 이상 상점에서 안나옴
+            boolean shouldRemoveFromPool = true; // 기본적으로는 구매하면 목록에서 제거
+            //스택형 유물이라면
+            if (item.getDurationType() == DurationType.STACKABLE) {
+                // 현재 스택 확인
+                int currentStack = userInfo.getItemStackCount(item.getName());
+                int maxStack = item.getMaxStack();
+                //스택 남았으면
+                if (currentStack < maxStack) {
+                    shouldRemoveFromPool = false; 
+                    System.out.println("스택형 유물: 리롤 목록에 유지됨 (" + currentStack + "/" + maxStack + ")");
+                } else {
+                    // 최대 스택 도달 -> 제거 진행
+                    System.out.println("스택형 유물: 최대 스택 도달. 리롤 목록에서 제거.");
+                }
+            }
+
+            if (shouldRemoveFromPool) {
+                removeItemFromPool(item.getName());
+            }
             // 4. 상점 UI 업데이트: '판매된 유물' 객체로 교체
             ItemInfo soldItem = new ItemInfo.SoldArtifact();
             currentItems.set(itemIndex, soldItem);
@@ -225,7 +247,12 @@ public class ItemShop {
             return PurchaseResult.INSUFFICIENT_TICKETS; 
         }
     }
-
+ // 유물 목록에서 이름을 찾아 안전하게 제거하는 헬퍼 함수
+    private void removeItemFromPool(String targetName) {
+        // availableItems 리스트를 순회하며 이름이 같은 객체 제거
+        availableItems.removeIf(info -> info.getName().equals(targetName));
+    }
+    
     // ItemShopScreen이 현재 아이템 목록을 가져가서 화면을 그릴 때 사용
     public List<ItemInfo> getCurrentItems() {
         return this.currentItems;

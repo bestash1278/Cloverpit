@@ -1,15 +1,18 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class User {
 
     private String user_name;  
     private List<String> user_call;
-    private List<String> user_item = new ArrayList<>();     
+    private List<String> user_item = new ArrayList<>();    
+    private Map<String, Integer> itemStacks = new HashMap<>();	//스택형 아이템을 위한 같은 아이템 몇번 구매했는지/Key: 아이템이름, Value: 현재스택
 
     private int roulatte_money = 10000;  
     private double interest = 0.1;  
-    private int ticket = 3;
+    private int ticket = 5;
     private int deadline = 1;
     private int round = 1;               
     private int deadline_money = 75;
@@ -19,10 +22,11 @@ public class User {
     private int item_max = 11;
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
-    private int call_count = 0;	//전화를 걸 수 있는 기회
+    private boolean call_count = false;	//전화를 걸 수 있는 여부
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
     private int freeItemReroll_count = 0; //무료 상점 리롤 횟수
+    private int freeCallReroll_count = 0; //무료 전화 리롤 횟수
     private int[] symbol_original = {2,2,3,3,5,5,7};
     private int[] pattern_original = {1,2,3,1,1,4,4,7,7,8,10};
     // 문양 가격 "레몬", "체리", "클로버", "종", "다이아", "보물", "7"
@@ -39,6 +43,14 @@ public class User {
     private double diamond_probability = 100.0/7.0;
     private double treasure_probability = 100.0/7.0;
     private double seven_probability = 100.0/7.0;
+    //문양 초기값 확률 변수
+    private double lemon_probability_original = 100.0/7.0;
+    private double cherry_probability_original = 100.0/7.0;
+    private double clover_probability_original = 100.0/7.0;
+    private double bell_probability_original = 100.0/7.0;
+    private double diamond_probability_original = 100.0/7.0;
+    private double treasure_probability_original = 100.0/7.0;
+    private double seven_probability_original = 100.0/7.0;
     
     // 변형자별 적용 확률 (0.0 ~ 1.0)
     private double chainModifierProbability = 0.3;
@@ -213,12 +225,16 @@ public class User {
         }
     }
 
+    
+
     public int getDeadline() {
         return deadline;
     }
 
     public void setDeadline(int deadline) {
         this.deadline = deadline;
+        // 기한별 데드라인 머니 계산: 75 * deadline * deadline * deadline
+        this.deadline_money = 75 * deadline * deadline * deadline;
     }
 
     public int getRound() {
@@ -266,22 +282,20 @@ public class User {
         this.item_max = item_max;
     }
     
-    // 전화 관련 메서드
-    public int getCall_count() {
+    // 전화 관련 메서드-------------------------------------
+    public boolean getCall_count() {
     	return call_count;
     }
     
-    public void setCall_count(int call_count) {
-    	this.call_count = call_count;
+    public void setCall_count(boolean set) {
+    	if(set == true) {
+    		this.call_count = true;
+    	}
+    	else {
+    		this.call_count = false;
+    	}
     }
-    
-    public void addCall_count() {	//전화 기회 추가
-    	this.call_count += 1;
-    }
-    
-    public void minusCall_count() {	//전화 기회 빼기
-    	this.call_count -= 1;
-    }
+    //-------------------------------------------------
     
     public int getRoulatte_cost() {
         return roulatte_cost;
@@ -297,6 +311,9 @@ public class User {
     
     public int getCallReroll_count() {
     	return callReroll_count;
+    }
+    public void setCallReroll_count(int set) {
+    	this.callReroll_count = set;
     }
     
     public int addCallReroll_count() {
@@ -325,6 +342,14 @@ public class User {
     public double getDiamondProbability() { return (diamond_probability * diamond_probability_multipBonus) + diamond_probability_sumBonus; }
     public double getTreasureProbability() { return (treasure_probability * treasure_probability_multipBonus) + treasure_probability_sumBonus; }
     public double getSevenProbability() { return (seven_probability * seven_probability_multipBonus) + seven_probability_sumBonus; }
+    
+    public double getLemonProbability_original() { return lemon_probability_original; }
+    public double getCherryProbability_original() { return cherry_probability_original; }
+    public double getCloverProbability_original() { return clover_probability_original; }
+    public double getBellProbability_original() { return bell_probability_original; }
+    public double getDiamondProbability_original() { return diamond_probability_original; }
+    public double getTreasureProbability_original() { return treasure_probability_original; }
+    public double getSevenProbability_original() { return seven_probability_original; }
     
     public void setLemonProbability(double prob) { this.lemon_probability = prob; }
     public void setCherryProbability(double prob) { this.cherry_probability = prob; }
@@ -498,7 +523,7 @@ public class User {
             this.pattern_sum[index] = value;
         }
     }
-    //--------유저 유물-----------
+    //이거 쓰던가
     public void addOwnItem_List(String itemName) {
         this.user_item.add(itemName);
     }
@@ -523,7 +548,20 @@ public class User {
     	this.freeItemReroll_count += addFreeItemReroll_count;
     	return freeItemReroll_count;
     }
+
+    public int getFreeCallReroll_count() {
+    	return freeCallReroll_count;
+    }
     
+    public void setFreeCallReroll_count(int freeItemReroll_count) {
+    	this.freeCallReroll_count = freeItemReroll_count;
+    }
+    
+    public int addFreeCallReroll_count(int addFreeItemReroll_count) {
+    	this.freeCallReroll_count += addFreeItemReroll_count;
+    	return freeCallReroll_count;
+    }
+
     public void addUserItem_List(String itemName) {
             if (this.user_item.size() < this.item_max) { // item_max 제한 확인 (선택 사항)
                 this.user_item.add(itemName);
@@ -581,7 +619,7 @@ public class User {
         }
         user_item.add(itemName);
     }
-
+    
     /**
      * 소유 유물에서 이름 하나를 제거합니다.
      * 제거에 성공하면 true, 없으면 false를 반환합니다.
@@ -590,5 +628,24 @@ public class User {
         if (user_item == null || itemName == null) return false;
         return user_item.remove(itemName);
     }
+  //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
+ // ⭐ 아이템 스택(개수) 가져오기
+    public int getItemStackCount(String itemName) {
+        return itemStacks.getOrDefault(itemName, 0);
+    }
+    
+ // ⭐ 아이템 획득 시 스택 증가 (ItemShop에서 호출)
+    public void addItemStack(String itemName) {
+        int current = getItemStackCount(itemName);
+        itemStacks.put(itemName, current + 1);
+        
+        // 첫 획득이면 리스트에도 이름 추가 (인벤토리 표시용)
+        if (current == 0) {
+            addOwnedItemName(itemName);
+        }
+    }
+    
+    
     //--------------------------
 }
