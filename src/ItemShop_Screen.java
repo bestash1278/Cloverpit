@@ -19,27 +19,25 @@ public class ItemShop_Screen extends JPanel {
     private javax.swing.JLabel priceLabel;      // 유물 가격
     private javax.swing.JButton buyButton;       // 구매 버튼
     private javax.swing.JButton cancelButton;    // 취소 버튼
-    // 현재 선택된 유물의 ItemInfo 객체와, 그 유물의 ITEM_AREAS 인덱스를 저장
     private ItemInfo selectedItem;
     private int selectedItemIndex = -1;
     
-    // 💡 5개의 아이템 박스 영역 좌표
+    //5개의 아이템 박스 영역 좌표
     private static final Rectangle[] ITEM_AREAS = new Rectangle[5]; 
-    // 💡 리롤 버튼 영역 좌표 (아이템 UI 크기 기준: 너비 150, 높이 100, 가운데 아래 배치)
+    //리롤 버튼 영역 좌표
     private static final Rectangle REROLL_AREA = new Rectangle(325, 450, 150, 100); 
     
     public ItemShop_Screen(ItemShop itemShopLogic) {
         this.itemShopLogic = itemShopLogic;
-
         // 초기 아이템 목록 가져오기
         this.displayedItems = itemShopLogic.getCurrentItems();
 
         loadBackgroundImage("res/back_ground.png"); 
         setLayout(null); 
         
-        //아이템 박스 좌표 설정 (피라미드 구조: 위에 2개, 밑에 3개)
+        //아이템 박스 좌표 설정
         setupItemAreas();
-        setupItemDetailPanel();	//초기화 로직
+        setupItemDetailPanel();	//초기화
         
         addMouseListener(new ShopClickListener());
         setPreferredSize(new Dimension(800, 600));
@@ -53,17 +51,16 @@ public class ItemShop_Screen extends JPanel {
         int gap = 80;
         int center_x = 400;
 
-        // 위에 2개 (인덱스 0, 1)
+        // 위에 2개 (0, 1)
         ITEM_AREAS[0] = new Rectangle(center_x - itemWidth - gap/2, 100, itemWidth, itemHeight);
         ITEM_AREAS[1] = new Rectangle(center_x + gap/2, 100, itemWidth, itemHeight);
 
-        // 밑에 3개 (인덱스 2, 3, 4)
+        // 밑에 3개 (2, 3, 4)
         ITEM_AREAS[2] = new Rectangle(center_x - itemWidth - gap - itemWidth/2, 250, itemWidth, itemHeight);
         ITEM_AREAS[3] = new Rectangle(center_x - itemWidth/2, 250, itemWidth, itemHeight);
         ITEM_AREAS[4] = new Rectangle(center_x + gap + itemWidth/2, 250, itemWidth, itemHeight);
     }
     
-    // UI 업데이트 (아이템 목록 새로고침)
     public void updateShopUI(List<ItemInfo> newItems) {
         this.displayedItems = newItems;
         revalidate();
@@ -88,22 +85,16 @@ public class ItemShop_Screen extends JPanel {
             );
         }
 
-        // 2. 유물 목록 순회 및 렌더링
         if (displayedItems != null) {
             for (int i = 0; i < displayedItems.size(); i++) {
                 java.awt.Rectangle area = ITEM_AREAS[i]; // 유물 표시 영역
-                // ItemInfo 객체를 가져옵니다. (ItemShop.class의 getCurrentItems()에서 넘어온 목록)
                 ItemInfo item = (ItemInfo) displayedItems.get(i); 
-
-                // --- A. 유물 이미지 동적 로드 및 그리기 (수정된 부분) ---
                 java.awt.Image realItemImage = null;
                 try {
-                    // ItemInfo에서 실제 이미지 경로를 가져와 File 객체로 로드
                     java.io.File imageFile = new java.io.File(item.getImagePath());
                     realItemImage = javax.imageio.ImageIO.read(imageFile);
                 } catch (java.io.IOException e) {
                     System.err.println("유물 이미지 로드 실패: " + item.getImagePath());
-                    // 에러 발생 시 realItemImage는 null 상태로 유지됩니다.
                 }
                 
                 if (realItemImage != null) {
@@ -117,19 +108,16 @@ public class ItemShop_Screen extends JPanel {
                         this
                     );
                 } else {
-                    // 이미지 로드 실패 시 대체 사각형 (LIGHT_GRAY 사용)
+                    // 이미지 로드 실패 시 대체 사각형
                     g.setColor(java.awt.Color.LIGHT_GRAY); 
                     g.fillRect(area.x, area.y, area.width, area.height); 
                 }
 
-                // --- B. 유물 비용 텍스트 그리기 ---
+                //유물 가격
                 g.setColor(java.awt.Color.YELLOW);
                 g.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
-                
-                // 티켓 비용 텍스트 준비
                 java.lang.String costText = item.getTicketCost() + " Tickets";
                 
-                // 텍스트 중앙 정렬을 위한 X 좌표 계산
                 int textWidth = g.getFontMetrics().stringWidth(costText);
                 int textX = area.x + (area.width - textWidth) / 2;
                 int textY = area.y + area.height + 20; // 유물 영역 아래쪽에 위치
@@ -138,13 +126,10 @@ public class ItemShop_Screen extends JPanel {
             }
         }
         
-        // 3. REROLL 영역 그리기 (클릭 영역 표시)
+        //리롤영역
         if (REROLL_AREA != null) {
             g.setColor(java.awt.Color.YELLOW);
-            // 사각형 테두리를 그려 REROLL 버튼 영역을 시각적으로 표시합니다.
             g.drawRect(REROLL_AREA.x, REROLL_AREA.y, REROLL_AREA.width, REROLL_AREA.height); 
-            
-            // REROLL 텍스트 표시 (중앙 정렬)
             g.setColor(java.awt.Color.WHITE);
             g.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 18));
             String rerollText = "REROLL";
@@ -154,8 +139,6 @@ public class ItemShop_Screen extends JPanel {
             g.drawString(rerollText, textX, textY);
         }
         
-        // 참고: 상세 정보 패널(itemDetailPanel)은 이 메서드 외부에서 add()되었기 때문에
-        // Swing에 의해 이 paintComponent가 끝난 후 자동으로 화면 위에 그려집니다.
     }
     
     

@@ -399,13 +399,11 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     public void updateShopScreen() {
         // 현재 표시 중인 화면이 ItemShop_Screen인지 확인
         if (this.currentPanel == null) {
-            // itemShopLogic에 저장된 최신 목록(리롤된 목록)으로 UI 갱신 요청
             this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
             
-            // 화면을 다시 그리도록 요청 (paintComponent 재호출)
+            // 화면을 다시 그리도록 요청
             this.itemShopScreen.revalidate();
             this.itemShopScreen.repaint();
-            System.out.println("SlotMachinePanel: 라운드 전환으로 상점 화면 즉시 갱신 완료.");
         }
     }
     
@@ -420,7 +418,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             // 팝업 창이 열려있다면 즉시 화면을 다시 그리도록 요청합니다.
             this.callScreen.revalidate();
             this.callScreen.repaint();
-            System.out.println("SlotMachinePanel: 라운드 전환으로 전화 화면 즉시 갱신 요청 완료.");
         }
     }
     
@@ -443,43 +440,33 @@ public class SlotMachinePanel extends JPanel implements Runnable {
 
     // 새로운 프레임 보여주는 함수
     private void showNewFrame(String title) {
-        // 1. JFrame 기본 설정
         JFrame frame = new JFrame(title);
-        
-        // UI 컴포넌트(JPanel)를 담을 변수 선언
         JPanel contentPanel = null;
         int width = 400; // 기본 너비
         int height = 300; // 기본 높이
 
-        // 2. 제목에 따라 적절한 UI 클래스 인스턴스화
+        //title에 따라서 화면 열리는게 달라짐
         switch (title) {
             case "납입 버튼 화면":
-                // "납입 버튼 화면"에 해당하는 Payment_Screen 인스턴스 생성
-                contentPanel = this.paymentScreen; // User 객체와 상태바 업데이트 콜백 전달
+                contentPanel = this.paymentScreen; 
                 width = 800;
                 height = 600;
-             // ⭐ 3. (중요) 상점 패널을 열 때, ItemShopLogic에 저장된 최신 목록으로 UI를 갱신
-                // ItemShop_Screen 내부에 updateShopUI(List<ItemInfo> items) 메서드가 있어야 합니다.
                 if (this.itemShopScreen != null) {
                      this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
                 }
                 break;
                 
             case "유물 상점 버튼 화면":
-                // "유물 상점 버튼 화면"에 해당하는 RelicShop_Screen 인스턴스 생성
             	contentPanel = this.itemShopScreen;
             	width = 800; 
                 height = 600;
-             // ItemShop Logic에 저장된 최신 목록(리롤된 목록)으로 UI를 갱신해야 합니다.
                 if (this.itemShopScreen != null) {
                      this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
-                     System.out.println("SlotMachinePanel: 상점 화면 열면서 UI 갱신 요청 완료."); // 💡 디버깅 코드 추가
                 }
                 break;
                 
                 
             case "전화":
-                // 전화기능에 해당하는 Phone_Screen 인스턴스 생성
                 contentPanel = this.callScreen;
                 width = 800;
                 height = 600;
@@ -530,7 +517,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         frame.setLocationRelativeTo(null); // 화면 중앙에 표시
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
         
-        // 3. 생성된 패널을 프레임에 추가하고 크기 설정
         if (contentPanel != null) {
             frame.add(contentPanel);
         }
@@ -542,10 +528,10 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         
     }
 
-    // 임시 패널 생성 메서드 (기존 코드를 재사용/분리) //테스트용 더미 창 생성용.
+    //테스트용 더미 창 생성용.
     private JPanel createPlaceholderPanel(String title) {
         JPanel panel = new JPanel(new BorderLayout());
-        JLabel label = new JLabel(title + " UI가 여기에 표시됩니다.", SwingConstants.CENTER);
+        JLabel label = new JLabel(title, SwingConstants.CENTER);
         
         Font font = new Font("Malgun Gothic", Font.BOLD, 16);
         if (!font.getFamily().equals("Malgun Gothic")) {
@@ -617,10 +603,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             JOptionPane.showMessageDialog(this, "먼저 라운드를 시작해주세요.");
             return;
         }
-        System.out.println(user.getLemonProbability());
-        System.out.println(user.getLemon_probability_multipBonus());
-        System.out.println(user.getLemon_probability_sumBonus());
-
         
         lastSpinOfDeadline = false;
         
@@ -658,6 +640,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
      */
     private void applyArtifactEffectsBeforeSpin() {
         java.util.List<String> ownedArtifactNames = user.getUserItem_List();
+        java.util.List<String> itemsToRemove = new java.util.ArrayList<>();
         
         for (String itemName : ownedArtifactNames) {
             ItemInfo item = ItemInfo.getArtifactTemplateByName(itemName); 
@@ -675,11 +658,24 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                     ArtifactAction action = effect.getAction();
                     action.execute(user); 
                     
-                    // System.out.println("DEBUG: [" + itemName + "] 효과 실행. 타입: " + type);
+                    if (type == DurationType.CONSUMABLE) {
+                    	int remaining = user.decreaseItemDuration(itemName);
+                    	System.out.println("DEBUG: [" + itemName + "] 남은 횟수: " + remaining);
+                    	if (remaining <= 0) {
+                            itemsToRemove.add(itemName);
+                        }
+                    }
                 }
             }
                 
             
+        }
+        for (String removeName : itemsToRemove) {
+            user.removeOwnedItemName(removeName);
+            System.out.println("DEBUG: [" + removeName + "] 수명 다함 -> 삭제 완료");
+        }
+        if (!itemsToRemove.isEmpty()) {
+            //updateOwnItemScreen.run(); // 만약 여기에 연결된 UI 갱신 런러블이 있다면 호출
         }
     }
     

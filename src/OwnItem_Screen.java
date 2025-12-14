@@ -35,7 +35,7 @@ public class OwnItem_Screen extends JPanel {
     
     private Image centralBackgroundImage; // ⭐ 중앙 배경 이미지 필드
     private static final String BACKGROUND_PATH = "res/back_ground.png"; 
-    private static final String CENTRAL_BG_PATH = "res/dummy.png"; // 유물 전체 뒤 배경 경로
+    private static final String CENTRAL_BG_PATH = "res/shop_bg.png"; // 유물 전체 뒤 배경 경로
     private Image backgroundImage;
     
     private static final Rectangle CENTRAL_ARTIFACT_AREA;	//유물 전체 뒷 배경
