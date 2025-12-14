@@ -9,7 +9,8 @@ public class User {
     private List<String> user_call;
     private List<String> user_item = new ArrayList<>();    
     private Map<String, Integer> itemStacks = new HashMap<>();	//스택형 아이템을 위한 같은 아이템 몇번 구매했는지/Key: 아이템이름, Value: 현재스택
-
+    private Map<String, Integer> itemDurations = new HashMap<>(); //단발형 유물을 얼마나 사용했는지 기록용
+    
     private int roulatte_money = 10000;  
     private double interest = 0.1;  
     private int ticket = 3;
@@ -19,7 +20,7 @@ public class User {
     private int total_money = 30;
     private int total_spin = 0;
     private int round_spin_left = 7;
-    private int item_max = 11;
+    private int item_max = 7;	//최대 11까지 가능
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
     private boolean call_count = false;	//전화를 걸 수 있는 기회
@@ -605,32 +606,52 @@ public class User {
         user_item.add(itemName);
     }
     
-    /**
-     * 소유 유물에서 이름 하나를 제거합니다.
-     * 제거에 성공하면 true, 없으면 false를 반환합니다.
-     */
-    public boolean removeOwnedItemName(String itemName) {
-        if (user_item == null || itemName == null) return false;
-        return user_item.remove(itemName);
-    }
+
   //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
- // ⭐ 아이템 스택(개수) 가져오기
     public int getItemStackCount(String itemName) {
         return itemStacks.getOrDefault(itemName, 0);
     }
     
- // ⭐ 아이템 획득 시 스택 증가 (ItemShop에서 호출)
     public void addItemStack(String itemName) {
         int current = getItemStackCount(itemName);
         itemStacks.put(itemName, current + 1);
         
-        // 첫 획득이면 리스트에도 이름 추가 (인벤토리 표시용)
-        if (current == 0) {
-            addOwnedItemName(itemName);
+
+    }
+    /**
+     * [추가] 아이템의 지속 횟수를 설정합니다. (구매 시 호출)
+     */
+    public void setItemDuration(String itemName, int count) {
+        itemDurations.put(itemName, count);
+    }
+
+    /**
+     * [추가] 아이템의 남은 횟수를 가져옵니다.
+     */
+    public int getItemDuration(String itemName) {
+        return itemDurations.getOrDefault(itemName, 0);
+    }
+
+    /**
+     * [추가] 아이템의 횟수를 1 차감하고, 남은 횟수를 반환합니다.
+     */
+    public int decreaseItemDuration(String itemName) {
+        if (itemDurations.containsKey(itemName)) {
+            int current = itemDurations.get(itemName);
+            int next = current - 1;
+            itemDurations.put(itemName, next);
+            return next;
         }
+        return 0;
     }
     
+    // 아이템 삭제 시 카운터도 같이 지워주는 게 좋습니다.
+    public boolean removeOwnedItemName(String itemName) {
+        if (user_item == null || itemName == null) return false;
+        itemDurations.remove(itemName); // ⭐ 횟수 정보도 삭제
+        return user_item.remove(itemName);
+    }
     
     //--------------------------
 }

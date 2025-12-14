@@ -49,8 +49,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int LEVER_HEAD_SIZE = 60; 
     private static final int LEVER_BAR_THICKNESS = 18; 
 
-    private static final int TARGET_WIDTH = 1200;
-    private static final int TARGET_HEIGHT = 650;
+    private static final int TARGET_WIDTH = 1600;
+    private static final int TARGET_HEIGHT = 900;
     
     private static final int SLOT_SIZE = 120;
     private static final int SLOT_SPACING = 15;

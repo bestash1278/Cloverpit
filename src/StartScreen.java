@@ -40,8 +40,8 @@ public class StartScreen extends JPanel {
         
         // 버튼 위치 설정 (배경 이미지의 네모 상자 영역에 맞춤)
         // 화면 중앙 하단 영역: x=500, y=550부터 시작 (1600x900 기준)
-        int buttonX = 693;
-        int buttonY = 500;
+        int buttonX = 500;
+        int buttonY = 550;
         int buttonWidth = 200;
         int buttonHeight = 60;
         int buttonSpacing = 10;

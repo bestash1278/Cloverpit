@@ -30,6 +30,7 @@ public class SymbolPrice_Screen extends JPanel {
     private JLabel[] symbolImageLabels;
     private JLabel[] symbolNameLabels;
     private JLabel[] currentPriceLabels;
+    private JLabel[] probabilityLabels;
     
     public SymbolPrice_Screen(User user) {
         this.user = user;
@@ -48,6 +49,7 @@ public class SymbolPrice_Screen extends JPanel {
         symbolImageLabels = new JLabel[SYMBOL_NAMES.length];
         symbolNameLabels = new JLabel[SYMBOL_NAMES.length];
         currentPriceLabels = new JLabel[SYMBOL_NAMES.length];
+        probabilityLabels = new JLabel[SYMBOL_NAMES.length];
         
         int panelWidth = 1200; // 패널 너비
         int startY = 150;
@@ -55,11 +57,13 @@ public class SymbolPrice_Screen extends JPanel {
         int imageSize = 80;
         int nameWidth = 120;
         int priceWidth = 200;
+        int probabilityWidth = 150;
         int gap1 = 30; // 이미지와 이름 사이 간격
         int gap2 = 40; // 이름과 가격 사이 간격
+        int gap3 = 30; // 가격과 확률 사이 간격
         
         // 전체 컨텐츠 너비 계산
-        int totalContentWidth = imageSize + gap1 + nameWidth + gap2 + priceWidth;
+        int totalContentWidth = imageSize + gap1 + nameWidth + gap2 + priceWidth + gap3 + probabilityWidth;
         int leftMargin = (panelWidth - totalContentWidth) / 2; // 가운데 정렬을 위한 왼쪽 마진
         
         // 제목 라벨 (완전히 가운데)
@@ -87,6 +91,12 @@ public class SymbolPrice_Screen extends JPanel {
         headerCurrent.setForeground(Color.WHITE);
         headerCurrent.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         add(headerCurrent);
+        
+        JLabel headerProbability = new JLabel("등장 확률", SwingConstants.CENTER);
+        headerProbability.setBounds(leftMargin + imageSize + gap1 + nameWidth + gap2 + priceWidth + gap3, startY - 30, probabilityWidth, 30);
+        headerProbability.setForeground(Color.WHITE);
+        headerProbability.setFont(new Font("맑은 고딕", Font.BOLD, 18));
+        add(headerProbability);
         
         // 각 무늬별 라벨 생성 및 배치
         for (int i = 0; i < SYMBOL_NAMES.length; i++) {
@@ -140,6 +150,14 @@ public class SymbolPrice_Screen extends JPanel {
             currentPriceLabels[i].setFont(new Font("맑은 고딕", Font.BOLD, 16));
             currentPriceLabels[i].setVerticalAlignment(SwingConstants.CENTER);
             add(currentPriceLabels[i]);
+            
+            // 확률 라벨 (수직 가운데 정렬)
+            probabilityLabels[i] = new JLabel("", SwingConstants.CENTER);
+            probabilityLabels[i].setBounds(leftMargin + imageSize + gap1 + nameWidth + gap2 + priceWidth + gap3, y + (imageSize - 30) / 2, probabilityWidth, 30);
+            probabilityLabels[i].setForeground(Color.ORANGE);
+            probabilityLabels[i].setFont(new Font("맑은 고딕", Font.BOLD, 16));
+            probabilityLabels[i].setVerticalAlignment(SwingConstants.CENTER);
+            add(probabilityLabels[i]);
         }
         
         // 가격 정보 업데이트
@@ -179,6 +197,19 @@ public class SymbolPrice_Screen extends JPanel {
             } else {
                 currentPriceLabels[i].setForeground(Color.GREEN);
             }
+            
+            // 확률 정보 업데이트
+            double probability = 0.0;
+            switch (i) {
+                case 0: probability = user.getLemonProbability(); break;
+                case 1: probability = user.getCherryProbability(); break;
+                case 2: probability = user.getCloverProbability(); break;
+                case 3: probability = user.getBellProbability(); break;
+                case 4: probability = user.getDiamondProbability(); break;
+                case 5: probability = user.getTreasureProbability(); break;
+                case 6: probability = user.getSevenProbability(); break;
+            }
+            probabilityLabels[i].setText(String.format("%.2f%%", probability));
         }
         
         revalidate();
@@ -206,4 +237,3 @@ public class SymbolPrice_Screen extends JPanel {
         }
     }
 }
-

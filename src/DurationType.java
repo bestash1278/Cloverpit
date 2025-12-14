@@ -2,8 +2,8 @@
  * 유물 효과의 지속 시간을 선언하는곳
  */
 public enum DurationType {
-    TEMPORARY,  //스핀 할때마다 효과 리셋
-    PERSISTENT,  //즉발
-    STACKABLE
+	INSTANT,    // [즉발형] 구매 즉시 발동, 소유 목록에 추가 X (예: 체력 포션)
+    CONSUMABLE, // [단발형] 소유 목록에 추가 O, 조건 만족 시 발동 후 제거 (예: 다음 1회 스핀 보너스)
+    PASSIVE,    // [영구형] 소유 목록에 추가 O, 계속 효과 지속 (예: 지속적인 심볼 강화)
+    STACKABLE   // [스택형] 영구형과 비슷하나 개수가 쌓임
 }
-
