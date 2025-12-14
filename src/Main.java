@@ -92,6 +92,7 @@ public class Main {
             System.exit(0);
         }
     }
+
     //탈락 전용 메서드
     public static void exitGameWithLose() {
         if (cardPanel != null && cardLayout != null) {
@@ -140,3 +141,5 @@ public class Main {
     }
 
 }
+
+

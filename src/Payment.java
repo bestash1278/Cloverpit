@@ -170,10 +170,13 @@ public class Payment {
     
     /**------------목표 납입액---------------**/
     //이번 라운드 납입해야할 금액 가져오는함수
-    public int get_deadline_money() {
+public int get_deadline_money() {
     	int this_round_money = userInfo.getDeadline_money();
     	this.round_money = this_round_money;
     	return round_money;
     }
+
+	
 	
 }
+

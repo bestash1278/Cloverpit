@@ -7,6 +7,8 @@ public class RoundManager {
 
     private int deadline_bonus_coin = 8;	//마감기한 보너스 코인
     private int deadline_bonus_tiket = 4;	//마감기한 보너스 티켓
+
+
     public RoundManager(User user) {
         this.user = user;
         if (user.getRound_spin_left() == 0) {

@@ -123,7 +123,8 @@ public class ItemShop {
         }
         
         // ⭐ 2. 소유 유물 목록 가져오기 (ItemInfo 이름 목록)
-        List<String> ownedItemNames = userInfo.getOwnedItemNames();
+
+        List<String> ownedItemNames = userInfo.getUserItem_List();
         
         // ⭐ 3. 새로운 상점 목록 후보 (구매 가능 유물) 생성
         List<ItemInfo> availableArtifacts = new ArrayList<>();
@@ -201,7 +202,7 @@ public class ItemShop {
             // 3. 티켓 차감 성공: 유물 효과 적용
             item.applyEffect(userInfo);
             
-            userInfo.addOwnedItemName(item.getName());
+            userInfo.addUserItem_List(item.getName());
             // 4. 상점 UI 업데이트: '판매된 유물' 객체로 교체
             ItemInfo soldItem = new ItemInfo.SoldArtifact();
             currentItems.set(itemIndex, soldItem);

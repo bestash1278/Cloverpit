@@ -119,16 +119,12 @@ public abstract class ItemInfo {
     public static class symbol_chain extends ItemInfo {
         public symbol_chain() {
             super("사슬 변형자 ", 0, "res/symbol_chain.png", "사슬 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다."); 
-
         }
         @Override
         public void applyEffect(User userInfo) {
-            for (int i = 0; i < 11; i++) {
-                userInfo.setPatternSum(i,userInfo.getPatternSum(i) + userInfo.getPatternOriginal(i));
-            }
+            // 효과 없음
         }
     }
-
 
     public static class symbol_repeat extends ItemInfo {
         public symbol_repeat() {
@@ -153,7 +149,6 @@ public abstract class ItemInfo {
     public static class symbol_token extends ItemInfo {
         public symbol_token() {
             super("토큰 변형자 ", 0, "res/symbol_token.png", "토큰 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다."); 
-
         }
         @Override
         public void applyEffect(User userInfo) {

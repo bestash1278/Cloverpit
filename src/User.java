@@ -7,7 +7,8 @@ public class User {
     private List<String> user_call;
     private List<String> user_item = new ArrayList<>();     
 
-    private int roulatte_money = 0;  
+
+    private int roulatte_money = 10000;  
     private double interest = 0.1;  
     private int ticket = 3;
     private int deadline = 1;
@@ -19,7 +20,6 @@ public class User {
     private int item_max = 11;
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
-
     private int call_count = 0;	//전화를 걸 수 있는 기회
     private int callReroll_count = 0; //전화 리롤 횟수
     private int itemReroll_count = 0; //유물상점 리롤 횟수
@@ -165,7 +165,6 @@ public class User {
         this.item_max = item_max;
     }
     
-
     // 전화 관련 메서드
     public int getCall_count() {
     	return call_count;
@@ -366,52 +365,4 @@ public class User {
         return this.user_item.remove(itemName);
     }
     //--------------------------
-    // ====== 새 아이템 게터 / 세터 (기존 메서드와 별도 사용) ======
-    /**
-     * 소유 유물 이름 리스트를 "읽을 때" 사용하는 메서드.
-     * 내부 리스트를 그대로 노출하지 않기 위해 복사본을 반환합니다.
-     */
-    public List<String> getOwnedItemNames() {
-        if (user_item == null) {
-            user_item = new ArrayList<>();
-        }
-        return new ArrayList<>(user_item);
-    }
-
-    /**
-     * 소유 유물 이름 리스트를 통째로 설정합니다.
-     * CSV 로드 등에서 사용됩니다.
-     */
-    public void setOwnedItemNames(List<String> ownedNames) {
-        if (user_item == null) {
-            user_item = new ArrayList<>();
-        } else {
-            user_item.clear();
-        }
-        if (ownedNames != null) {
-            user_item.addAll(ownedNames);
-        }
-    }
-
-    /**
-     * 소유 유물에 이름 하나를 추가합니다.
-     */
-    public void addOwnedItemName(String itemName) {
-        if (itemName == null || itemName.isEmpty()) return;
-        if (user_item == null) {
-            user_item = new ArrayList<>();
-        }
-        user_item.add(itemName);
-    }
-
-    /**
-     * 소유 유물에서 이름 하나를 제거합니다.
-     * 제거에 성공하면 true, 없으면 false를 반환합니다.
-     */
-    public boolean removeOwnedItemName(String itemName) {
-        if (user_item == null || itemName == null) return false;
-        return user_item.remove(itemName);
-    }
-
 }
-
