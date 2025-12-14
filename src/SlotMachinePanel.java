@@ -803,6 +803,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         //라운드 끝날 때마다 저장
         if (saveManager != null && user != null) {
         	saveManager.save(user);
+            JOptionPane.showMessageDialog(this, "게임 데이터가 저장되었습니다!");
         }
     }
     
