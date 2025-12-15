@@ -1,1 +1,5 @@
+# Eclipse / Java build
 /bin/
+
+# Runtime save file
+/data/user_save.csv
