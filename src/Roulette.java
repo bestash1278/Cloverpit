@@ -112,6 +112,9 @@ public class Roulette {
 
     public void setUser(User user) {
         this.user = user;
+        if (user != null) {
+            user.setRoulette(this);
+        }
         initializeProbabilities();
     }
     
@@ -207,11 +210,21 @@ public class Roulette {
             case 6: user.setSevenProbability(newProbability); break;
         }
         
-        // 나머지 문양들의 확률 조정
+        // 나머지 문양들의 확률 조정 - 균등하게 감소
         if (remainingTotal > 0 && targetRemaining > 0) {
-            // 비례적으로 조정
-            double ratio = targetRemaining / remainingTotal;
-            adjustOtherProbabilities(symbolIndex, ratio);
+            // 현재 확률과 원래 확률의 차이 계산
+            double originalProb = getOriginalProbability(symbolIndex);
+            double increaseAmount = newProbability - originalProb;
+            
+            if (increaseAmount > 0) {
+                // 증가량만큼 나머지 문양들을 균등하게 감소
+                double decreasePerSymbol = increaseAmount / 6.0;
+                decreaseOtherProbabilitiesEvenly(symbolIndex, decreasePerSymbol);
+            } else {
+                // 감소하는 경우 비례적으로 조정
+                double ratio = targetRemaining / remainingTotal;
+                adjustOtherProbabilities(symbolIndex, ratio);
+            }
         } else if (remainingTotal == 0) {
             // 다른 문양이 없으면 균등 분배
             double equalProb = targetRemaining / (SYMBOL_TYPES.length - 1);
@@ -264,6 +277,56 @@ public class Roulette {
     }
     
     /**
+     * 특정 문양의 원래 확률을 반환합니다.
+     */
+    private double getOriginalProbability(int symbolIndex) {
+        switch (symbolIndex) {
+            case 0: return user.getLemonProbability_original();
+            case 1: return user.getCherryProbability_original();
+            case 2: return user.getCloverProbability_original();
+            case 3: return user.getBellProbability_original();
+            case 4: return user.getDiamondProbability_original();
+            case 5: return user.getTreasureProbability_original();
+            case 6: return user.getSevenProbability_original();
+            default: return 0.0;
+        }
+    }
+    
+    /**
+     * 특정 문양을 제외한 나머지 문양들의 확률을 균등하게 감소시킵니다.
+     */
+    private void decreaseOtherProbabilitiesEvenly(int excludeIndex, double decreaseAmount) {
+        if (excludeIndex != 0) {
+            double newProb = Math.max(0.0, user.getLemonProbability() - decreaseAmount);
+            user.setLemonProbability(newProb);
+        }
+        if (excludeIndex != 1) {
+            double newProb = Math.max(0.0, user.getCherryProbability() - decreaseAmount);
+            user.setCherryProbability(newProb);
+        }
+        if (excludeIndex != 2) {
+            double newProb = Math.max(0.0, user.getCloverProbability() - decreaseAmount);
+            user.setCloverProbability(newProb);
+        }
+        if (excludeIndex != 3) {
+            double newProb = Math.max(0.0, user.getBellProbability() - decreaseAmount);
+            user.setBellProbability(newProb);
+        }
+        if (excludeIndex != 4) {
+            double newProb = Math.max(0.0, user.getDiamondProbability() - decreaseAmount);
+            user.setDiamondProbability(newProb);
+        }
+        if (excludeIndex != 5) {
+            double newProb = Math.max(0.0, user.getTreasureProbability() - decreaseAmount);
+            user.setTreasureProbability(newProb);
+        }
+        if (excludeIndex != 6) {
+            double newProb = Math.max(0.0, user.getSevenProbability() - decreaseAmount);
+            user.setSevenProbability(newProb);
+        }
+    }
+    
+    /**
      * 확률을 정규화하여 전체 합이 정확히 100이 되도록 합니다.
      */
     private void normalizeProbabilities() {
@@ -281,6 +344,25 @@ public class Roulette {
             user.setTreasureProbability(user.getTreasureProbability() * ratio);
             user.setSevenProbability(user.getSevenProbability() * ratio);
         }
+    }
+    
+    /**
+     * 특정 문양의 확률을 증가시키고, 나머지 문양들의 확률을 균등하게 감소시킵니다.
+     * 전체 확률 합이 항상 100%를 유지합니다.
+     * @param symbolIndex 문양 인덱스 (0: 레몬, 1: 체리, 2: 클로버, 3: 종, 4: 다이아, 5: 보물, 6: 세븐)
+     * @param increaseAmount 증가할 확률량
+     */
+    public void increaseSymbolProbabilityEvenly(int symbolIndex, double increaseAmount) {
+        if (symbolIndex < 0 || symbolIndex >= SYMBOL_TYPES.length || increaseAmount <= 0) {
+            return;
+        }
+        
+        // 현재 확률 가져오기
+        double currentProbability = getSymbolProbability(symbolIndex);
+        double newProbability = currentProbability + increaseAmount;
+        
+        // setSymbolProbability를 사용하여 확률 설정 (나머지 문양들의 확률은 자동으로 조정됨)
+        setSymbolProbability(symbolIndex, newProbability);
     }
     
     /**
@@ -484,14 +566,7 @@ public class Roulette {
         java.util.ArrayList<String> availableModifiers = getAvailableModifiers();
         
         // 디버깅: 사용 가능한 변형자 확인
-        if (availableModifiers.isEmpty()) {
-            System.out.println("DEBUG: 사용 가능한 변형자가 없습니다. 보유 아이템: " + 
-                (user != null && user.getUserItem_List() != null ? user.getUserItem_List() : "null"));
-        } else {
-            System.out.println("DEBUG: 사용 가능한 변형자: " + availableModifiers);
-        }
         
-        int modifierCount = 0;
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
                 // 먼저 확률 기반으로 문양 생성
@@ -505,7 +580,6 @@ public class Roulette {
                         double modifierProbability = getModifierProbability(availableModifier);
                         if (random.nextDouble() < modifierProbability) {
                             modifier = availableModifier;
-                            modifierCount++;
                             break; // 하나의 변형자만 적용
                         }
                     }
@@ -515,7 +589,6 @@ public class Roulette {
             }
         }
         
-        System.out.println("DEBUG: 총 " + modifierCount + "개의 변형자가 적용되었습니다.");
         return results;
     }
     
@@ -553,7 +626,6 @@ public class Roulette {
      * @return 패턴 결과
      */
     private PatternResult checkResultsWithModifiers(int[][] results, SymbolInfo[][] symbolInfos) {
-        StringBuilder winMessage = new StringBuilder();
         boolean hasWin = false;
         String detectedPattern = "";
         
@@ -571,8 +643,6 @@ public class Roulette {
             results[2][4] == zigSymbol) {
             isGround = true;
             detectedPattern = GROUND;
-            winMessage.append(String.format("%s 패턴! (%s)\n", 
-                GROUND, SYMBOL_NAMES[zigSymbol]));
             roulette_money += user.getSymbolSum(results[0][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
             hasWin = true;
             // 패턴 발동 시 변형자 발동
@@ -581,8 +651,6 @@ public class Roulette {
             }
         } else if (isZig) {
             detectedPattern = ZIG;
-            winMessage.append(String.format("%s 패턴! (%s)\n", 
-                ZIG, SYMBOL_NAMES[zigSymbol]));
             roulette_money += user.getSymbolSum(results[0][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
             hasWin = true;
             // 패턴 발동 시 변형자 발동
@@ -604,8 +672,6 @@ public class Roulette {
             results[0][4] == zagSymbol) {
             isHeaven = true;
             detectedPattern = HEAVEN;
-            winMessage.append(String.format("%s 패턴! (%s)\n", 
-                HEAVEN, SYMBOL_NAMES[zagSymbol]));
             roulette_money += user.getSymbolSum(results[0][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
             hasWin = true;
             // 패턴 발동 시 변형자 발동
@@ -614,8 +680,6 @@ public class Roulette {
             }
         } else if (isZag) {
             detectedPattern = ZAG;
-            winMessage.append(String.format("%s 패턴! (%s)\n", 
-                ZAG, SYMBOL_NAMES[zagSymbol]));
             roulette_money += user.getSymbolSum(results[0][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
             hasWin = true;
             // 패턴 발동 시 변형자 발동
@@ -635,8 +699,6 @@ public class Roulette {
         
         if (isEye) {
             detectedPattern = EYE;
-            winMessage.append(String.format("%s 패턴! (%s)\n", 
-                EYE, SYMBOL_NAMES[eyeSymbol]));
             roulette_money += user.getSymbolSum(results[2][1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
             hasWin = true;
             // 패턴 발동 시 변형자 발동
@@ -663,7 +725,6 @@ public class Roulette {
             
             if (results[0][j] == results[1][j+1] && results[1][j+1] == results[2][j+2]) {
                 detectedPattern = RIGHT_DIAGONAL;
-                winMessage.append(String.format("아래로 대각선패턴! (%s)\n", SYMBOL_NAMES[results[0][j]]));
                 roulette_money += user.getSymbolSum(results[0][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
                 // 패턴 발동 시 변형자 발동
@@ -675,7 +736,6 @@ public class Roulette {
             // 대각선 체크 - LEFT_DIAGONAL (오른쪽 위 -> 왼쪽 아래)
             if (results[2][j] == results[1][j+1] && results[1][j+1] == results[0][j+2]) {
                 detectedPattern = LEFT_DIAGONAL;
-                winMessage.append(String.format("위로 대각선 패턴! (%s)\n", SYMBOL_NAMES[results[2][j]]));
                 roulette_money += user.getSymbolSum(results[0][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
                 // 패턴 발동 시 변형자 발동
@@ -702,8 +762,6 @@ public class Roulette {
                 // 1행의 펜타는 SECPENTA로 처리
                 if (i == 1) {
                     detectedPattern = SECPENTA;
-                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                        i + 1, SECPENTA, SYMBOL_NAMES[row[0]]));
                     roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                     // 패턴 발동 시 변형자 발동
@@ -712,8 +770,6 @@ public class Roulette {
                     }
                 } else {
                     detectedPattern = PENTA;
-                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                        i + 1, PENTA, SYMBOL_NAMES[row[0]]));
                     roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                     // 패턴 발동 시 변형자 발동
@@ -733,8 +789,6 @@ public class Roulette {
                     continue;
                 }
                 detectedPattern = QUADRA;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    i + 1, QUADRA, SYMBOL_NAMES[row[0]]));
                 roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
                 // 패턴 발동 시 변형자 발동
@@ -752,8 +806,6 @@ public class Roulette {
                     continue;
                 }
                 detectedPattern = QUADRA;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    i + 1, QUADRA, SYMBOL_NAMES[row[1]]));
                 roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
                 // 패턴 발동 시 변형자 발동
@@ -772,8 +824,6 @@ public class Roulette {
                     continue;
                 }
                 detectedPattern = TRIPLE;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    i + 1, TRIPLE, SYMBOL_NAMES[row[0]]));
                 roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
                 // 패턴 발동 시 변형자 발동
@@ -795,8 +845,6 @@ public class Roulette {
                     continue;
                 }
                 detectedPattern = TRIPLE;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    i + 1, TRIPLE, SYMBOL_NAMES[row[1]]));
                 roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
                 // 패턴 발동 시 변형자 발동
@@ -814,8 +862,6 @@ public class Roulette {
                     continue;
                 }
                 detectedPattern = TRIPLE;
-                winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                    i + 1, TRIPLE, SYMBOL_NAMES[row[2]]));
                 roulette_money += user.getSymbolSum(row[2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
                 // 패턴 발동 시 변형자 발동
@@ -832,8 +878,6 @@ public class Roulette {
             }
             if (results[0][j] == results[1][j] && results[1][j] == results[2][j]) {
                 detectedPattern = VERTICAL;
-                winMessage.append(String.format("%d번째 열 %s 패턴! (%s)\n", 
-                    j + 1, VERTICAL, SYMBOL_NAMES[results[0][j]]));
                 roulette_money += user.getSymbolSum(results[1][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
                 // 패턴 발동 시 변형자 발동
@@ -857,8 +901,6 @@ public class Roulette {
         
         if (isJackpot) {
             detectedPattern = JACKPOT;
-            winMessage.append(String.format("%s 패턴! (%s)\n", 
-                JACKPOT, SYMBOL_NAMES[jackpotSymbol]));
             roulette_money += user.getSymbolSum(results[1][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
             hasWin = true;
             // 패턴 발동 시 변형자 발동
@@ -867,7 +909,7 @@ public class Roulette {
             }
         }
         
-        return new PatternResult(hasWin, winMessage.toString(), detectedPattern);
+        return new PatternResult(hasWin, detectedPattern);
     }
     
     /**
@@ -906,7 +948,7 @@ public class Roulette {
         }
         
         // 패턴 결과 생성 (변형자 효과 적용을 위해)
-        PatternResult patternResult = new PatternResult(true, "", pattern);
+        PatternResult patternResult = new PatternResult(true, pattern);
         
         // 각 변형자 효과 적용
         for (String modifier : modifiersInPattern) {
@@ -936,66 +978,6 @@ public class Roulette {
         }
     }
     
-    /**
-     * 패턴 완성 시 변형자 효과를 적용합니다.
-     * @param patternResult 패턴 결과
-     * @param symbolInfos 변형자 정보 배열
-     * @param results 문양 인덱스 배열
-     */
-    private void applyModifierEffects(PatternResult patternResult, SymbolInfo[][] symbolInfos, int[][] results) {
-        if (!patternResult.hasWin() || symbolInfos == null) {
-            return;
-        }
-        
-        String pattern = patternResult.getPattern();
-        java.util.ArrayList<int[]> patternPositions = getPatternPositions(pattern, results);
-        
-        // 패턴에 포함된 위치들의 변형자 확인 (중복 허용 - 같은 변형자가 여러 개 있으면 모두 발동)
-        java.util.ArrayList<String> modifiersInPattern = new java.util.ArrayList<>();
-        for (int[] pos : patternPositions) {
-            int i = pos[0];
-            int j = pos[1];
-            if (symbolInfos[i][j].hasModifier()) {
-                modifiersInPattern.add(symbolInfos[i][j].getModifier());
-            }
-        }
-        
-        // 반복 변형자의 개수 세기
-        int repeatCount = 0;
-        for (String modifier : modifiersInPattern) {
-            if (modifier.equals(MODIFIER_REPEAT)) {
-                repeatCount+=1;
-            }
-        }
-        
-        // 각 변형자 효과 적용
-        // 반복 변형자가 있으면 다른 변형자들의 효과도 반복 변형자 개수만큼 추가 발동
-        for (String modifier : modifiersInPattern) {
-            if (modifier.equals(MODIFIER_REPEAT)) {
-                // 반복 변형자 자체는 원래 개수만큼만 발동 (패턴 보상 추가)
-                applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
-            } else {
-                // 다른 변형자는 원래 개수만큼 발동
-                applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
-            }
-        }
-        
-        // 반복 변형자가 있으면 다른 변형자들의 효과를 반복 변형자 개수만큼 추가 발동
-        if (repeatCount > 0) {
-            java.util.Set<String> otherModifiers = new java.util.HashSet<>();
-            for (String modifier : modifiersInPattern) {
-                if (!modifier.equals(MODIFIER_REPEAT)) {
-                    otherModifiers.add(modifier);
-                }
-            }
-            // 각 다른 변형자를 반복 변형자 개수만큼 추가 발동
-            for (int i = 0; i < repeatCount; i++) {
-                for (String modifier : otherModifiers) {
-                    applyModifierEffect(modifier, pattern, patternResult, results, patternPositions);
-                }
-            }
-        }
-    }
     
     /**
      * 모든 감지된 패턴의 위치를 반환합니다.
@@ -1550,7 +1532,6 @@ public class Roulette {
                 int originalValue = user.getPatternOriginal(patternIndex);
                 // 원래 가치만큼 증가
                 user.setPatternSum(patternIndex, currentValue + originalValue);
-                System.out.println("사슬 변형자 효과: " + pattern + " 패턴 가치가 " + originalValue + " 증가했습니다.");
             }
             
         } else if (modifier.equals(MODIFIER_REPEAT)) {
@@ -1563,19 +1544,16 @@ public class Roulette {
                 // 패턴 보상을 한 번 더 지급
                 int additionalReward = user.getSymbolSum(symbolIndex) * what_pattern(pattern) * symbol_mul * pattern_mul;
                 roulette_money += additionalReward;
-                System.out.println("반복 변형자 효과: " + pattern + " 패턴 보상을 한 번 더 받았습니다. (+" + additionalReward + "원)");
             }
             
         } else if (modifier.equals(MODIFIER_TICKET)) {
             // 티켓: 티켓 +1
             user.addTicket(1);
-            System.out.println("티켓 변형자 효과: 티켓이 1개 증가했습니다.");
             
         } else if (modifier.equals(MODIFIER_TOKEN)) {
             // 토큰: 현재 이자만큼 돈 추가
             int interestAmount = (int)(user.getTotal_money() * user.getInterest());
             roulette_money += interestAmount;
-            System.out.println("토큰 변형자 효과: 현재 이자(" + (user.getInterest() * 100) + "%)만큼 돈이 추가되었습니다. (+" + interestAmount + "원)");
         }
     }
     
@@ -1610,7 +1588,6 @@ public class Roulette {
      * @return 패턴 결과
      */
     public PatternResult checkResults(int[][] results) {
-        StringBuilder winMessage = new StringBuilder();
         boolean hasWin = false;
         String detectedPattern = "";
         
@@ -1628,14 +1605,10 @@ public class Roulette {
                 results[2][4] == zigSymbol) {
                 isGround = true;
                 detectedPattern = GROUND;
-                winMessage.append(String.format("%s 패턴! (%s)\n", 
-                    GROUND, SYMBOL_NAMES[zigSymbol]));
                 roulette_money += user.getSymbolSum(results[0][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             } else if (isZig) {
                 detectedPattern = ZIG;
-                winMessage.append(String.format("%s 패턴! (%s)\n", 
-                    ZIG, SYMBOL_NAMES[zigSymbol]));
                 roulette_money += user.getSymbolSum(results[0][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
@@ -1653,14 +1626,10 @@ public class Roulette {
                 results[0][4] == zagSymbol) {
                 isHeaven = true;
                 detectedPattern = HEAVEN;
-                winMessage.append(String.format("%s 패턴! (%s)\n", 
-                    HEAVEN, SYMBOL_NAMES[zagSymbol]));
                 roulette_money += user.getSymbolSum(results[0][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             } else if (isZag) {
                 detectedPattern = ZAG;
-                winMessage.append(String.format("%s 패턴! (%s)\n", 
-                    ZAG, SYMBOL_NAMES[zagSymbol]));
                 roulette_money += user.getSymbolSum(results[0][0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
@@ -1676,8 +1645,6 @@ public class Roulette {
             
             if (isEye) {
                 detectedPattern = EYE;
-                winMessage.append(String.format("%s 패턴! (%s)\n", 
-                    EYE, SYMBOL_NAMES[eyeSymbol]));
                 roulette_money += user.getSymbolSum(results[2][1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
@@ -1704,7 +1671,6 @@ public class Roulette {
                 if (results[0][j] == results[1][j+1] && results[1][j+1] == results[2][j+2]) {
                     
                     detectedPattern = RIGHT_DIAGONAL;
-                    winMessage.append(String.format("아래로 대각선패턴! (%s)\n", SYMBOL_NAMES[results[0][j]]));
                     roulette_money += user.getSymbolSum(results[0][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                     
@@ -1714,7 +1680,6 @@ public class Roulette {
                 if (results[2][j] == results[1][j+1] && results[1][j+1] == results[0][j+2]) {
                    
                     detectedPattern = LEFT_DIAGONAL;
-                    winMessage.append(String.format("위로 대각선 패턴! (%s)\n", SYMBOL_NAMES[results[2][j]]));
                     roulette_money += user.getSymbolSum(results[0][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                     
@@ -1739,14 +1704,10 @@ public class Roulette {
                     // 1행의 펜타는 SECPENTA로 처리
                     if (i == 1) {
                         detectedPattern = SECPENTA;
-                        winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                            i + 1, SECPENTA, SYMBOL_NAMES[row[0]]));
                         roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                         hasWin = true;
                     } else {
                         detectedPattern = PENTA;
-                        winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                            i + 1, PENTA, SYMBOL_NAMES[row[0]]));
                         roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                         hasWin = true;
                     }
@@ -1762,8 +1723,6 @@ public class Roulette {
                         continue;
                     }
                     detectedPattern = QUADRA;
-                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                        i + 1, QUADRA, SYMBOL_NAMES[row[0]]));
                     roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                 }
@@ -1777,8 +1736,6 @@ public class Roulette {
                         continue;
                     }
                     detectedPattern = QUADRA;
-                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                        i + 1, QUADRA, SYMBOL_NAMES[row[1]]));
                     roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                 }
@@ -1795,8 +1752,6 @@ public class Roulette {
                     // 눈 패턴이 있을 때 0행과 2행의 [0,1,2] 열 트리플은 눈 패턴과 겹치지 않으므로 체크
                     // 하지만 [1,2,3] 열 트리플은 눈 패턴과 겹침
                     detectedPattern = TRIPLE;
-                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                        i + 1, TRIPLE, SYMBOL_NAMES[row[0]]));
                     roulette_money += user.getSymbolSum(row[0]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                 }
@@ -1814,8 +1769,6 @@ public class Roulette {
                         continue;
                     }
                     detectedPattern = TRIPLE;
-                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                        i + 1, TRIPLE, SYMBOL_NAMES[row[1]]));
                     roulette_money += user.getSymbolSum(row[1]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                 }
@@ -1829,8 +1782,6 @@ public class Roulette {
                         continue;
                     }
                     detectedPattern = TRIPLE;
-                    winMessage.append(String.format("%d번째 행 %s 패턴! (%s)\n", 
-                        i + 1, TRIPLE, SYMBOL_NAMES[row[2]]));
                     roulette_money += user.getSymbolSum(row[2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                 }
@@ -1843,8 +1794,6 @@ public class Roulette {
                 }
                 if (results[0][j] == results[1][j] && results[1][j] == results[2][j]) {
                     detectedPattern = VERTICAL;
-                    winMessage.append(String.format("%d번째 열 %s 패턴! (%s)\n", 
-                        j + 1, VERTICAL, SYMBOL_NAMES[results[0][j]]));
                     roulette_money += user.getSymbolSum(results[1][j]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                     hasWin = true;
                 }
@@ -1864,34 +1813,26 @@ public class Roulette {
             
             if (isJackpot) {
                 detectedPattern = JACKPOT;
-                winMessage.append(String.format("%s 패턴! (%s)\n", 
-                    JACKPOT, SYMBOL_NAMES[jackpotSymbol]));
                 roulette_money += user.getSymbolSum(results[1][2]) * what_pattern(detectedPattern)*symbol_mul*pattern_mul;
                 hasWin = true;
             }
         
         
-        return new PatternResult(hasWin, winMessage.toString(), detectedPattern);
+        return new PatternResult(hasWin, detectedPattern);
     }
     
     // 패턴 결과를 담는 내부 클래스
     public static class PatternResult {
         private boolean hasWin;
-        private String message;
         private String pattern;
         
-        public PatternResult(boolean hasWin, String message, String pattern) {
+        public PatternResult(boolean hasWin, String pattern) {
             this.hasWin = hasWin;
-            this.message = message;
             this.pattern = pattern;
         }
         
         public boolean hasWin() {
             return hasWin;
-        }
-        
-        public String getMessage() {
-            return message;
         }
         
         public String getPattern() {

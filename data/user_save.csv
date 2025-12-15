@@ -1,2 +1,2 @@
 round,round_spin_left,deadline,roulatte_money,total_money,ticket,interest,item_max,deadline_money,total_spin,call_count,callReroll_count,itemReroll_count,freeItemReroll_count,lemon_prob,cherry_prob,clover_prob,bell_prob,diamond_prob,treasure_prob,seven_prob,symbol_sum,pattern_sum,user_items,user_call
-1,6,1,10002,30,4,0.1,7,75,1,false,0,0,0,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,2|2|3|3|5|5|7,1|2|3|1|1|4|4|7|7|8|10,반복 변형자 |티켓 변형자 ,
+1,4,1,8810,30,22,0.1,7,75,3,false,0,35,0,32.784571644556344,15.692741636967575,11.29769963501618,11.29769963501618,8.367671633715243,16.489318582921257,4.070297231807212,2|2|3|3|5|5|7,1|2|3|1|1|4|4|7|7|8|10,신비한 레몬(스택형)|신비한 보물(스택형),

@@ -13,7 +13,7 @@ public class User {
     
     private int roulatte_money = 10000;  
     private double interest = 0.1;  
-    private int ticket = 3;
+    private int ticket = 30;
     private int deadline = 1;
     private int round = 1;               
     private int deadline_money = 75;
@@ -36,22 +36,22 @@ public class User {
     // 패턴 가격 "트리플", "쿼드라", "펜타", "세로", "대각선", "지그", "재그", "지상", "천상", "눈", "잭팟" 
     private int[] pattern_sum = {1,2,3,1,1,4,4,7,7,8,10};
     
-    //문양 확률 변수
-    private double lemon_probability = 100.0 / 7.0;
-    private double cherry_probability = 100.0 / 7.0;
-    private double clover_probability = 100.0 / 7.0;
-    private double bell_probability = 100.0 / 7.0;
-    private double diamond_probability = 100.0 / 7.0;
-    private double treasure_probability = 100.0 / 7.0;
-    private double seven_probability = 100.0 / 7.0;
-    //문양 초기값 확률 변수
-    private double lemon_probability_original = 100.0 / 7.0;
-    private double cherry_probability_original = 100.0 / 7.0;
-    private double clover_probability_original = 100.0 / 7.0;
-    private double bell_probability_original = 100.0 / 7.0;
-    private double diamond_probability_original = 100.0 / 7.0;
-    private double treasure_probability_original = 100.0 / 7.0;
-    private double seven_probability_original = 100.0 / 7.0;
+    //문양 확률 변수 (이미지 기준 기본값)
+    private double lemon_probability = 19.4;
+    private double cherry_probability = 19.4;
+    private double clover_probability = 14.9;
+    private double bell_probability = 14.9;
+    private double diamond_probability = 11.9;
+    private double treasure_probability = 11.9;
+    private double seven_probability = 7.5;
+    //문양 초기값 확률 변수 (이미지 기준 기본값)
+    private double lemon_probability_original = 19.4;
+    private double cherry_probability_original = 19.4;
+    private double clover_probability_original = 14.9;
+    private double bell_probability_original = 14.9;
+    private double diamond_probability_original = 11.9;
+    private double treasure_probability_original = 11.9;
+    private double seven_probability_original = 7.5;
     
     // 변형자별 적용 확률 (0.0 ~ 1.0)
     private double chainModifierProbability = 0.3;
@@ -81,6 +81,9 @@ public class User {
     //보너스 문양, 패턴 넣을 공간
     private double[] tempSymbolBonus; // SymbolOriginal의 길이만큼 (기본값 1)
     private double[] tempPatternBonus; // PatternOriginal의 길이만큼 (기본값 1.0)
+    
+    // Roulette 인스턴스 참조
+    private Roulette roulette;
 
     public User() {
         // tempSymbolBonus와 tempPatternBonus 초기화
@@ -289,10 +292,6 @@ public class User {
     
     public void increaseInterestRate(double rate) {
         this.interest += rate;
-        System.out.println(
-            "DEBUG: 이자율이 " + (rate * 100) + "%p 증가했습니다. " + 
-            "현재 이자율: " + (this.interest * 100) + "%p"
-        );
     }
     
     public int getCallReroll_count() {
@@ -651,6 +650,26 @@ public class User {
         if (user_item == null || itemName == null) return false;
         itemDurations.remove(itemName); // ⭐ 횟수 정보도 삭제
         return user_item.remove(itemName);
+    }
+    
+    // Roulette 관련 메서드
+    public void setRoulette(Roulette roulette) {
+        this.roulette = roulette;
+    }
+    
+    public Roulette getRoulette() {
+        return roulette;
+    }
+    
+    /**
+     * Roulette의 setSymbolProbability를 호출하는 헬퍼 메서드
+     * @param symbolIndex 문양 인덱스 (0~6)
+     * @param newProbability 새로운 확률 (0~100)
+     */
+    public void setSymbolProbability(int symbolIndex, double newProbability) {
+        if (roulette != null) {
+            roulette.setSymbolProbability(symbolIndex, newProbability);
+        }
     }
     
     //--------------------------

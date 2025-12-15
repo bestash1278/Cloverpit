@@ -64,9 +64,6 @@ public abstract class ItemInfo {
      * 2. 단발형 유물 : 설정한 횟수만큼 능력 발동후 자동으로 삭제되는 유물
      * 3. 영구형 유물 : 룰렛을 돌릴때마다 반복하여 능력을 사용합니다.
      * 4. 스택형 유물 : 선언당시 설정한 만큼 상점에서 유물이 등장함, 중첩해서 효과 상승
-     * 
-     * tip) 
-     * 		
      * 		
      */
     //즉발형 유물
@@ -118,14 +115,15 @@ public abstract class ItemInfo {
                 "레몬 등장 확률이 증가합니다. (중첩 가능: 개당 +5%)", // 설명
                 new ItemEffect(
                     (user) -> { 
-                        int stacks = user.getItemStackCount("신비한 레몬"); //스택형 유물 몇개 가지고 있는지
+                        int stacks = user.getItemStackCount("신비한 레몬(스택형)"); //스택형 유물 몇개 가지고 있는지
                         //스택에 따른 보너스 계산 (1개: 5%, 2개: 10%, 3개: 15%)
                         double bonusChance = stacks * 5.0; 
 
                         double lemonProbability_original = user.getLemonProbability_original();
-                        user.setLemonProbability(lemonProbability_original + bonusChance);
+                        double newProbability = lemonProbability_original + bonusChance;
+                        user.setSymbolProbability(0, newProbability); // 레몬 인덱스: 0
                         
-                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
+                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%, 원래: " + lemonProbability_original + " -> 새로운: " + newProbability);
                     },
                     DurationType.STACKABLE //스택형 유물
                 ),1 //선언한만큼 리롤후 삭제(단발형 유물에서만 사용)
@@ -143,9 +141,9 @@ public abstract class ItemInfo {
     //즉발형
     public static class HealthPotionArtifact extends ItemInfo {	
         private final int moneyRestore = 50000;
-
+        //image URL = https://studionamepending.itch.io/heart-pickup-animated
         public HealthPotionArtifact() {
-            super("신비한 물약(즉발형)", 2, "res/dummy.png", "소지금 50,000원을 즉시 회복합니다.", null,1);
+            super("신비한 물약(즉발형)", 2, "res/Heart Pickup.png", "소지금 50,000원을 즉시 회복합니다.", null,1);
         }
 
         @Override
@@ -270,8 +268,9 @@ public abstract class ItemInfo {
     //단발형
     public static class NextSpinOnlyArtifact extends ItemInfo {
         public NextSpinOnlyArtifact() {
+        	//image URL = https://freesvg.org/lemon-128985
             super(
-                "레몬 2배(단발형)", 2, "res/dummy.png", "룰렛 돌릴때, 레몬 가격 2배 보너스!.",
+                "레몬 2배(단발형)", 2, "res/lemon-citrina.png", "룰렛 돌릴때, 레몬 가격 2배 보너스!.",
                 new ItemEffect(
                 	    (user) -> {
                 	    	int targetIndex = 0; // 레몬
@@ -326,5 +325,475 @@ public abstract class ItemInfo {
         public void applyEffect(User userInfo) {}
     }
     
+    //단발형 - 체리
+    public static class RefreshingCherryArtifact extends ItemInfo {
+        public RefreshingCherryArtifact() {
+            super(
+                "상큼한 체리(단발형)", 1, "res/refreshing_cherry.png", 
+                "다음 룰렛 3회에 한해 체리의 상금 배율을 3배로 증가시킵니다.",
+                
+                new ItemEffect(
+                    (user) -> { 
+                        int targetIndex = 1; // 체리
+                        double currentBonus = user.getTempSymbolBonus(targetIndex);
+                        user.setTempSymbolBonus(targetIndex, currentBonus * 3.0);
+                    },
+                    DurationType.CONSUMABLE
+                ) 
+            ,3
+            ); 
+        }
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //스택형 유물 - 체리
+    public static class CherryStackArtifact extends ItemInfo {
+        public CherryStackArtifact() {
+            super(
+                "신비한 체리(스택형)",
+                2,
+                "res/special_cherry.png",
+                "체리 등장 확률이 증가합니다. (중첩 가능: 개당 +5%)",
+                new ItemEffect(
+                    (user) -> { 
+                        int stacks = user.getItemStackCount("신비한 체리(스택형)");
+                        double bonusChance = stacks * 5.0; 
+
+                        double cherryProbability_original = user.getCherryProbability_original();
+                        double newProbability = cherryProbability_original + bonusChance;
+                        user.setSymbolProbability(1, newProbability); // 체리 인덱스: 1
+                        
+                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
+                    },
+                    DurationType.STACKABLE
+                ),1
+            );
+            this.setMaxStack(3);
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //단발형 - 클로버
+    public static class RefreshingCloverArtifact extends ItemInfo {
+        public RefreshingCloverArtifact() {
+            super(
+                "상큼한 클로버(단발형)", 1, "res/refreshing_clover.png", 
+                "다음 룰렛 3회에 한해 클로버의 상금 배율을 3배로 증가시킵니다.",
+                
+                new ItemEffect(
+                    (user) -> { 
+                        int targetIndex = 2; // 클로버
+                        double currentBonus = user.getTempSymbolBonus(targetIndex);
+                        user.setTempSymbolBonus(targetIndex, currentBonus * 3.0);
+                    },
+                    DurationType.CONSUMABLE
+                ) 
+            ,3
+            ); 
+        }
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //스택형 유물 - 클로버
+    public static class CloverStackArtifact extends ItemInfo {
+        public CloverStackArtifact() {
+            super(
+                "신비한 클로버(스택형)",
+                2,
+                "res/special_clover.png",
+                "클로버 등장 확률이 증가합니다. (중첩 가능: 개당 +5%)",
+                new ItemEffect(
+                    (user) -> { 
+                        int stacks = user.getItemStackCount("신비한 클로버(스택형)");
+                        double bonusChance = stacks * 5.0; 
+
+                        double cloverProbability_original = user.getCloverProbability_original();
+                        double newProbability = cloverProbability_original + bonusChance;
+                        user.setSymbolProbability(2, newProbability); // 클로버 인덱스: 2
+                        
+                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
+                    },
+                    DurationType.STACKABLE
+                ),1
+            );
+            this.setMaxStack(3);
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //단발형 - 벨
+    public static class RefreshingBellArtifact extends ItemInfo {
+        public RefreshingBellArtifact() {
+            super(
+                "상큼한 종(단발형)", 1, "res/refreshing_bell.png", 
+                "다음 룰렛 3회에 한해 종의 상금 배율을 3배로 증가시킵니다.",
+                
+                new ItemEffect(
+                    (user) -> { 
+                        int targetIndex = 3; // 벨
+                        double currentBonus = user.getTempSymbolBonus(targetIndex);
+                        user.setTempSymbolBonus(targetIndex, currentBonus * 3.0);
+                    },
+                    DurationType.CONSUMABLE
+                ) 
+            ,3
+            ); 
+        }
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //스택형 유물 - 벨
+    public static class BellStackArtifact extends ItemInfo {
+        public BellStackArtifact() {
+            super(
+                "신비한 종(스택형)",
+                2,
+                "res/special_bell.png",
+                "벨 등장 확률이 증가합니다. (중첩 가능: 개당 +5%)",
+                new ItemEffect(
+                    (user) -> { 
+                        int stacks = user.getItemStackCount("신비한 종(스택형)");
+                        double bonusChance = stacks * 5.0; 
+
+                        double bellProbability_original = user.getBellProbability_original();
+                        double newProbability = bellProbability_original + bonusChance;
+                        user.setSymbolProbability(3, newProbability); // 종 인덱스: 3
+                        
+                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
+                    },
+                    DurationType.STACKABLE
+                ),1
+            );
+            this.setMaxStack(3);
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //단발형 - 다이아몬드
+    public static class RefreshingDiamondArtifact extends ItemInfo {
+        public RefreshingDiamondArtifact() {
+            super(
+                "상큼한 다이아몬드(단발형)", 1, "res/refreshing_diamond.png", 
+                "다음 룰렛 3회에 한해 다이아몬드의 상금 배율을 3배로 증가시킵니다.",
+                
+                new ItemEffect(
+                    (user) -> { 
+                        int targetIndex = 4; // 다이아몬드
+                        double currentBonus = user.getTempSymbolBonus(targetIndex);
+                        user.setTempSymbolBonus(targetIndex, currentBonus * 3.0);
+                    },
+                    DurationType.CONSUMABLE
+                ) 
+            ,3
+            ); 
+        }
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //스택형 유물 - 다이아몬드
+    public static class DiamondStackArtifact extends ItemInfo {
+        public DiamondStackArtifact() {
+            super(
+                "신비한 다이아몬드(스택형)",
+                2,
+                "res/special_diamond.png",
+                "다이아몬드 등장 확률이 증가합니다. (중첩 가능: 개당 +5%)",
+                new ItemEffect(
+                    (user) -> { 
+                        int stacks = user.getItemStackCount("신비한 다이아몬드(스택형)");
+                        double bonusChance = stacks * 5.0; 
+
+                        double diamondProbability_original = user.getDiamondProbability_original();
+                        double newProbability = diamondProbability_original + bonusChance;
+                        user.setSymbolProbability(4, newProbability); // 다이아몬드 인덱스: 4
+                        
+                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
+                    },
+                    DurationType.STACKABLE
+                ),1
+            );
+            this.setMaxStack(3);
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //단발형 - 보물
+    public static class RefreshingTreasureArtifact extends ItemInfo {
+        public RefreshingTreasureArtifact() {
+            super(
+                "상큼한 보물(단발형)", 1, "res/refreshing_treasure.png", 
+                "다음 룰렛 3회에 한해 보물의 상금 배율을 3배로 증가시킵니다.",
+                
+                new ItemEffect(
+                    (user) -> { 
+                        int targetIndex = 5; // 보물
+                        double currentBonus = user.getTempSymbolBonus(targetIndex);
+                        user.setTempSymbolBonus(targetIndex, currentBonus * 3.0);
+                    },
+                    DurationType.CONSUMABLE
+                ) 
+            ,3
+            ); 
+        }
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //스택형 유물 - 보물
+    public static class TreasureStackArtifact extends ItemInfo {
+        public TreasureStackArtifact() {
+            super(
+                "신비한 보물(스택형)",
+                2,
+                "res/special_treasure.png",
+                "보물 등장 확률이 증가합니다. (중첩 가능: 개당 +5%)",
+                new ItemEffect(
+                    (user) -> { 
+                        int stacks = user.getItemStackCount("신비한 보물(스택형)");
+                        double bonusChance = stacks * 5.0; 
+
+                        double treasureProbability_original = user.getTreasureProbability_original();
+                        double newProbability = treasureProbability_original + bonusChance;
+                        user.setSymbolProbability(5, newProbability); // 보물 인덱스: 5
+                        
+                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
+                    },
+                    DurationType.STACKABLE
+                ),1
+            );
+            this.setMaxStack(3);
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //단발형 - 세븐
+    public static class RefreshingSevenArtifact extends ItemInfo {
+        public RefreshingSevenArtifact() {
+            super(
+                "상큼한 세븐(단발형)", 1, "res/refreshing_seven.png", 
+                "다음 룰렛 3회에 한해 세븐의 상금 배율을 3배로 증가시킵니다.",
+                
+                new ItemEffect(
+                    (user) -> { 
+                        int targetIndex = 6; // 세븐
+                        double currentBonus = user.getTempSymbolBonus(targetIndex);
+                        user.setTempSymbolBonus(targetIndex, currentBonus * 3.0);
+                    },
+                    DurationType.CONSUMABLE
+                ) 
+            ,3
+            ); 
+        }
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //스택형 유물 - 세븐
+    public static class SevenStackArtifact extends ItemInfo {
+        public SevenStackArtifact() {
+            super(
+                "신비한 세븐(스택형)",
+                2,
+                "res/special_seven.png",
+                "세븐 등장 확률이 증가합니다. (중첩 가능: 개당 +5%)",
+                new ItemEffect(
+                    (user) -> { 
+                        int stacks = user.getItemStackCount("신비한 세븐(스택형)");
+                        double bonusChance = stacks * 5.0; 
+
+                        double sevenProbability_original = user.getSevenProbability_original();
+                        double newProbability = sevenProbability_original + bonusChance;
+                        user.setSymbolProbability(6, newProbability); // 세븐 인덱스: 6
+                        
+                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
+                    },
+                    DurationType.STACKABLE
+                ),1
+            );
+            this.setMaxStack(3);
+        }
+
+    
+
+        @Override
+        public void applyEffect(User userInfo) {}
+    }
+    
+    //즉발형 유물 - 레몬 골드
+    public static class GoldenLemon extends ItemInfo {
+        public GoldenLemon() {
+            super(
+                "황금레몬(즉발형)",
+                2,
+                "res/sybols_lemon_gold.png",
+                "구매 시, 레몬 문양의 가격이 오리지널 가격만큼 영구적으로 증가합니다.",
+                null,
+                1
+            );
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {
+            int originalPrice = userInfo.getSymbolOriginal(0);
+            int[] symbolSumArray = userInfo.getSymbolSum();
+            int oldPrice = symbolSumArray[0];
+            int newPrice = oldPrice + originalPrice;
+            userInfo.setSymbolSum(0, newPrice);
+            System.out.println(getName() + " 효과 적용: 레몬 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
+        }
+    }
+    
+    public static class GoldenCherry extends ItemInfo {
+        public GoldenCherry() {
+            super(
+                "황금체리(즉발형)",
+                2,
+                "res/sybols_cherry_gold.png",
+                "구매 시, 체리 문양의 가격이 오리지널 가격만큼 영구적으로 증가합니다.",
+                null,
+                1
+            );
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {
+            int originalPrice = userInfo.getSymbolOriginal(1);
+            int[] symbolSumArray = userInfo.getSymbolSum();
+            int oldPrice = symbolSumArray[1];
+            int newPrice = oldPrice + originalPrice;
+            userInfo.setSymbolSum(1, newPrice);
+            System.out.println(getName() + " 효과 적용: 체리 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
+        }
+    }
+    
+    public static class GoldenClover extends ItemInfo {
+        public GoldenClover() {
+            super(
+                "황금클로버(즉발형)",
+                2,
+                "res/sybols_clover_gold.png",
+                "구매 시, 클로버 문양의 가격이 오리지널 가격만큼 영구적으로 증가합니다.",
+                null,
+                1
+            );
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {
+            int originalPrice = userInfo.getSymbolOriginal(2);
+            int[] symbolSumArray = userInfo.getSymbolSum();
+            int oldPrice = symbolSumArray[2];
+            int newPrice = oldPrice + originalPrice;
+            userInfo.setSymbolSum(2, newPrice);
+            System.out.println(getName() + " 효과 적용: 클로버 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
+        }
+    }
+    
+    public static class GoldenBell extends ItemInfo {
+        public GoldenBell() {
+            super(
+                "황금종(즉발형)",
+                2,
+                "res/sybols_bell_gold.png",
+                "구매 시, 종 문양의 가격이 오리지널 가격만큼 영구적으로 증가합니다.",
+                null,
+                1
+            );
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {
+            int originalPrice = userInfo.getSymbolOriginal(3);
+            int[] symbolSumArray = userInfo.getSymbolSum();
+            int oldPrice = symbolSumArray[3];
+            int newPrice = oldPrice + originalPrice;
+            userInfo.setSymbolSum(3, newPrice);
+            System.out.println(getName() + " 효과 적용: 종 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
+        }
+    }
+    
+    public static class GoldenDiamond extends ItemInfo {
+        public GoldenDiamond() {
+            super(
+                "황금다이아몬드(즉발형)",
+                2,
+                "res/sybols_diamond_gold.png",
+                "구매 시, 다이아몬드 문양의 가격이 오리지널 가격만큼 영구적으로 증가합니다.",
+                null,
+                1
+            );
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {
+            int originalPrice = userInfo.getSymbolOriginal(4);
+            int[] symbolSumArray = userInfo.getSymbolSum();
+            int oldPrice = symbolSumArray[4];
+            int newPrice = oldPrice + originalPrice;
+            userInfo.setSymbolSum(4, newPrice);
+            System.out.println(getName() + " 효과 적용: 다이아몬드 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
+        }
+    }
+    
+    public static class GoldenTreasure extends ItemInfo {
+        public GoldenTreasure() {
+            super(
+                "황금보물(즉발형)",
+                2,
+                "res/sybols_treasure_gold.png",
+                "구매 시, 보물 문양의 가격이 오리지널 가격만큼 영구적으로 증가합니다.",
+                null,
+                1
+            );
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {
+            int originalPrice = userInfo.getSymbolOriginal(5);
+            int[] symbolSumArray = userInfo.getSymbolSum();
+            int oldPrice = symbolSumArray[5];
+            int newPrice = oldPrice + originalPrice;
+            userInfo.setSymbolSum(5, newPrice);
+            System.out.println(getName() + " 효과 적용: 보물 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
+        }
+    }
+    
+    public static class GoldenSeven extends ItemInfo {
+        public GoldenSeven() {
+            super(
+                "황금세븐(즉발형)",
+                2,
+                "res/sybols_seven_gold.png",
+                "구매 시, 세븐 문양의 가격이 오리지널 가격만큼 영구적으로 증가합니다.",
+                null,
+                1
+            );
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {
+            int originalPrice = userInfo.getSymbolOriginal(6);
+            int[] symbolSumArray = userInfo.getSymbolSum();
+            int oldPrice = symbolSumArray[6];
+            int newPrice = oldPrice + originalPrice;
+            userInfo.setSymbolSum(6, newPrice);
+            System.out.println(getName() + " 효과 적용: 세븐 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
+        }
+    }
 
 }
+

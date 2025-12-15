@@ -1,4 +1,4 @@
-// ItemShopScreen.java
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -19,27 +19,25 @@ public class ItemShop_Screen extends JPanel {
     private javax.swing.JLabel priceLabel;      // 유물 가격
     private javax.swing.JButton buyButton;       // 구매 버튼
     private javax.swing.JButton cancelButton;    // 취소 버튼
-    // 현재 선택된 유물의 ItemInfo 객체와, 그 유물의 ITEM_AREAS 인덱스를 저장
     private ItemInfo selectedItem;
     private int selectedItemIndex = -1;
     
-    // 💡 5개의 아이템 박스 영역 좌표
+    //5개의 아이템 박스 영역 좌표
     private static final Rectangle[] ITEM_AREAS = new Rectangle[5]; 
-    // 💡 리롤 버튼 영역 좌표 (아이템 UI 크기 기준: 너비 150, 높이 100, 가운데 아래 배치)
+    //리롤 버튼 영역 좌표
     private static final Rectangle REROLL_AREA = new Rectangle(325, 450, 150, 100); 
     
     public ItemShop_Screen(ItemShop itemShopLogic) {
         this.itemShopLogic = itemShopLogic;
-
         // 초기 아이템 목록 가져오기
         this.displayedItems = itemShopLogic.getCurrentItems();
 
         loadBackgroundImage("res/back_ground.png"); 
         setLayout(null); 
         
-        //아이템 박스 좌표 설정 (피라미드 구조: 위에 2개, 밑에 3개)
+        //아이템 박스 좌표 설정
         setupItemAreas();
-        setupItemDetailPanel();	//초기화 로직
+        setupItemDetailPanel();	//초기화
         
         addMouseListener(new ShopClickListener());
         setPreferredSize(new Dimension(800, 600));
@@ -53,17 +51,16 @@ public class ItemShop_Screen extends JPanel {
         int gap = 80;
         int center_x = 400;
 
-        // 위에 2개 (인덱스 0, 1)
+        // 위에 2개 (0, 1)
         ITEM_AREAS[0] = new Rectangle(center_x - itemWidth - gap/2, 100, itemWidth, itemHeight);
         ITEM_AREAS[1] = new Rectangle(center_x + gap/2, 100, itemWidth, itemHeight);
 
-        // 밑에 3개 (인덱스 2, 3, 4)
+        // 밑에 3개 (2, 3, 4)
         ITEM_AREAS[2] = new Rectangle(center_x - itemWidth - gap - itemWidth/2, 250, itemWidth, itemHeight);
         ITEM_AREAS[3] = new Rectangle(center_x - itemWidth/2, 250, itemWidth, itemHeight);
         ITEM_AREAS[4] = new Rectangle(center_x + gap + itemWidth/2, 250, itemWidth, itemHeight);
     }
     
-    // UI 업데이트 (아이템 목록 새로고침)
     public void updateShopUI(List<ItemInfo> newItems) {
         this.displayedItems = newItems;
         revalidate();
@@ -76,34 +73,21 @@ public class ItemShop_Screen extends JPanel {
     protected void paintComponent(java.awt.Graphics g) {
         super.paintComponent(g);
 
-        // 1. 배경 이미지 그리기
-        if (backgroundImage != null) {
-            g.drawImage(
-                backgroundImage, 
-                0, 
-                0, 
-                getWidth(), 
-                getHeight(), 
-                this
-            );
+        //배경 이미지
+        if (backgroundImage != null) { 
+        	g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         }
 
-        // 2. 유물 목록 순회 및 렌더링
         if (displayedItems != null) {
             for (int i = 0; i < displayedItems.size(); i++) {
                 java.awt.Rectangle area = ITEM_AREAS[i]; // 유물 표시 영역
-                // ItemInfo 객체를 가져옵니다. (ItemShop.class의 getCurrentItems()에서 넘어온 목록)
                 ItemInfo item = (ItemInfo) displayedItems.get(i); 
-
-                // --- A. 유물 이미지 동적 로드 및 그리기 (수정된 부분) ---
                 java.awt.Image realItemImage = null;
                 try {
-                    // ItemInfo에서 실제 이미지 경로를 가져와 File 객체로 로드
                     java.io.File imageFile = new java.io.File(item.getImagePath());
                     realItemImage = javax.imageio.ImageIO.read(imageFile);
                 } catch (java.io.IOException e) {
                     System.err.println("유물 이미지 로드 실패: " + item.getImagePath());
-                    // 에러 발생 시 realItemImage는 null 상태로 유지됩니다.
                 }
                 
                 if (realItemImage != null) {
@@ -117,19 +101,16 @@ public class ItemShop_Screen extends JPanel {
                         this
                     );
                 } else {
-                    // 이미지 로드 실패 시 대체 사각형 (LIGHT_GRAY 사용)
+                    // 이미지 로드 실패 시 대체 사각형
                     g.setColor(java.awt.Color.LIGHT_GRAY); 
                     g.fillRect(area.x, area.y, area.width, area.height); 
                 }
 
-                // --- B. 유물 비용 텍스트 그리기 ---
+                //유물 가격
                 g.setColor(java.awt.Color.YELLOW);
                 g.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
-                
-                // 티켓 비용 텍스트 준비
                 java.lang.String costText = item.getTicketCost() + " Tickets";
                 
-                // 텍스트 중앙 정렬을 위한 X 좌표 계산
                 int textWidth = g.getFontMetrics().stringWidth(costText);
                 int textX = area.x + (area.width - textWidth) / 2;
                 int textY = area.y + area.height + 20; // 유물 영역 아래쪽에 위치
@@ -138,13 +119,10 @@ public class ItemShop_Screen extends JPanel {
             }
         }
         
-        // 3. REROLL 영역 그리기 (클릭 영역 표시)
+        //리롤영역
         if (REROLL_AREA != null) {
             g.setColor(java.awt.Color.YELLOW);
-            // 사각형 테두리를 그려 REROLL 버튼 영역을 시각적으로 표시합니다.
             g.drawRect(REROLL_AREA.x, REROLL_AREA.y, REROLL_AREA.width, REROLL_AREA.height); 
-            
-            // REROLL 텍스트 표시 (중앙 정렬)
             g.setColor(java.awt.Color.WHITE);
             g.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 18));
             String rerollText = "REROLL";
@@ -154,41 +132,35 @@ public class ItemShop_Screen extends JPanel {
             g.drawString(rerollText, textX, textY);
         }
         
-        // 참고: 상세 정보 패널(itemDetailPanel)은 이 메서드 외부에서 add()되었기 때문에
-        // Swing에 의해 이 paintComponent가 끝난 후 자동으로 화면 위에 그려집니다.
     }
     
     
 
-    //유물 설명 화면 초기화 메서드
+    //유물 설명 화면 초기화 함수
     private void setupItemDetailPanel() {
-        // 1. 상세 패널 생성 및 기본 설정
         itemDetailPanel = new javax.swing.JPanel();
-        itemDetailPanel.setLayout(null); // 내부 컴포넌트 위치를 직접 지정하기 위해 null로 설정
-        itemDetailPanel.setBackground(new java.awt.Color(0, 0, 0, 180)); // 반투명 검은색 배경 (RGB + Alpha)
+        itemDetailPanel.setLayout(null);
+        itemDetailPanel.setBackground(new java.awt.Color(0, 0, 0, 180)); 
         itemDetailPanel.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.WHITE));
 
-        // 화면 중앙에 위치하도록 setBounds를 사용하여 크기와 위치를 지정합니다.
-        int windowWidth = 800;	//설정한 윈도우창 너비
+        int windowWidth = 800;
         int panelW = 500;
         int panelH = 350;
-        int panelX = (windowWidth - panelW) / 2; // 예: (800 - 500) / 2 = 150
+        int panelX = (windowWidth - panelW) / 2;
         int panelY = 50;
         itemDetailPanel.setBounds(panelX, panelY, panelW, panelH);
         
-        // 초기에는 숨김 처리
+        //처음에는 유물 상세 설명이 안보이도록 설정했다가 유물 클릭하면 보이도록 설정
         itemDetailPanel.setVisible(false);
-
-        // 2. 내부 컴포넌트 설정 및 추가
         
-        // 이름 라벨 (왼쪽 위)
+        // 이름 표시
         nameLabel = new javax.swing.JLabel("유물이름", javax.swing.SwingConstants.LEFT);
         nameLabel.setForeground(java.awt.Color.YELLOW);
         nameLabel.setFont(new java.awt.Font("Dialog", java.awt.Font.BOLD, 22));
         nameLabel.setBounds(10, 10, panelW - 20, 30);
         itemDetailPanel.add(nameLabel);
 
-        // 설명 텍스트 영역 (이름 아래)
+        // 설명 표시
         descriptionArea = new javax.swing.JTextArea();
         descriptionArea.setWrapStyleWord(true); // 단어 단위 줄 바꿈
         descriptionArea.setLineWrap(true);       // 줄 바꿈 활성화
@@ -200,54 +172,46 @@ public class ItemShop_Screen extends JPanel {
         descriptionArea.setBounds(10, 50, panelW - 20, 200);
         itemDetailPanel.add(descriptionArea);
         
-        // 가격 라벨 (오른쪽 아래)
+        // 가격 표시
         priceLabel = new javax.swing.JLabel("", javax.swing.SwingConstants.RIGHT);
         priceLabel.setForeground(java.awt.Color.GREEN);
         priceLabel.setFont(new java.awt.Font("Dialog", java.awt.Font.BOLD, 18));
         priceLabel.setBounds(10, panelH - 70, panelW - 20, 20);
         itemDetailPanel.add(priceLabel);
-
-        // 구매 버튼 (하단) - 아이템 UI 크기 기준 (150x150)
+        // 구매버튼 설정
         buyButton = new javax.swing.JButton("구매 (BUY)");
         buyButton.setBounds(panelW / 2 - 165, panelH - 40, 150, 40);
         buyButton.setFont(new java.awt.Font("Dialog", java.awt.Font.BOLD, 16));
         itemDetailPanel.add(buyButton);
-        
-        // 취소 버튼 (하단) - 아이템 UI 크기 기준 (150x150)
+        //취소버튼 설정
         cancelButton = new javax.swing.JButton("취소 (CANCEL)");
         cancelButton.setBounds(panelW / 2 + 15, panelH - 40, 150, 40);
         cancelButton.setFont(new java.awt.Font("Dialog", java.awt.Font.BOLD, 16));
         itemDetailPanel.add(cancelButton);
 
-        // 메인 패널에 상세 정보 패널 추가
-        this.add(itemDetailPanel); // ItemShop_Screen (JPanel)에 추가
-        
-        // 3. 버튼 리스너 연결
+        this.add(itemDetailPanel); 
+        //버튼 함수
         setupButtonListeners();
     }
 
+    //상세정보 보여주기 함수
     public void showItemDetails(ItemInfo item, int index) {
-        this.selectedItem = item;
-        this.selectedItemIndex = index;
-
-     // 1. 컴포넌트에 유물 정보 설정
-        nameLabel.setText(item.getName());
-        // getDescription() 메서드는 ItemInfo.class에 정의되어 있습니다.
-        descriptionArea.setText(item.getDescription()); 
+        this.selectedItem = item;		//선택한 유물이 무엇인지
+        this.selectedItemIndex = index;	//선택한 유물의 상점번호가 몇인지
+        nameLabel.setText(item.getName());	//선택한 유물 이름 가져오기
+        descriptionArea.setText(item.getDescription());
         priceLabel.setText("가격: " + item.getTicketCost() + " Tickets");
         
-        // 2. 패널 보이기
         itemDetailPanel.setVisible(true);
         itemDetailPanel.requestFocusInWindow();
         
-        // 3. UI 갱신 요청
         repaint();
     }
     
-    //구매버튼 리스너
+    //구매버튼
     private void setupButtonListeners() {
     	
-    	// 취소 버튼 로직
+    	// 취소 버튼
         cancelButton.addActionListener(e -> {
             itemDetailPanel.setVisible(false);
             selectedItem = null;
@@ -255,16 +219,14 @@ public class ItemShop_Screen extends JPanel {
             repaint();
         });
         
-        //구매 버튼 로직
+        //구매 버튼
         buyButton.addActionListener(e -> {
-            if (selectedItem != null) {
-                // ItemShop의 buy_item 로직 호출 (ItemShop.class의 buy_item(I)Z 메서드 사용)
-            	ItemShop.PurchaseResult result = itemShopLogic.buy_item(selectedItemIndex);
-            	
-            	// 2. 결과에 따라 처리 분기
+            if (selectedItem != null) {	//유물 선택을 했다면
+            	ItemShop.PurchaseResult result = itemShopLogic.buy_item(selectedItemIndex);	//유물 구매 함수 실행
+            	//결과에 따라서 처리
                 switch (result) {
                     case SUCCESS:
-                    	updateShopUI(itemShopLogic.getCurrentItems()); // ⭐ ItemShop_Screen 자신의 화면만 갱신
+                    	updateShopUI(itemShopLogic.getCurrentItems());
                         javax.swing.JOptionPane.showMessageDialog(this, selectedItem.getName() + " 구매 성공!", "알림", javax.swing.JOptionPane.INFORMATION_MESSAGE);
                         break;
                         
@@ -278,7 +240,7 @@ public class ItemShop_Screen extends JPanel {
                         javax.swing.JOptionPane.showMessageDialog(this, "이미 판매된 유물입니다!", "구매 실패", javax.swing.JOptionPane.WARNING_MESSAGE);
                         break;
                         
-                    case INVENTORY_FULL: // ⭐ 인벤토리 가득 찼을 경우 메시지
+                    case INVENTORY_FULL: //인벤토리 가득 찼을 경우
                         JOptionPane.showMessageDialog(this, 
                             "유물 소유 개수가 최대치에 도달하여 더 이상 구매할 수 없습니다.", 
                             "구매 실패", 
@@ -287,57 +249,44 @@ public class ItemShop_Screen extends JPanel {
                         break;
                 }
             }
-            // 상세 패널 숨기기
+            //작업 처리후 유물 상세정보 화면 감추기
             itemDetailPanel.setVisible(false);
             selectedItem = null;
             selectedItemIndex = -1;
-            repaint(); // 화면 갱신
+            repaint();
         });
     }
     
     
     
     /**----------------------마우스 클릭 리스너--------------------------*/
-    // 마우스 클릭 리스너
+    //마우스 클릭시
     private class ShopClickListener extends MouseAdapter {
-    	//마우스 눌렀을때
         @Override
         public void mouseClicked(java.awt.event.MouseEvent e) {
             Point clickedPoint = e.getPoint();
-         //상세 패널이 이미 보이는 중이라면, 다른 이벤트는 무시
+            //유물 상세 정보가 보인다면
             if (itemDetailPanel.isVisible()) {
                 return;
             }
-
-         // 1. 리롤 버튼 클릭 처리
+            //리롤 버튼을 눌렀다면
             if (REROLL_AREA.contains(clickedPoint)) {
-                // ⭐ 이 부분에 List<ItemInfo> newItems = ... 할당이 필요합니다.
-                List<ItemInfo> newItems = itemShopLogic.rerollItems(); 
-                
-                if (newItems != null) {
-                    // 리롤 성공 (비용 차감 성공)
+                List<ItemInfo> newItems = itemShopLogic.rerollItems(); //리롤해서 새로운 유물 채워넣기
+                if (newItems != null) {	//채운걸로 ui업데이트
                     updateShopUI(newItems);
-                } else {
-                    // 리롤 실패 (비용 부족 등 useItemForReroll()이 false를 반환한 경우)
-//                    JOptionPane.showMessageDialog(this, "리롤 비용이 부족하거나 리롤 조건이 충족되지 않았습니다.", "리롤 실패", JOptionPane.WARNING_MESSAGE);
-                }
-                // TODO: 리롤 결과에 따른 알림 메시지 (예: 비용 부족) 처리는 if/else 블록에서 처리되었습니다.
-                
+                }  
             }
-            
-            
-            
-            // 2. 아이템 박스 클릭 처리
+            //유물 클릭했다면
             else {
                 for (int i = 0; i < ITEM_AREAS.length; i++) {
                     if (ITEM_AREAS[i].contains(clickedPoint)) {
                     	// 유물 클릭 감지!
                         if (displayedItems != null && i < displayedItems.size()) {
                             ItemInfo clickedItem = (ItemInfo) displayedItems.get(i);
-                            // 3. 상세 정보 표시 메서드 호출
+                            //유물에 맞는 상세정보 보여주기
                             showItemDetails(clickedItem, i); 
                         }
-                        return; // 클릭 처리 완료 후 종료
+                        return;
                     }
                 }
             }

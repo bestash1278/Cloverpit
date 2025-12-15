@@ -1,4 +1,4 @@
-// ItemShop.java
+
 import java.util.List;
 import java.util.ArrayList; 
 import java.util.Collections;
@@ -30,7 +30,6 @@ public class ItemShop {
             new ItemInfo.pattern_train(), 
             new ItemInfo.PersistentBonusArtifact(),
             new ItemInfo.NextSpinOnlyArtifact(),  
-            new ItemInfo.HealthPotionArtifact(),
             
             //테스트 유물
             new ItemInfo.TestPersistentArtifact(), 
@@ -41,7 +40,29 @@ public class ItemShop {
             new ItemInfo.symbol_repeat(),
             new ItemInfo.symbol_ticket(),
             new ItemInfo.symbol_token(),
-            new ItemInfo.LemonStackArtifact()
+            new ItemInfo.LemonStackArtifact(),
+
+            new ItemInfo.RefreshingCherryArtifact(), // 상큼한 체리
+            new ItemInfo.CherryStackArtifact(),    // 신비한 체리
+            new ItemInfo.RefreshingCloverArtifact(), // 상큼한 클로버
+            new ItemInfo.CloverStackArtifact(),    // 신비한 클로버
+            new ItemInfo.RefreshingBellArtifact(),   // 상큼한 종
+            new ItemInfo.BellStackArtifact(),      // 신비한 종
+            new ItemInfo.RefreshingDiamondArtifact(),// 상큼한 다이아몬드
+            new ItemInfo.DiamondStackArtifact(),   // 신비한 다이아몬드
+            new ItemInfo.RefreshingTreasureArtifact(),// 상큼한 보물
+            new ItemInfo.TreasureStackArtifact(),  // 신비한 보물
+            new ItemInfo.RefreshingSevenArtifact(),  // 상큼한 세븐
+            new ItemInfo.SevenStackArtifact(),      // 신비한 세븐
+            
+            // 황금 문양 유물
+            new ItemInfo.GoldenLemon(),      // 황금 레몬
+            new ItemInfo.GoldenCherry(),     // 황금 체리
+            new ItemInfo.GoldenClover(),     // 황금 클로버
+            new ItemInfo.GoldenBell(),       // 황금 종
+            new ItemInfo.GoldenDiamond(),    // 황금 다이아몬드
+            new ItemInfo.GoldenTreasure(),   // 황금 보물
+            new ItemInfo.GoldenSeven()       // 황금 세븐
 
         );
     }
@@ -54,7 +75,6 @@ public class ItemShop {
             System.out.println("ItemShop: 상점 목록 최초 생성 완료.");
     	}
     }
-    
     
     // 무작위로 5개의 유물을 뽑아 반환하는 함수
     private java.util.List<ItemInfo> createRandomItems() {
@@ -131,7 +151,6 @@ public class ItemShop {
         return this.currentItems;
     }
     
-    
     public enum PurchaseResult {
         SUCCESS,       // 구매 성공
         INSUFFICIENT_TICKETS, // 티켓 부족
@@ -156,46 +175,41 @@ public class ItemShop {
         if (item instanceof ItemInfo.SoldArtifact) {
             return PurchaseResult.ALREADY_SOLD;
         }
-
-        // 최대유물 갯수를 넘지 않는지
-        boolean isConsumable = (item.getDurationType() == DurationType.CONSUMABLE);
-        boolean isStackable = (item.getDurationType() == DurationType.STACKABLE);
-        boolean hasItem = userInfo.getItemStackCount(item.getName()) > 0;
-        boolean isInstant = (item.getDurationType() == DurationType.INSTANT);
+        boolean isConsumable = (item.getDurationType() == DurationType.CONSUMABLE);	//단발형 유물인지
+        boolean isStackable = (item.getDurationType() == DurationType.STACKABLE);	//스택형 유물인지
+        boolean hasItem = userInfo.getItemStackCount(item.getName()) > 0;	//스택이 있는지
+        boolean isInstant = (item.getDurationType() == DurationType.INSTANT);	//지속형 유물인지
         
-     // 인벤토리 체크: "즉발형도 아니고" AND "(스택형이면서 이미 가진 경우)도 아니라면" -> 공간 필요
+        // 인벤토리 체크: "즉발형도 아니고" AND "(스택형이면서 이미 가진 경우)도 아니라면" -> 공간 필요
         if (!isInstant && !(isStackable && hasItem)) {
             int currentItemsCount = userInfo.getUserItem_List().size();
             if (currentItemsCount >= userInfo.getItem_max()) {
                 return PurchaseResult.INVENTORY_FULL;
             }
         }
-
         int cost = item.getTicketCost(); //아이템 가격 가져오기
         
         if (userInfo.minusTicket(cost)) {
         	if (item.getDurationType() == DurationType.INSTANT) {
-                // 1. 즉발형: 구매 즉시 효과 발동
+                //즉발형 유물 즉시 효과 발동
                 item.applyEffect(userInfo); 
-                System.out.println("즉발형 아이템 사용됨: " + item.getName());
-                // 2. 인벤토리에 추가하지 않음 (addOwnedItemName 호출 X)
+                //즉발형은 인벤토리 추가 안됨
         	}
         	else {
 	            //해당 아이템 스택 +1
 	            userInfo.addItemStack(item.getName());
 	            
-                if (!isStackable || !hasItem) {
-                    userInfo.addOwnedItemName(item.getName());
+                if (!isStackable || !hasItem) {	//스택형 유물이 아니거나 스택이 0보다 크다면
+                    userInfo.addOwnedItemName(item.getName());	//아이템 추가
                 }
 
-                //단발형(CONSUMABLE)이라면 지속 횟수 설정
+                //단발형이라면 지속 횟수 설정
                 if (isConsumable) {
                     userInfo.setItemDuration(item.getName(), item.getActiveTurns());
-                    System.out.println("단발형 아이템 구매: " + item.getName() + " (횟수: " + item.getActiveTurns() + ")");
                 }
 
-	            //기본아이템들은 구매하면 더 이상 상점에서 안나옴
-	            boolean shouldRemoveFromPool = true; // 기본적으로는 구매하면 목록에서 제거
+	            //기본 유물은 구매하면 더 이상 상점에서 안나옴
+	            boolean shouldRemoveFromPool = true; //구매하면 목록에서 제거
 	            //스택형 유물이라면
 	            if (item.getDurationType() == DurationType.STACKABLE) {
 	                // 현재 스택 확인
@@ -206,9 +220,7 @@ public class ItemShop {
 	                    shouldRemoveFromPool = false; 
 	                }
 	            }
-	            
-	
-	            if (shouldRemoveFromPool) {
+	            if (shouldRemoveFromPool) { //유물 제거
 	                removeItemFromPool(item.getName());
 	            }
         	}
@@ -224,16 +236,16 @@ public class ItemShop {
             
             return PurchaseResult.SUCCESS; // 구매 성공
         } else {
-            // 티켓 차감 실패
-            return PurchaseResult.INSUFFICIENT_TICKETS; 
+            return PurchaseResult.INSUFFICIENT_TICKETS;// 티켓 차감 실패
         }
     }
-    
+    //유물제거용 함수
     private void removeItemFromPool(String targetName) {
         availableItems.removeIf(info -> info.getName().equals(targetName));
     }
-    
+   
     public List<ItemInfo> getCurrentItems() {
         return this.currentItems;
     }
 }
+
