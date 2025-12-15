@@ -64,9 +64,6 @@ public abstract class ItemInfo {
      * 2. 단발형 유물 : 설정한 횟수만큼 능력 발동후 자동으로 삭제되는 유물
      * 3. 영구형 유물 : 룰렛을 돌릴때마다 반복하여 능력을 사용합니다.
      * 4. 스택형 유물 : 선언당시 설정한 만큼 상점에서 유물이 등장함, 중첩해서 효과 상승
-     * 
-     * tip) 
-     * 		
      * 		
      */
     //즉발형 유물
@@ -143,9 +140,9 @@ public abstract class ItemInfo {
     //즉발형
     public static class HealthPotionArtifact extends ItemInfo {	
         private final int moneyRestore = 50000;
-
+        //image URL = https://studionamepending.itch.io/heart-pickup-animated
         public HealthPotionArtifact() {
-            super("신비한 물약(즉발형)", 2, "res/dummy.png", "소지금 50,000원을 즉시 회복합니다.", null,1);
+            super("신비한 물약(즉발형)", 2, "res/Heart Pickup.png", "소지금 50,000원을 즉시 회복합니다.", null,1);
         }
 
         @Override
@@ -244,8 +241,9 @@ public abstract class ItemInfo {
     //단발형
     public static class NextSpinOnlyArtifact extends ItemInfo {
         public NextSpinOnlyArtifact() {
+        	//image URL = https://freesvg.org/lemon-128985
             super(
-                "레몬 2배(단발형)", 2, "res/dummy.png", "룰렛 돌릴때, 레몬 가격 2배 보너스!.",
+                "레몬 2배(단발형)", 2, "res/lemon-citrina.png", "룰렛 돌릴때, 레몬 가격 2배 보너스!.",
                 new ItemEffect(
                 	    (user) -> {
                 	    	int targetIndex = 0; // 레몬
