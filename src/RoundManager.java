@@ -56,7 +56,7 @@ public class RoundManager {
 
         int money = user.getTotal_money();
         int interestAmount = (int) Math.floor(money * interest);
-        user.addTotal_money(interestAmount);
+        user.addRoulatte_money(interestAmount);
     }
 
     public boolean isDeadlineOver() {

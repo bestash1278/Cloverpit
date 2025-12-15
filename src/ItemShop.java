@@ -1,4 +1,3 @@
-// ItemShop.java
 import java.util.List;
 import java.util.ArrayList; 
 import java.util.Collections;
@@ -9,85 +8,80 @@ public class ItemShop {
     private List<ItemInfo> currentItems; // 현재 상점에 표시되는 5개 아이템 목록
     private Runnable updateMainStatus; // 상태바 업데이트를 위한 Runnable 인터페이스
     private final Runnable updateOwnItemScreen;
+    private List<ItemInfo> availableItems;//등장 가능한 유물 목록
+    private SaveManagerCsv saveManager;
+    public void setSaveManager(SaveManagerCsv saveManager) { // 저장 필드 추가
+        this.saveManager = saveManager;
+    }
 
 
     public ItemShop(User userInfo,Runnable updateMainStatus, Runnable updateOwnItemScreen) {
         this.userInfo = userInfo;
         this.updateMainStatus = updateMainStatus;
         this.updateOwnItemScreen = updateOwnItemScreen;
+        this.availableItems = new ArrayList<>(ALL_ARTIFACTS);//등장 가능한 유물 초기화
         initializeShop(); // 초기 아이템 목록 설정
     }
-    
- // ItemShop.class (필드 및 초기화 블록)
 
- // 1. 모든 유물을 정의하는 마스터 풀을 선언
     private static final java.util.List<ItemInfo> ALL_ARTIFACTS;
 
     static {
-        // ItemInfo.class에 정의된 '인수가 없는 기본 생성자'를 사용하여 유물을 생성합니다.
         ALL_ARTIFACTS = java.util.List.of(
-            // ⭐ 인수를 전달하지 않고 기본 생성자만 호출합니다.
+            //***************추가된 유물이 상점에 나오도록 생성자 추가해줘야 합니다. ****************
             new ItemInfo.HealthPotionArtifact(),
-            new ItemInfo.golden_compass(),  // 6번째 슬롯
-            new ItemInfo.symbol_train(),  // 6번째 슬롯
-            new ItemInfo.pattern_train(),  // 6번째 슬롯
+            new ItemInfo.golden_compass(),  
+            new ItemInfo.symbol_train(),  
+            new ItemInfo.pattern_train(), 
+            new ItemInfo.PersistentBonusArtifact(),
+            new ItemInfo.NextSpinOnlyArtifact(),  
+            new ItemInfo.HealthPotionArtifact(),
+            
+            //테스트 유물
+            new ItemInfo.TestPersistentArtifact(), 
+            new ItemInfo.TestTemporaryArtifact(),
+            new ItemInfo.pattern_train(),
 
-            // 여기에 다른 유물 클래스들의 기본 생성자 호출을 추가합니다.
-            new ItemInfo.HealthPotionArtifact(),
             new ItemInfo.symbol_chain(),
             new ItemInfo.symbol_repeat(),
             new ItemInfo.symbol_ticket(),
-            new ItemInfo.symbol_token()
-            // ... (모든 유물 정의)
+            new ItemInfo.symbol_token(),
+            new ItemInfo.LemonStackArtifact()
+
         );
     }
     
     
-
     // 초기 상점 아이템을 설정하거나 리롤하는 함수
     private void initializeShop() {
-    	if (this.currentItems == null) { // ⭐ 최초 1회만 실행되도록 조건 추가
+    	if (this.currentItems == null) {
             this.currentItems = createRandomItems();
             System.out.println("ItemShop: 상점 목록 최초 생성 완료.");
     	}
     }
     
-    
- // 무작위로 5개의 유물을 뽑아 반환하는 함수
+    // 무작위로 5개의 유물을 뽑아 반환하는 함수
     private java.util.List<ItemInfo> createRandomItems() {
-        // 1. ALL_ARTIFACTS 리스트를 복사 (원본 보호)
         java.util.List<ItemInfo> itemsToShuffle = new java.util.ArrayList<>(ALL_ARTIFACTS);
-        
-        // 2. 리스트를 무작위로 섞습니다.
-        java.util.Collections.shuffle(itemsToShuffle);
-        
-        // 3. 섞인 리스트에서 최대 5개의 유물을 선택하여 반환합니다.
-        int count = java.lang.Math.min(5, itemsToShuffle.size());
-        
+        java.util.Collections.shuffle(itemsToShuffle);	//무작위로 섞기
+        int count = java.lang.Math.min(5, itemsToShuffle.size());	//섞인 유물에서 5개 뽑습니다.
         return itemsToShuffle.subList(0, count);
     }
-    
+    //리롤 비용 계산 함수
     private boolean tryRerollCost() {
         int Reroll_cost = userInfo.getItemReroll_count() * 2 * userInfo.getRound();
-        
-        // 1. 무료 리롤 횟수 확인 및 사용
-        if (userInfo.getFreeItemReroll_count() > 0) {
-            // 무료 리롤 사용: 무료 횟수 1 차감
+
+        if (userInfo.getFreeItemReroll_count() > 0) {	//무료 리롤있는지
             userInfo.addFreeItemReroll_count(-1); 
             System.out.println("무료 리롤 사용 성공. 남은 무료 리롤횟수: " + userInfo.getFreeItemReroll_count());
             
-            // 상태바 갱신은 메인 로직(rerollItems)에서 한 번에 처리합니다.
             return true;
         }
         
-        // 2. 돈으로 리롤 시도
+        //돈으로 리롤 시도
         else {
-            if (userInfo.getRoulatte_money() >= Reroll_cost) { // 금액 비교 >=로 변경
+            if (userInfo.getRoulatte_money() >= Reroll_cost) { 
                 userInfo.addRoulatte_money(-Reroll_cost);    // 계산식: (유물 리롤 횟수 * 2 * 라운드수)
                 userInfo.addItemReroll_count();                // 유물 리롤 카운트 증가
-                
-                // 갱신은 rerollItems에서 처리되므로 여기서는 제거합니다.
-                
                 System.out.println("리롤 사용 성공. 차감 금액: " + Reroll_cost + " 남은 금액: " + userInfo.getRoulatte_money());
                 return true;
             }
@@ -97,69 +91,49 @@ public class ItemShop {
     }
     
     
-    
-    // 리롤 버튼 클릭 시 호출될 함수
-//    public List<ItemInfo> rerollItems() {
-//        // TODO: 리롤 비용(예: 1 티켓)을 차감하는 로직 구현
-//        useItemForReroll();
-//        // 새로운 아이템 목록으로 갱신
-//    	this.currentItems = createRandomItems(); // 새로운 아이템 생성
-//    	System.out.println("ItemShop: 리롤 성공. 새 목록 크기: " + this.currentItems.size()); //디버깅용
-//    	
-//        // 갱신된 아이템 목록을 ItemShopScreen에 반환
-//        return this.currentItems;
-//    }
-    
     /**
      * 현재 상점 유물 목록을 리롤하고 새로운 목록을 반환합니다.
      * @return 새로 리롤된 5개의 유물 목록. (리롤 비용 부족 시 null)
      */
     public List<ItemInfo> rerollItems() {
-        // 1. 리롤 비용 확인 및 차감
-    	// ⭐ 1. 리롤 비용 계산 및 차감 (사용자 제공 로직 통합)
         if (!tryRerollCost()) {
-            // 비용(돈 또는 무료 횟수) 차감 실패 시 리롤 중단
             return null; 
         }
-        
-        // ⭐ 2. 소유 유물 목록 가져오기 (ItemInfo 이름 목록)
 
-        List<String> ownedItemNames = userInfo.getUserItem_List();
-        
-        // ⭐ 3. 새로운 상점 목록 후보 (구매 가능 유물) 생성
+        List<String> ownedItemNames = userInfo.getOwnedItemNames();
         List<ItemInfo> availableArtifacts = new ArrayList<>();
         
         for (ItemInfo artifact : ALL_ARTIFACTS) {
-            // 소유 목록에 없는 유물만 후보로 추가
-            if (!ownedItemNames.contains(artifact.getName())) { // getName()으로 비교
+        	String name = artifact.getName();
+            boolean isOwned = ownedItemNames.contains(name);
+            if (!isOwned) {
                 availableArtifacts.add(artifact);
             }
+            else if (artifact.getDurationType() == DurationType.STACKABLE) {
+                int currentStack = userInfo.getItemStackCount(name);
+                
+                if (currentStack < artifact.getMaxStack()) { //스택형 유물, 풀스택이 아니면 상점에 재등장
+                    availableArtifacts.add(artifact);	//상점에 재등장
+                }
+            }
+        
+            
         }
-        
-        // 4. 새로운 5개 아이템을 무작위로 선택
-        int itemsToSelect = Math.min(5, availableArtifacts.size());
-        
-        // 리스트를 섞고, 앞에서 itemsToSelect 개를 선택
         Collections.shuffle(availableArtifacts, new Random());
-        
+        int itemsToSelect = Math.min(5, availableArtifacts.size());
         List<ItemInfo> newItems = new ArrayList<>(availableArtifacts.subList(0, itemsToSelect));
-        
-        // 5. 상점 목록을 5개로 채우기 (5개 미만인 경우 SoldArtifact로 채움)
+        //상점목록이 5개보다 적으면
         while (newItems.size() < 5) {
             newItems.add(new ItemInfo.SoldArtifact());
         }
-        
-        // 6. 현재 상점 목록 업데이트
         this.currentItems = newItems;
-        
-        // 상태바 갱신 요청 (리롤 횟수 차감 반영)
+
         if (this.updateMainStatus != null) {
             this.updateMainStatus.run();
         }
 
         return this.currentItems;
     }
-    
     
     public enum PurchaseResult {
         SUCCESS,       // 구매 성공
@@ -174,36 +148,67 @@ public class ItemShop {
      * @return 구매 성공 시 true, 실패 시 (티켓 부족 등) false
      */
     public PurchaseResult buy_item(int itemIndex) {
+    	//유물 상점이 비어있지 않고 보여줄수있는 만큼 보여주기
         if (currentItems == null || itemIndex < 0 || itemIndex >= currentItems.size()) {
-            return PurchaseResult.ALREADY_SOLD; // 유효하지 않은 인덱스
+            return PurchaseResult.ALREADY_SOLD;
         }
-
+        //상점에 보여주기 위해 생성한 아이템들 목록
         ItemInfo item = (ItemInfo) currentItems.get(itemIndex);
 
-        // 1. 판매된 유물인지 확인 (SoldArtifact는 재구매 불가)
+        //판매된 유물인지 확인
         if (item instanceof ItemInfo.SoldArtifact) {
             return PurchaseResult.ALREADY_SOLD;
         }
+        boolean isConsumable = (item.getDurationType() == DurationType.CONSUMABLE);	//단발형 유물인지
+        boolean isStackable = (item.getDurationType() == DurationType.STACKABLE);	//스택형 유물인지
+        boolean hasItem = userInfo.getItemStackCount(item.getName()) > 0;	//스택이 있는지
+        boolean isInstant = (item.getDurationType() == DurationType.INSTANT);	//지속형 유물인지
         
-        int currentItemsCount = userInfo.getUserItem_List().size();
-        int maxItemsCount = userInfo.getItem_max();
-        
-        if (currentItemsCount >= maxItemsCount) {
-            // 인벤토리가 가득 찼을 경우, 구매 불가 반환
-            System.out.println("DEBUG: 인벤토리가 가득 찼습니다. 현재: " + currentItemsCount + "/" + maxItemsCount);
-            return PurchaseResult.INVENTORY_FULL; 
+        // 인벤토리 체크: "즉발형도 아니고" AND "(스택형이면서 이미 가진 경우)도 아니라면" -> 공간 필요
+        if (!isInstant && !(isStackable && hasItem)) {
+            int currentItemsCount = userInfo.getUserItem_List().size();
+            if (currentItemsCount >= userInfo.getItem_max()) {
+                return PurchaseResult.INVENTORY_FULL;
+            }
         }
+        int cost = item.getTicketCost(); //아이템 가격 가져오기
         
-        int cost = item.getTicketCost();
-        
-        // 2. UserInfo에서 티켓 차감 시도
-        // userInfo 필드는 ItemShop.class에 선언되어 있습니다.
         if (userInfo.minusTicket(cost)) {
-            // 3. 티켓 차감 성공: 유물 효과 적용
-            item.applyEffect(userInfo);
-            
-            userInfo.addUserItem_List(item.getName());
-            // 4. 상점 UI 업데이트: '판매된 유물' 객체로 교체
+        	if (item.getDurationType() == DurationType.INSTANT) {
+                //즉발형 유물 즉시 효과 발동
+                item.applyEffect(userInfo); 
+                //즉발형은 인벤토리 추가 안됨
+        	}
+        	else {
+	            //해당 아이템 스택 +1
+	            userInfo.addItemStack(item.getName());
+	            
+                if (!isStackable || !hasItem) {	//스택형 유물이 아니거나 스택이 0보다 크다면
+                    userInfo.addOwnedItemName(item.getName());	//아이템 추가
+                }
+
+                //단발형이라면 지속 횟수 설정
+                if (isConsumable) {
+                    userInfo.setItemDuration(item.getName(), item.getActiveTurns());
+                }
+
+	            //기본 유물은 구매하면 더 이상 상점에서 안나옴
+	            boolean shouldRemoveFromPool = true; //구매하면 목록에서 제거
+	            //스택형 유물이라면
+	            if (item.getDurationType() == DurationType.STACKABLE) {
+	                // 현재 스택 확인
+	                int currentStack = userInfo.getItemStackCount(item.getName());
+	                int maxStack = item.getMaxStack();
+	                //스택 남았으면
+	                if (currentStack < maxStack) {
+	                    shouldRemoveFromPool = false; 
+	                }
+	            }
+	            if (shouldRemoveFromPool) { //유물 제거
+	                removeItemFromPool(item.getName());
+	            }
+        	}
+            //'판매된 유물' 객체로 교체
             ItemInfo soldItem = new ItemInfo.SoldArtifact();
             currentItems.set(itemIndex, soldItem);
             
@@ -212,19 +217,25 @@ public class ItemShop {
                 this.updateOwnItemScreen.run(); 
                 System.out.println("ItemShop: 소유 유물 화면 갱신 요청 완료.");
             }
+            // 유물 구매 직후 자동 저장
+            if (saveManager != null) {
+                saveManager.save(userInfo);
+                System.out.println("[SAVE] 유물 구매 저장 완료: " + item.getName());
+            }
+
             
             return PurchaseResult.SUCCESS; // 구매 성공
         } else {
-            // 티켓 차감 실패 (티켓 부족)
-            return PurchaseResult.INSUFFICIENT_TICKETS; 
+            return PurchaseResult.INSUFFICIENT_TICKETS;// 티켓 차감 실패
         }
     }
-
-    // ItemShopScreen이 현재 아이템 목록을 가져가서 화면을 그릴 때 사용
+    //유물제거용 함수
+    private void removeItemFromPool(String targetName) {
+        availableItems.removeIf(info -> info.getName().equals(targetName));
+    }
+   
     public List<ItemInfo> getCurrentItems() {
         return this.currentItems;
     }
-    
-    // ... 기타 UI 표시를 위한 Getter (예: 리롤 비용 등) ...
 }
 

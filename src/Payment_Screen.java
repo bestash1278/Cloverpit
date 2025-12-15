@@ -46,17 +46,14 @@ public class Payment_Screen extends JPanel implements ActionListener {
     }
 
     private void loadScreenImages() {
-        // ⭐ 원하는 배경색의 RGB 값을 설정합니다. (단일 색상이어야 합니다.)
         Color paymentBGColor = new Color(220, 16, 183); // 납입 기계 이미지의 배경색
         Color bonusBGColor = new Color(220, 15, 180);   // 보너스 기계 이미지의 배경색
 
-        // 1. 납입 기계 이미지 로드 및 배경색 투명 처리
         paymentMachineImage = loadAndTransparentImage(
             "res/payment_machine.png", 
             paymentBGColor
         ); 
 
-        // 2. 보너스 기계 이미지 로드 및 배경색 투명 처리
         bonusMachineImage = loadAndTransparentImage(
             "res/bonus_machine.png", 
             bonusBGColor
@@ -65,27 +62,18 @@ public class Payment_Screen extends JPanel implements ActionListener {
 
     }
     
-    /**
-     * 이미지에서 특정 RGB 값을 투명하게 처리합니다. (Color Keying)
-     * @param sourceImage 배경색이 포함된 원본 Image 객체
-     * @param targetColor 투명하게 만들고자 하는 배경색 (java.awt.Color 객체)
-     * @return 배경이 투명하게 처리된 BufferedImage 객체
-     */
     private BufferedImage makeColorTransparent(Image sourceImage, Color targetColor) {
         if (sourceImage == null) return null;
 
-        // 1. Image 객체를 BufferedImage로 변환
-        // ImageIO.read()로 로드된 Image는 일반적으로 BufferedImage이지만, 안전을 위해 변환 과정을 거칩니다.
         BufferedImage image = new BufferedImage(
             sourceImage.getWidth(null), 
             sourceImage.getHeight(null), 
-            BufferedImage.TYPE_INT_ARGB // 알파 채널(투명도)을 지원하는 타입으로 설정
+            BufferedImage.TYPE_INT_ARGB
         );
         Graphics g = image.getGraphics();
         g.drawImage(sourceImage, 0, 0, null);
         g.dispose();
 
-        // 2. 투명화 작업 수행
         int targetRGB = targetColor.getRGB();
         int width = image.getWidth();
         int height = image.getHeight();
@@ -94,17 +82,14 @@ public class Payment_Screen extends JPanel implements ActionListener {
             for (int y = 0; y < height; y++) {
                 int pixel = image.getRGB(x, y);
 
-                // 해당 픽셀의 색상이 목표 색상과 일치하는지 확인
                 if (pixel == targetRGB) {
-                    // 일치하면 투명 픽셀로 설정 (알파 채널 0)
-                    image.setRGB(x, y, 0x00000000); // 0xAARRGGBB, AA=00 (투명)
+                    image.setRGB(x, y, 0x00000000); 
                 }
             }
         }
         return image;
     }
 
-    // ⭐ 헬퍼 메서드: 이미지를 로드하고 바로 투명 처리까지 수행하는 메서드
     private Image loadAndTransparentImage(String path, Color targetColor) {
         Image originalImage = loadImage(path); // 기존 loadImage 메서드 사용
         if (originalImage == null) return null;
@@ -112,15 +97,14 @@ public class Payment_Screen extends JPanel implements ActionListener {
         return makeColorTransparent(originalImage, targetColor);
     }
     
-    
-    // 1. 생성자에서 Payment 객체를 주입받아 필드에 저장 (의존성 유지)
     public Payment_Screen(Payment paymentLogic) {
         this.paymentLogic = paymentLogic;	//의존성 주입용
         setOpaque(false);
         
         loadBackgroundImage("res/back_ground.png");     
         loadScreenImages();
-        setLayout(null);        // 3. 레이아웃 설정 (null 레이아웃을 사용해 절대 좌표로 컴포넌트 배치)
+
+        setLayout(null);
         
         //마감기한 보너스 결과값 가져오기 위해 함수 호출
         Payment.get_deadline_bonus result = this.paymentLogic.deadline_bonus_count();
@@ -161,17 +145,11 @@ public class Payment_Screen extends JPanel implements ActionListener {
         interestLabel.setFont(new Font("맑은 고딕", Font.BOLD, 16));
         add(interestLabel);
         paymentLogic.get_total_money(); // 초기 총액 표시
-
-        // 5. 클릭 이벤트 리스너 연결 (MouseAdapter 사용)
         addMouseListener(new ScreenClickListener()); 
-        
-        // 6. 패널 크기 설정 (이것은 MainFrame의 CardLayout에 맞게 조정될 것입니다)
-        setPreferredSize(new Dimension(800, 600));
+        setPreferredSize(new Dimension(800, 600));	//기본 화면비
     }
     
-    public void updateLocalUI() {
-        // 💡 Payment Logic 객체를 통해 최신 정보를 가져옵니다.
-        
+    public void updatePaymentUI() {
         // 이자 업데이트
         int interest = paymentLogic.interest_count();    
         interestLabel.setText("계산된 이자: " + interest + "원");
@@ -183,13 +161,11 @@ public class Payment_Screen extends JPanel implements ActionListener {
         // 목표 금액 업데이트
         get_round_money_lable.setText("목표 금액: " + paymentLogic.get_deadline_money() + "원");
         
-        // 변경된 내용을 즉시 반영하도록 요청
         revalidate();
         repaint();
     }
     
     /**------------배경 이미지 그리기 (JPanel의 paintComponent 오버라이드)---------*/
-    // PNG 이미지 로드 함수
     private void loadBackgroundImage(String path) {
         try {
             backgroundImage = ImageIO.read(new File(path));
@@ -204,72 +180,57 @@ public class Payment_Screen extends JPanel implements ActionListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (backgroundImage != null) {
-            // 패널 크기에 맞게 이미지 그리기
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         }
         
         if (bonusMachineImage != null) {
-            int x = 50;    // 시작 X 좌표 (조정 필요)
-            int y = 200;    // 시작 Y 좌표 (조정 필요)
-            int width = 250;  // 너비 (조정 필요)
-            int height = 350; // 높이 (조정 필요)
+            int x = 50;    // 시작 X 좌표
+            int y = 200;    // 시작 Y 좌표 
+            int width = 250;  // 너비
+            int height = 350; // 높이
             g.drawImage(bonusMachineImage, x, y, width, height, this);
         }
         
         if (paymentMachineImage != null) {
-            int x = 350;    // 시작 X 좌표 (조정 필요)
-            int y = 150;    // 시작 Y 좌표 (조정 필요)
-            int width = 300;  // 너비 (조정 필요)
-            int height = 400; // 높이 (조정 필요)
+            int x = 350;    // 시작 X 좌표
+            int y = 150;    // 시작 Y 좌표 
+            int width = 300;  // 너비 
+            int height = 400; // 높이
             g.drawImage(paymentMachineImage, x, y, width, height, this);
         }
         if (depositImage != null) {
-            int x = 570;    // 시작 X 좌표 (조정 필요)
-            int y = 270;    // 시작 Y 좌표 (조정 필요)
-            int width = 50;  // 너비 (조정 필요)
-            int height = 50; // 높이 (조정 필요)
+            int x = 570;    // 시작 X 좌표 
+            int y = 270;    // 시작 Y 좌표
+            int width = 50;  // 너비 
+            int height = 50; // 높이
             g.drawImage(depositImage, x, y, width, height, this);
         }
-        
-        // 디버깅 용: 클릭 영역을 시각적으로 표시 (나중에 제거)
-        g.setColor(new Color(255, 0, 0, 100)); // 투명한 빨간색
-        g.fillRect(CLICK_AREA.x, CLICK_AREA.y, CLICK_AREA.width, CLICK_AREA.height);
     }
     
     
-    /**------------ 마우스 클릭 리스너 클래스 (내부 클래스로 구현)----------------*/
+    /**------------ 마우스 클릭 리스너 클래스----------------*/
     private class ScreenClickListener extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) {
-        	// 클릭된 좌표 (e.getX(), e.getY())
             Point clickedPoint = e.getPoint();
-
             // 버튼 클릭시
             if (CLICK_AREA.contains(clickedPoint)) {
-                // 🚨 수정된 메서드를 호출하고 성공 여부를 바로 확인
                 if (paymentLogic.processPayment()) {
-                	updateLocalUI();
+                	updatePaymentUI();
 
                 } else {
-                    // 납입 실패 (잔액 부족, 이미 목표 달성 등) 시 사용자에게 메시지 표시
+                    // 납입 실패시  메시지 표시
                     JOptionPane.showMessageDialog(null, "납입 불가: 잔액이 부족하거나 목표액을 달성했습니다.");
                 }
             } else {
-                // 다른 영역 클릭 시 처리
-                System.out.println("빈 영역 클릭: " + clickedPoint);
+                System.out.println("빈 영역 클릭: " + clickedPoint);//디버깅용
             }
-            
-         // 변경된 내용을 즉시 반영하도록 요청 (Swing 컴포넌트의 필수 과정)
             revalidate();
             repaint();
         }
     }
-    
-
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 }
 

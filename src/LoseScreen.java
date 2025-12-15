@@ -14,6 +14,10 @@ public class LoseScreen extends JPanel {
 
     private Image background;
 
+    // 기준 해상도
+    private static final int SCREEN_WIDTH = 1600;
+    private static final int SCREEN_HEIGHT = 900;
+
     public LoseScreen(JFrame frame, CardLayout cardLayout, JPanel cardPanel) {
         this.frame = frame;
         this.cardLayout = cardLayout;
@@ -24,7 +28,7 @@ public class LoseScreen extends JPanel {
         ImageIcon bgIcon = new ImageIcon("res/loose_background.png");
         background = bgIcon.getImage();
 
-        // 내용 표시용 패널 (투명)
+        // 내용 표시용 패널 (투명, 절대좌표)
         JPanel contentPanel = new JPanel(null);
         contentPanel.setOpaque(false);
         add(contentPanel, BorderLayout.CENTER);
@@ -32,31 +36,39 @@ public class LoseScreen extends JPanel {
         // ===== 제목 라벨 =====
         JLabel titleLabel = new JLabel("탈락했습니다...", SwingConstants.CENTER);
         titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(createFont(40, Font.BOLD));
-        titleLabel.setBounds(0, 100, 1600, 60);
+        titleLabel.setFont(createFont(48, Font.BOLD));
+        titleLabel.setBounds(
+                0,
+                120,
+                SCREEN_WIDTH,
+                80
+        );
         contentPanel.add(titleLabel);
 
-        // ===== 버튼들 =====
+        // ===== 버튼 공통 설정 =====
+        int buttonWidth = 220;
+        int buttonHeight = 60;
+        int buttonY = 680;
+        int gap = 30;
+
+        int totalWidth = buttonWidth * 3 + gap * 2;
+        int startX = (SCREEN_WIDTH - totalWidth) / 2;
+
         // 다시 시작 버튼
         JButton restartButton = createMenuButton("다시 시작");
-        restartButton.setBounds(460, 640, 200, 60);
-        restartButton.addActionListener(e -> {
-            // 세이브 초기화 + 새 게임 시작
-            Main.restartGame();
-        });
+        restartButton.setBounds(startX, buttonY, buttonWidth, buttonHeight);
+        restartButton.addActionListener(e -> Main.restartGame());
         contentPanel.add(restartButton);
 
         // 메뉴로 돌아가기 버튼
         JButton menuButton = createMenuButton("메뉴로 돌아가기");
-        menuButton.setBounds(700, 640, 200, 60);
-        menuButton.addActionListener(e -> {
-            Main.goToMenu();
-        });
+        menuButton.setBounds(startX + buttonWidth + gap, buttonY, buttonWidth, buttonHeight);
+        menuButton.addActionListener(e -> Main.goToMenu());
         contentPanel.add(menuButton);
 
         // 게임 종료 버튼
         JButton exitButton = createMenuButton("게임 종료");
-        exitButton.setBounds(940, 640, 200, 60);
+        exitButton.setBounds(startX + (buttonWidth + gap) * 2, buttonY, buttonWidth, buttonHeight);
         exitButton.addActionListener(e -> System.exit(0));
         contentPanel.add(exitButton);
     }
@@ -79,7 +91,6 @@ public class LoseScreen extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
         if (background != null) {
             g.drawImage(background, 0, 0, getWidth(), getHeight(), this);
         }

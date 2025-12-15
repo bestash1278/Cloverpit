@@ -35,6 +35,7 @@ public class StartScreen extends JPanel {
         
         setLayout(null); // 절대 위치 레이아웃 사용
         setOpaque(false);
+        setPreferredSize(new Dimension(1600, 900));
         
         soundManager.playBackgroundMusic();
         
