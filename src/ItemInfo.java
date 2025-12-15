@@ -204,7 +204,15 @@ public abstract class ItemInfo {
     
     public static class symbol_chain extends ItemInfo {
         public symbol_chain() {
-            super("사슬 변형자 ", 0, "res/symbol_chain.png", "사슬 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다.", null,1); 
+
+            super(
+                "사슬 변형자", 2, "res/symbol_chain.png", "30% 확률로 사슬 변형자를 적용시킵니다. (사슬변형자: 기본 패턴 값만큼 패턴 가격 증가)",
+                new ItemEffect(
+                	    (user) -> {
+                	    	},
+                	    DurationType.PASSIVE
+                	),1
+            );
         }
         @Override
         public void applyEffect(User userInfo) {
@@ -213,7 +221,15 @@ public abstract class ItemInfo {
 
     public static class symbol_repeat extends ItemInfo {
         public symbol_repeat() {
-            super("반복 변형자 ", 0, "res/symbol_repeat.png", "반복 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다.", null,1); 
+
+            super("반복 변형자 ", 0, "res/symbol_repeat.png", "반복 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다.",
+            new ItemEffect(
+                (user) -> {
+                    },
+                DurationType.PASSIVE
+            ),1
+        ); 
+        
         }
         @Override
         public void applyEffect(User userInfo) {
@@ -222,7 +238,12 @@ public abstract class ItemInfo {
 
     public static class symbol_ticket extends ItemInfo {
         public symbol_ticket() {
-            super("티켓 변형자 ", 0, "res/symbol_ticket.png", "티켓 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다.", null,1); 
+            super("티켓 변형자 ", 0, "res/symbol_ticket.png", "티켓 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다.", 
+            new ItemEffect(
+                (user) -> {
+                    },
+                DurationType.PASSIVE
+            ),1); 
         }
         @Override
         public void applyEffect(User userInfo) {
@@ -231,7 +252,12 @@ public abstract class ItemInfo {
 
     public static class symbol_token extends ItemInfo {
         public symbol_token() {
-            super("토큰 변형자 ", 0, "res/symbol_token.png", "토큰 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다.", null,1); 
+            super("토큰 변형자 ", 0, "res/symbol_token.png", "토큰 변형자가 포함된 무늬의 패턴이 나오면 패턴 가격이 증가합니다.", 
+            new ItemEffect(
+                (user) -> {
+                    },
+                DurationType.PASSIVE
+            ),1); 
         }
         @Override
         public void applyEffect(User userInfo) {

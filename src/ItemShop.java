@@ -30,7 +30,6 @@ public class ItemShop {
             new ItemInfo.pattern_train(), 
             new ItemInfo.PersistentBonusArtifact(),
             new ItemInfo.NextSpinOnlyArtifact(),  
-            new ItemInfo.HealthPotionArtifact(),
             
             //테스트 유물
             new ItemInfo.TestPersistentArtifact(), 
