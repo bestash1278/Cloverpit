@@ -619,6 +619,22 @@ public class User {
         
 
     }
+    
+    /**
+     * itemStacks 맵을 반환합니다. (저장/로드용)
+     */
+    public Map<String, Integer> getItemStacks() {
+        return new HashMap<>(itemStacks);
+    }
+    
+    /**
+     * itemStacks 맵을 설정합니다. (저장/로드용)
+     */
+    public void setItemStacks(Map<String, Integer> stacks) {
+        if (stacks != null) {
+            this.itemStacks = new HashMap<>(stacks);
+        }
+    }
     /**
      * [추가] 아이템의 지속 횟수를 설정합니다. (구매 시 호출)
      */

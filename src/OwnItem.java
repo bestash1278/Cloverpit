@@ -18,6 +18,15 @@ public class OwnItem {
     }
 
     /**
+     * 특정 유물의 스택 개수를 반환합니다.
+     * @param itemName 유물 이름
+     * @return 스택 개수 (스택형이 아니거나 없으면 0)
+     */
+    public int getItemStackCount(String itemName) {
+        return user.getItemStackCount(itemName);
+    }
+
+    /**
      * 유물을 판매 처리하고 사용자에게 돈을 환급합니다.
      * @param itemName 판매할 유물의 이름
      * @return 판매 성공 시 true

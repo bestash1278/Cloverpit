@@ -146,6 +146,38 @@ public class OwnItem_Screen extends JPanel {
                 g2d.setColor(Color.BLACK);
                 g2d.drawString(item.getName(), itemAreaX + 5, itemAreaY + 15);
             }
+            
+            // 스택형 유물인 경우 스택 개수 표시
+            if (item.getDurationType() == DurationType.STACKABLE) {
+                int stackCount = ownItemLogic.getItemStackCount(item.getName());
+                if (stackCount > 0) {
+                    // 스택 개수를 표시할 위치 (유물 이미지 우측 상단)
+                    int stackX = area.x + imagePadding + imageSize - 25;
+                    int stackY = area.y + imagePadding + 20;
+                    
+                    // 배경 원 그리기
+                    g2d.setColor(new Color(255, 215, 0, 220)); // 골드색 반투명 배경
+                    g2d.fillOval(stackX - 10, stackY - 15, 30, 30);
+                    
+                    // 테두리 그리기
+                    g2d.setColor(Color.WHITE);
+                    g2d.setStroke(new java.awt.BasicStroke(2));
+                    g2d.drawOval(stackX - 10, stackY - 15, 30, 30);
+                    
+                    // 스택 개수 텍스트 그리기
+                    g2d.setColor(Color.BLACK);
+                    Font stackFont = new Font("Malgun Gothic", Font.BOLD, 30);
+                    if (!stackFont.getFamily().equals("Malgun Gothic")) {
+                        stackFont = new Font("Dotum", Font.BOLD, 30);
+                    }
+                    g2d.setFont(stackFont);
+                    String stackText = String.valueOf(stackCount);
+                    FontMetrics fm = g2d.getFontMetrics();
+                    int textWidth = fm.stringWidth(stackText);
+                    int textHeight = fm.getAscent();
+                    g2d.drawString(stackText, stackX - textWidth / 2+5, stackY + textHeight / 4+5);
+                }
+            }
         }
     }
 

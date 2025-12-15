@@ -5,7 +5,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SaveManagerCsv {
 
@@ -17,7 +19,7 @@ public class SaveManagerCsv {
           + "total_money,ticket,interest,item_max,deadline_money,"
           + "total_spin,call_count,callReroll_count,itemReroll_count,freeItemReroll_count,"
           + "lemon_prob,cherry_prob,clover_prob,bell_prob,diamond_prob,treasure_prob,seven_prob,"
-          + "symbol_sum,pattern_sum,user_items,user_call";
+          + "symbol_sum,pattern_sum,user_items,user_call,item_stacks";
 
     public SaveManagerCsv() {
         File file = new File(SAVE_FILE);
@@ -52,6 +54,7 @@ public class SaveManagerCsv {
 
             String symbolSumStr  = joinIntArray(user.getSymbolSum());
             String patternSumStr = joinIntArray(user.getPatternSum());
+            String itemStacksStr = joinItemStacks(user.getItemStacks());
 
             StringBuilder sb = new StringBuilder();
 
@@ -82,7 +85,8 @@ public class SaveManagerCsv {
             sb.append(symbolSumStr).append(",");
             sb.append(patternSumStr).append(",");
             sb.append(userItemsStr).append(",");
-            sb.append(userCallStr);
+            sb.append(userCallStr).append(",");
+            sb.append(itemStacksStr);
 
             bw.write(sb.toString());
             bw.newLine();
@@ -187,6 +191,13 @@ public class SaveManagerCsv {
                 for (String c : calls) {
                     user.addUser_call(c);
                 }
+            }
+
+            // item_stacks (스택형 유물 스택 개수)
+            String itemStacksStr = getString(arr, idx++, "");
+            if (!itemStacksStr.isEmpty()) {
+                Map<String, Integer> stacks = parseItemStacks(itemStacksStr);
+                user.setItemStacks(stacks);
             }
 
             return user;
@@ -303,5 +314,52 @@ public class SaveManagerCsv {
             }
         }
         return list;
+    }
+    
+    /**
+     * itemStacks 맵을 문자열로 변환 (저장용)
+     * 형식: "아이템이름:스택수|아이템이름:스택수"
+     */
+    private String joinItemStacks(Map<String, Integer> stacks) {
+        if (stacks == null || stacks.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (Map.Entry<String, Integer> entry : stacks.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) continue;
+            if (!first) sb.append("|");
+            // 아이템 이름에 특수문자가 있을 수 있으므로 이스케이프 처리
+            String itemName = entry.getKey().replace(":", "\\:").replace("|", "\\|");
+            sb.append(itemName).append(":").append(entry.getValue());
+            first = false;
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * 문자열을 itemStacks 맵으로 변환 (로드용)
+     * 형식: "아이템이름:스택수|아이템이름:스택수"
+     */
+    private Map<String, Integer> parseItemStacks(String value) {
+        Map<String, Integer> map = new HashMap<>();
+        if (value == null || value.isEmpty()) return map;
+
+        String[] parts = value.split("\\|");
+        for (String part : parts) {
+            if (part == null || part.isEmpty()) continue;
+            // 콜론으로 분리 (마지막 콜론만 분리 기준)
+            int lastColonIndex = part.lastIndexOf(':');
+            if (lastColonIndex > 0 && lastColonIndex < part.length() - 1) {
+                String itemName = part.substring(0, lastColonIndex).replace("\\:", ":").replace("\\|", "|");
+                try {
+                    int stackCount = Integer.parseInt(part.substring(lastColonIndex + 1));
+                    if (stackCount > 0) {
+                        map.put(itemName, stackCount);
+                    }
+                } catch (NumberFormatException e) {
+                    // 무시하고 계속
+                }
+            }
+        }
+        return map;
     }
 }

@@ -110,7 +110,7 @@ public abstract class ItemInfo {
         public LemonStackArtifact() {
             super(
                 "신비한 레몬(스택형)",    // 이름
-                2,              // 가격 (티켓)
+                1,              // 가격 (티켓)
                 "res/special_lemon.png", // 이미지 경로
                 "레몬 등장 확률이 증가합니다. (중첩 가능: 개당 +5%)", // 설명
                 new ItemEffect(
