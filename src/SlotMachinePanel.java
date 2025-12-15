@@ -134,7 +134,22 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         this.user = user;
         this.soundManager = new SoundManager();
         this.saveManager = new SaveManagerCsv();
+        
+        // 저장된 스핀 옵션 로드
+        SPINS_PER_ROUND = user.getSpinsPerRound();
+        if (SPINS_PER_ROUND != 0 && SPINS_PER_ROUND != 7) {
+            // 기본값 설정 (호환성을 위해)
+            SPINS_PER_ROUND = 7;
+            user.setSpinsPerRound(7);
+        }
+        
+        boolean shouldShowDialog = (user.getRound_spin_left() <= 0);
+        
         this.roundManager = new RoundManager(user);
+        
+        if (shouldShowDialog && user.getRound_spin_left() > 0) {
+            user.setRound_spin_left(0);
+        }
         
         this.roulatte = new RoulatteInfo();
         this.ownItem = new OwnItem(user, this::updateStatusBar);
@@ -285,12 +300,19 @@ public class SlotMachinePanel extends JPanel implements Runnable {
 
         gameThread = new Thread(this);
         gameThread.start();
-        
+    }
+    
+    /**
+     * 외부에서 라운드 시작 다이얼로그를 호출할 수 있는 public 메서드
+     */
+    public void showRoundStartDialogIfNeeded() {
         if (!roundStarted) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    showRoundStartDialog();
+                    if (!roundStarted) {
+                        showRoundStartDialog();
+                    }
                 }
             });
         }
@@ -369,7 +391,20 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         ticketLabel.setText("티켓: " + user.getTicket());
         deadlineLabel.setText("기한: " + user.getDeadline());
         roundLabel.setText("라운드: " + roundLeft + "/" + ROUNDS_PER_DEADLINE);
-        spinLeftLabel.setText("남은 스핀:" + user.getRound_spin_left() + "/" + SPINS_PER_ROUND);
+        
+        // 스핀 보너스 유물 체크하여 최대 횟수 계산
+        boolean hasSpinBonus = user.getUserItem_List() != null && user.getUserItem_List().contains("스핀 보너스(영구형)");
+        int bonusSpins = hasSpinBonus ? 2 : 0;
+        int maxSpins;
+        if (SPINS_PER_ROUND == 0) {
+            // 3회 옵션 선택 시
+            maxSpins = 3 + bonusSpins;
+        } else {
+            // 7회 옵션 선택 시
+            maxSpins = SPINS_PER_ROUND + bonusSpins;
+        }
+        spinLeftLabel.setText("남은 스핀:" + user.getRound_spin_left() + "/" + maxSpins);
+        
         deadlineMoneyLabel.setText("목표: " + user.getDeadline_money());
         totalMoneyLabel.setText("납입: " + user.getTotal_money());
         updatePhoneButtonState();	//전화 버튼 활성화 여부확인 함수---------------------------------------------------------------------
@@ -558,9 +593,16 @@ public class SlotMachinePanel extends JPanel implements Runnable {
             return;
         }
         
+        // 스핀 보너스 유물 체크
+        boolean hasSpinBonus = user.getUserItem_List() != null && user.getUserItem_List().contains("스핀 보너스(영구형)");
+        int bonusSpins = hasSpinBonus ? 2 : 0;
+        
+        int option1Spins = 7 + bonusSpins;
+        int option2Spins = 3 + bonusSpins;
+        
         Object[] options = {
-            "돌리기 7회 + 티켓 1개",
-            "돌리기 3회 + 티켓 2개"
+            "돌리기 " + option1Spins + "회 + 티켓 1개",
+            "돌리기 " + option2Spins + "회 + 티켓 2개"
         };
         
         int choice = JOptionPane.showOptionDialog(
@@ -576,22 +618,40 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         
         if (choice == JOptionPane.YES_OPTION) {
             SPINS_PER_ROUND = 7;
-            user.setRound_spin_left(7);
+            user.setSpinsPerRound(7);
+            int spinCount = 7;
+            
+            // 스핀 보너스 유물 효과 적용
+            if (user.getUserItem_List() != null && user.getUserItem_List().contains("스핀 보너스(영구형)")) {
+                spinCount += 2;
+                System.out.println("스핀 보너스 발동! 스핀 횟수가 2회 추가되었습니다.");
+            }
+            
+            user.setRound_spin_left(spinCount);
             user.addTicket(1);
             roundStarted = true;
             leverButton.setEnabled(true);
             roundStartButton.setVisible(false);
             updateStatusBar();
-            JOptionPane.showMessageDialog(this, "라운드가 시작되었습니다!\n돌리기 횟수: 7회\n티켓 지급: 1개");
+            JOptionPane.showMessageDialog(this, "라운드가 시작되었습니다!\n돌리기 횟수: " + spinCount + "회\n티켓 지급: 1개");
         } else if (choice == JOptionPane.NO_OPTION) {
             SPINS_PER_ROUND = 3;
-            user.setRound_spin_left(3);
+            user.setSpinsPerRound(3);
+            int spinCount = 3;
+            
+            // 스핀 보너스 유물 효과 적용
+            if (user.getUserItem_List() != null && user.getUserItem_List().contains("스핀 보너스(영구형)")) {
+                spinCount += 2;
+                System.out.println("스핀 보너스 발동! 스핀 횟수가 2회 추가되었습니다.");
+            }
+            
+            user.setRound_spin_left(spinCount);
             user.addTicket(2);
             roundStarted = true;
             leverButton.setEnabled(true);
             roundStartButton.setVisible(false);
             updateStatusBar();
-            JOptionPane.showMessageDialog(this, "라운드가 시작되었습니다!\n돌리기 횟수: 3회\n티켓 지급: 2개");
+            JOptionPane.showMessageDialog(this, "라운드가 시작되었습니다!\n돌리기 횟수: " + spinCount + "회\n티켓 지급: 2개");
         }
     }
     

@@ -1,6 +1,8 @@
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 public class ItemShop {
     private final User userInfo; // 사용자 티켓/돈 정보를 위해 의존성 주입
@@ -30,14 +32,12 @@ public class ItemShop {
             new ItemInfo.HealthPotionArtifact(),
             new ItemInfo.golden_compass(),  
             new ItemInfo.symbol_train(),  
-            new ItemInfo.pattern_train(), 
             new ItemInfo.PersistentBonusArtifact(),
             new ItemInfo.NextSpinOnlyArtifact(),  
             
             //테스트 유물
             new ItemInfo.TestPersistentArtifact(), 
             new ItemInfo.TestTemporaryArtifact(),
-            new ItemInfo.pattern_train(),
 
             new ItemInfo.symbol_chain(),
             new ItemInfo.symbol_repeat(),
@@ -171,17 +171,44 @@ public class ItemShop {
             }
         }
         
-        // 가중치 기반으로 5개 선택
+        // 가중치 기반으로 5개 선택 (중복 방지)
         java.util.List<ItemInfo> selectedItems = new java.util.ArrayList<>();
+        Set<String> selectedNames = new HashSet<>(); // 이미 선택된 유물 이름 추적
         java.util.Random random = new java.util.Random();
         
         for (int i = 0; i < 5; i++) {
-            ItemInfo selected = selectByWeight(random, commonItems, rareItems, epicItems, legendaryItems);
-            if (selected != null) {
-                selectedItems.add(selected);
-            } else if (!availableArtifacts.isEmpty()) {
+            ItemInfo selected = null;
+            int attempts = 0;
+            int maxAttempts = 100; // 무한 루프 방지
+            
+            // 중복되지 않는 유물 선택
+            while (selected == null || selectedNames.contains(selected.getName())) {
+                // 이미 선택 가능한 유물이 부족한 경우 중복 허용
+                if (attempts >= maxAttempts || selectedItems.size() >= availableArtifacts.size()) {
+                    break;
+                }
+                
+                selected = selectByWeight(random, commonItems, rareItems, epicItems, legendaryItems);
+                
                 // 가중치 선택 실패 시 랜덤으로 선택
-                selectedItems.add(availableArtifacts.get(random.nextInt(availableArtifacts.size())));
+                if (selected == null && !availableArtifacts.isEmpty()) {
+                    List<ItemInfo> notSelected = new ArrayList<>();
+                    for (ItemInfo artifact : availableArtifacts) {
+                        if (!selectedNames.contains(artifact.getName())) {
+                            notSelected.add(artifact);
+                        }
+                    }
+                    if (!notSelected.isEmpty()) {
+                        selected = notSelected.get(random.nextInt(notSelected.size()));
+                    }
+                }
+                
+                attempts++;
+            }
+            
+            if (selected != null && !selectedNames.contains(selected.getName())) {
+                selectedItems.add(selected);
+                selectedNames.add(selected.getName());
             } else {
                 // 선택 가능한 유물이 없으면 SoldArtifact 추가
                 selectedItems.add(new ItemInfo.SoldArtifact());
@@ -264,17 +291,44 @@ public class ItemShop {
             }
         }
         
-        // 가중치 기반으로 5개 선택
+        // 가중치 기반으로 5개 선택 (중복 방지)
         java.util.Random random = new java.util.Random();
         List<ItemInfo> newItems = new ArrayList<>();
+        Set<String> selectedNames = new HashSet<>(); // 이미 선택된 유물 이름 추적
         
         for (int i = 0; i < 5; i++) {
-            ItemInfo selected = selectByWeight(random, commonItems, rareItems, epicItems, legendaryItems);
-            if (selected != null) {
-                newItems.add(selected);
-            } else if (!availableArtifacts.isEmpty()) {
+            ItemInfo selected = null;
+            int attempts = 0;
+            int maxAttempts = 100; // 무한 루프 방지
+            
+            // 중복되지 않는 유물 선택
+            while (selected == null || selectedNames.contains(selected.getName())) {
+                // 이미 선택 가능한 유물이 부족한 경우 중복 허용
+                if (attempts >= maxAttempts || newItems.size() >= availableArtifacts.size()) {
+                    break;
+                }
+                
+                selected = selectByWeight(random, commonItems, rareItems, epicItems, legendaryItems);
+                
                 // 가중치 선택 실패 시 랜덤으로 선택
-                newItems.add(availableArtifacts.get(random.nextInt(availableArtifacts.size())));
+                if (selected == null && !availableArtifacts.isEmpty()) {
+                    List<ItemInfo> notSelected = new ArrayList<>();
+                    for (ItemInfo artifact : availableArtifacts) {
+                        if (!selectedNames.contains(artifact.getName())) {
+                            notSelected.add(artifact);
+                        }
+                    }
+                    if (!notSelected.isEmpty()) {
+                        selected = notSelected.get(random.nextInt(notSelected.size()));
+                    }
+                }
+                
+                attempts++;
+            }
+            
+            if (selected != null && !selectedNames.contains(selected.getName())) {
+                newItems.add(selected);
+                selectedNames.add(selected.getName());
             }
         }
         //상점목록이 5개보다 적으면

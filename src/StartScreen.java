@@ -154,5 +154,15 @@ public class StartScreen extends JPanel {
         cardLayout.show(cardPanel, "GAME");
         parentFrame.revalidate();
         parentFrame.repaint();
+        
+        // 화면 전환 후 스핀 횟수 선택 다이얼로그 자동 표시
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (gamePanel != null) {
+                    gamePanel.showRoundStartDialogIfNeeded();
+                }
+            }
+        });
     }
 }

@@ -11,16 +11,17 @@ public class User {
     private Map<String, Integer> itemStacks = new HashMap<>();	//스택형 아이템을 위한 같은 아이템 몇번 구매했는지/Key: 아이템이름, Value: 현재스택
     private Map<String, Integer> itemDurations = new HashMap<>(); //단발형 유물을 얼마나 사용했는지 기록용
     
-    private int roulatte_money = 10000;  
+    private int roulatte_money = 30;  
     private double interest = 0.1;  
     private int ticket = 3;
     private int deadline = 1;
     private int round = 1;               
     private int deadline_money = 75;
-    private int total_money = 30;
+    private int total_money = 0;
     private int total_spin = 0;
     private int round_spin_left = 7;
     private int item_max = 7;	//최대 11까지 가능
+    private int spinsPerRound = 7; // 선택한 스핀 옵션 (7 또는 3)
     
     private int roulatte_cost = 2;	//룰렛 1회 비용
     private boolean call_count = false;	//전화를 걸 수 있는 기회
@@ -294,6 +295,14 @@ public class User {
 
     public void setItem_max(int item_max) {
         this.item_max = item_max;
+    }
+    
+    public int getSpinsPerRound() {
+        return spinsPerRound;
+    }
+    
+    public void setSpinsPerRound(int spinsPerRound) {
+        this.spinsPerRound = spinsPerRound;
     }
     
     // 전화 관련 메서드-------------------------------------

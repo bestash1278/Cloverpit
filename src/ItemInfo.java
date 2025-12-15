@@ -186,31 +186,6 @@ public abstract class ItemInfo {
             }    
         }
     }
-    //단발형
-    public static class pattern_train extends ItemInfo {
-        public pattern_train() {
-            super(
-                "패턴 기차(단발형)",
-                2, 
-                "res/pattern_train.png", 
-                "다음 7번 룰렛을 돌릴때에 한해 패턴 가격이 원래 가격만큼 상승합니다.",
-                new ItemEffect(
-                    (user) -> { 
-                        for (int i = 0; i < 11; i++) {
-                            // 현재 임시 보너스 + 오리지널 패턴 값만큼 보너스 추가
-                            user.setPatternSum(
-                                i, 
-                                (int)user.getPatternSum(i) + user.getPatternOriginal(i)
-                            );
-                        }
-                    },
-                    DurationType.CONSUMABLE // 단발형 유물
-                ) ,7, Rarity.RARE	//7번 스핀후 삭제(단발형 유물)
-            ); 
-        }
-        @Override
-        public void applyEffect(User userInfo) {}
-    }
     
     public static class symbol_chain extends ItemInfo {
         public symbol_chain() {

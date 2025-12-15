@@ -18,6 +18,7 @@ public class SaveManagerCsv {
             "round,round_spin_left,deadline,roulatte_money,"
           + "total_money,ticket,interest,item_max,deadline_money,"
           + "total_spin,call_count,callReroll_count,itemReroll_count,freeItemReroll_count,"
+          + "spins_per_round,"
           + "lemon_prob,cherry_prob,clover_prob,bell_prob,diamond_prob,treasure_prob,seven_prob,"
           + "symbol_sum,pattern_sum,user_items,user_call,item_stacks";
 
@@ -73,6 +74,7 @@ public class SaveManagerCsv {
             sb.append(user.getCallReroll_count()).append(",");
             sb.append(user.getItemReroll_count()).append(",");
             sb.append(user.getFreeItemReroll_count()).append(",");
+            sb.append(user.getSpinsPerRound()).append(",");
 
             sb.append(user.getLemonProbability()).append(",");
             sb.append(user.getCherryProbability()).append(",");
@@ -145,6 +147,9 @@ public class SaveManagerCsv {
 
             int savedFreeItemReroll = getInt(arr, idx++, user.getFreeItemReroll_count());
             user.setFreeItemReroll_count(savedFreeItemReroll);
+
+            // 선택한 스핀 옵션
+            user.setSpinsPerRound(getInt(arr, idx++, user.getSpinsPerRound()));
 
             // 문양 확률
             double lemonProb    = getDouble(arr, idx++, user.getLemonProbability());
