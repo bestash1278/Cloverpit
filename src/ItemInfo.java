@@ -79,14 +79,13 @@ public abstract class ItemInfo {
         @Override
         public void applyEffect(User userInfo) {
         	userInfo.increaseInterestRate(rateIncrease);
-        	System.out.println(getName() + " 유물 효과 적용: 이자율이 " + rateIncrease * 100 + "%p 증가했습니다.");
         }
     }
     //단발형
     public static class TestTemporaryArtifact extends ItemInfo {
         public TestTemporaryArtifact() {
             super(
-                "상큼한 레몬(단발형)", 1, "res/refreshing_lemon.png", 
+                "상큼한 레몬(단발형)", 1, "res/fresh_lemon.png", 
                 "다음 룰렛 3회에 한해 레몬의 상금 배율을 3배로 증가시킵니다.",
                 
                 new ItemEffect(
@@ -122,8 +121,6 @@ public abstract class ItemInfo {
                         double lemonProbability_original = user.getLemonProbability_original();
                         double newProbability = lemonProbability_original + bonusChance;
                         user.setSymbolProbability(0, newProbability); // 레몬 인덱스: 0
-                        
-                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%, 원래: " + lemonProbability_original + " -> 새로운: " + newProbability);
                     },
                     DurationType.STACKABLE //스택형 유물
                 ),1 //선언한만큼 리롤후 삭제(단발형 유물에서만 사용)
@@ -294,7 +291,6 @@ public abstract class ItemInfo {
                         // User의 지속 필드 (persistent)를 변경하는 계산식 정의
                         // 🚨 User 클래스에 increasePersistentSymbolBonus(double)이 필요
                         //user.increasePersistentSymbolBonus(1.1);
-                        System.out.println("DEBUG: [PersistentBonusArtifact] 지속 심볼 배율 1.1x 누적");
                     },
                     DurationType.PASSIVE
                 ),1
@@ -329,7 +325,7 @@ public abstract class ItemInfo {
     public static class RefreshingCherryArtifact extends ItemInfo {
         public RefreshingCherryArtifact() {
             super(
-                "상큼한 체리(단발형)", 1, "res/refreshing_cherry.png", 
+                "상큼한 체리(단발형)", 1, "res/fresh_cherry.png", 
                 "다음 룰렛 3회에 한해 체리의 상금 배율을 3배로 증가시킵니다.",
                 
                 new ItemEffect(
@@ -363,8 +359,6 @@ public abstract class ItemInfo {
                         double cherryProbability_original = user.getCherryProbability_original();
                         double newProbability = cherryProbability_original + bonusChance;
                         user.setSymbolProbability(1, newProbability); // 체리 인덱스: 1
-                        
-                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
                     },
                     DurationType.STACKABLE
                 ),1
@@ -380,7 +374,7 @@ public abstract class ItemInfo {
     public static class RefreshingCloverArtifact extends ItemInfo {
         public RefreshingCloverArtifact() {
             super(
-                "상큼한 클로버(단발형)", 1, "res/refreshing_clover.png", 
+                "상큼한 클로버(단발형)", 1, "res/fresh_clover.png", 
                 "다음 룰렛 3회에 한해 클로버의 상금 배율을 3배로 증가시킵니다.",
                 
                 new ItemEffect(
@@ -414,8 +408,6 @@ public abstract class ItemInfo {
                         double cloverProbability_original = user.getCloverProbability_original();
                         double newProbability = cloverProbability_original + bonusChance;
                         user.setSymbolProbability(2, newProbability); // 클로버 인덱스: 2
-                        
-                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
                     },
                     DurationType.STACKABLE
                 ),1
@@ -431,7 +423,7 @@ public abstract class ItemInfo {
     public static class RefreshingBellArtifact extends ItemInfo {
         public RefreshingBellArtifact() {
             super(
-                "상큼한 종(단발형)", 1, "res/refreshing_bell.png", 
+                "상큼한 종(단발형)", 1, "res/fresh_bell.png", 
                 "다음 룰렛 3회에 한해 종의 상금 배율을 3배로 증가시킵니다.",
                 
                 new ItemEffect(
@@ -465,8 +457,6 @@ public abstract class ItemInfo {
                         double bellProbability_original = user.getBellProbability_original();
                         double newProbability = bellProbability_original + bonusChance;
                         user.setSymbolProbability(3, newProbability); // 종 인덱스: 3
-                        
-                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
                     },
                     DurationType.STACKABLE
                 ),1
@@ -482,7 +472,7 @@ public abstract class ItemInfo {
     public static class RefreshingDiamondArtifact extends ItemInfo {
         public RefreshingDiamondArtifact() {
             super(
-                "상큼한 다이아몬드(단발형)", 1, "res/refreshing_diamond.png", 
+                "상큼한 다이아몬드(단발형)", 1, "res/fresh_diamond.png", 
                 "다음 룰렛 3회에 한해 다이아몬드의 상금 배율을 3배로 증가시킵니다.",
                 
                 new ItemEffect(
@@ -516,8 +506,6 @@ public abstract class ItemInfo {
                         double diamondProbability_original = user.getDiamondProbability_original();
                         double newProbability = diamondProbability_original + bonusChance;
                         user.setSymbolProbability(4, newProbability); // 다이아몬드 인덱스: 4
-                        
-                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
                     },
                     DurationType.STACKABLE
                 ),1
@@ -533,7 +521,7 @@ public abstract class ItemInfo {
     public static class RefreshingTreasureArtifact extends ItemInfo {
         public RefreshingTreasureArtifact() {
             super(
-                "상큼한 보물(단발형)", 1, "res/refreshing_treasure.png", 
+                "상큼한 보물(단발형)", 1, "res/fresh_treasure.png", 
                 "다음 룰렛 3회에 한해 보물의 상금 배율을 3배로 증가시킵니다.",
                 
                 new ItemEffect(
@@ -567,8 +555,6 @@ public abstract class ItemInfo {
                         double treasureProbability_original = user.getTreasureProbability_original();
                         double newProbability = treasureProbability_original + bonusChance;
                         user.setSymbolProbability(5, newProbability); // 보물 인덱스: 5
-                        
-                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
                     },
                     DurationType.STACKABLE
                 ),1
@@ -584,7 +570,7 @@ public abstract class ItemInfo {
     public static class RefreshingSevenArtifact extends ItemInfo {
         public RefreshingSevenArtifact() {
             super(
-                "상큼한 세븐(단발형)", 1, "res/refreshing_seven.png", 
+                "상큼한 세븐(단발형)", 1, "res/fresh_seven.png", 
                 "다음 룰렛 3회에 한해 세븐의 상금 배율을 3배로 증가시킵니다.",
                 
                 new ItemEffect(
@@ -618,8 +604,6 @@ public abstract class ItemInfo {
                         double sevenProbability_original = user.getSevenProbability_original();
                         double newProbability = sevenProbability_original + bonusChance;
                         user.setSymbolProbability(6, newProbability); // 세븐 인덱스: 6
-                        
-                        System.out.println("현재 유물 스택: " + stacks + ", 적용 확률 보너스: +" + bonusChance + "%");
                     },
                     DurationType.STACKABLE
                 ),1
@@ -653,7 +637,6 @@ public abstract class ItemInfo {
             int oldPrice = symbolSumArray[0];
             int newPrice = oldPrice + originalPrice;
             userInfo.setSymbolSum(0, newPrice);
-            System.out.println(getName() + " 효과 적용: 레몬 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
         }
     }
     
@@ -676,7 +659,6 @@ public abstract class ItemInfo {
             int oldPrice = symbolSumArray[1];
             int newPrice = oldPrice + originalPrice;
             userInfo.setSymbolSum(1, newPrice);
-            System.out.println(getName() + " 효과 적용: 체리 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
         }
     }
     
@@ -699,7 +681,6 @@ public abstract class ItemInfo {
             int oldPrice = symbolSumArray[2];
             int newPrice = oldPrice + originalPrice;
             userInfo.setSymbolSum(2, newPrice);
-            System.out.println(getName() + " 효과 적용: 클로버 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
         }
     }
     
@@ -722,7 +703,6 @@ public abstract class ItemInfo {
             int oldPrice = symbolSumArray[3];
             int newPrice = oldPrice + originalPrice;
             userInfo.setSymbolSum(3, newPrice);
-            System.out.println(getName() + " 효과 적용: 종 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
         }
     }
     
@@ -745,7 +725,6 @@ public abstract class ItemInfo {
             int oldPrice = symbolSumArray[4];
             int newPrice = oldPrice + originalPrice;
             userInfo.setSymbolSum(4, newPrice);
-            System.out.println(getName() + " 효과 적용: 다이아몬드 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
         }
     }
     
@@ -768,7 +747,6 @@ public abstract class ItemInfo {
             int oldPrice = symbolSumArray[5];
             int newPrice = oldPrice + originalPrice;
             userInfo.setSymbolSum(5, newPrice);
-            System.out.println(getName() + " 효과 적용: 보물 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
         }
     }
     
@@ -791,7 +769,6 @@ public abstract class ItemInfo {
             int oldPrice = symbolSumArray[6];
             int newPrice = oldPrice + originalPrice;
             userInfo.setSymbolSum(6, newPrice);
-            System.out.println(getName() + " 효과 적용: 세븐 가격 " + oldPrice + " -> " + newPrice + " (오리지널: " + originalPrice + ")");
         }
     }
 
