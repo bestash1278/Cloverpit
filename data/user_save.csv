@@ -1,2 +1,2 @@
 round,round_spin_left,deadline,roulatte_money,total_money,ticket,interest,item_max,deadline_money,total_spin,call_count,callReroll_count,itemReroll_count,freeItemReroll_count,lemon_prob,cherry_prob,clover_prob,bell_prob,diamond_prob,treasure_prob,seven_prob,symbol_sum,pattern_sum,user_items,user_call
-1,3,2,9435,600,9,0.1,11,600,15,true,0,2,0,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,2|2|3|3|5|5|7,1|2|3|1|1|4|4|7|7|8|10,,
+1,7,1,60000,30,1,0.1,7,75,0,false,0,0,0,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,14.285714285714286,2|2|3|3|5|5|7,1|2|3|1|1|4|4|7|7|8|10,,

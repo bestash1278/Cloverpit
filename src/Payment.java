@@ -37,9 +37,7 @@ public class Payment {
 	public int interest_count() {
 		int total_deposit = this.userInfo.getTotal_money(); //총 납입금
 		double currentRate = this.interest_rate;
-		int interest_count = (int) (total_deposit * currentRate); //계산식 : 납입총액 * 이자율
-		this.interest = interest_count;	//지역변수 만들어서 가독성 올렸습니다.
-		return this.interest;	//계산된 이자
+		return (int) (total_deposit * currentRate);	//계산식 : 납입총액 * 이자율
 	}
 	
 	/**현재 이자**/
@@ -63,7 +61,7 @@ public class Payment {
 		return chack;
 	}
 
-	// 납입 처리를 수행하고 성공 여부(true/false)를 반환하는 메서드
+	// 납입 처리 함수
 	public boolean processPayment() {
 	    //필요한 값 가져오기
 	    int current_money = this.userInfo.getRoulatte_money(); // 유저 소지액
@@ -91,13 +89,17 @@ public class Payment {
 	    if (actual_payment <= 0) {
 	        return false; 
 	    }
-	    
+
 	    //실제 납입 계산
 	    int new_total_money = current_money - actual_payment;	//계산식 : 소지액 - 실제 납입금
 	    int new_total_deposit = deposit_count + actual_payment;	//계산식 : 총 납입액 + 실제 납입금
 	    this.userInfo.setRoulatte_money(new_total_money);    //유저돈 업데이트
 	    this.userInfo.setTotal_money(new_total_deposit); 	//유저 총 납입액 업데이트
-	    //라운드 종료 여부 확인 (업데이트 후)
+	    
+	    if (this.updateMainStatus != null) {
+	        this.updateMainStatus.run(); // 메인 화면 갱신 요청!
+	    }
+	    //라운드 종료 여부 확인
 	    if (new_total_deposit >= current_round_money) {
 	    	this.userInfo.getDeadline_money();
 	        this.itemShop.rerollItems();	//상점리롤

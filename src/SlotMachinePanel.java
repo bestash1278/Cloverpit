@@ -395,7 +395,17 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     }
 
    /* ------ 화면 전환용 코드 -------*/
- // ItemShop_Screen이 현재 활성화된 화면이라면 즉시 갱신을 요청하는 메서드
+    //납입화면 실행중이면 납입화면 업데이트 함수ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+    public void updatePaymentScreen() {
+        if (this.paymentScreen != null) {
+            this.paymentScreen.updatePaymentUI(); 
+            
+            this.paymentScreen.revalidate();
+            this.paymentScreen.repaint();
+            
+        }
+    }
+    //유물상점화면 실행중이면 유물상점화면 업데이트 함수
     public void updateShopScreen() {
         // 현재 표시 중인 화면이 ItemShop_Screen인지 확인
         if (this.currentPanel == null) {
@@ -407,15 +417,11 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         }
     }
     
-    /**
-     * 전화 화면(Call_Screen)이 현재 열려 있다면 즉시 UI를 갱신합니다.
-     * Payment 클래스에서 라운드 전환 시 호출됩니다.
-     */
+    //전화화면 실행중이면 전화화면 업데이트 함수
     public void updateCallScreen() {
         if (this.callScreen != null) {
             this.callScreen.updateUI(); 
             
-            // 팝업 창이 열려있다면 즉시 화면을 다시 그리도록 요청합니다.
             this.callScreen.revalidate();
             this.callScreen.repaint();
         }
@@ -451,8 +457,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 contentPanel = this.paymentScreen; 
                 width = 800;
                 height = 600;
-                if (this.itemShopScreen != null) {
-                     this.itemShopScreen.updateShopUI(this.itemShop.getCurrentItems()); 
+                if (this.paymentScreen != null) {	//여기 납입화면 으로 수정됨--------------------------------------
+                     this.paymentScreen.updatePaymentUI(); 
                 }
                 break;
                 
@@ -478,7 +484,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 height = 600;
                 if (this.ownItemScreen != null) {
                     this.ownItemScreen.updateUI(); 
-                    System.out.println("SlotMachinePanel: 소지 유물 화면 갱신 요청 성공."); // 디버그 출력
                 }
                 break;
 
@@ -488,7 +493,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 height = 800;
                 if (this.symbolPriceScreen != null) {
                     this.symbolPriceScreen.updatePriceInfo();
-                    System.out.println("SlotMachinePanel: 무늬 가격 화면 열기 성공.");
                 }
                 break;
                 
@@ -498,7 +502,6 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 height = 800;
                 if (this.patternPriceScreen != null) {
                     this.patternPriceScreen.updatePriceInfo();
-                    System.out.println("SlotMachinePanel: 패턴 가격 화면 열기 성공.");
                 }
                 break;
                 
@@ -864,6 +867,7 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                     "다음 기한으로 진행합니다."
             );
             goNextDeadline();
+            
         } else {
             // 플레이어가 납입을 선택하지 않음 → 탈락 처리
             JOptionPane.showMessageDialog(
@@ -885,6 +889,11 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         roundStarted = false;
         leverButton.setEnabled(false);
         roundStartButton.setVisible(true);
+        roundManager.applyInterestAfterRound();	//이자 받기-------------------------------------
+        if (this.paymentScreen != null) {	//납입화면 업데이트------------------------------
+            this.paymentScreen.updatePaymentUI(); 
+       }
+
         updateStatusBar();
     }
     

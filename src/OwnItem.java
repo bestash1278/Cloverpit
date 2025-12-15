@@ -2,7 +2,7 @@ import java.util.List;
 
 public class OwnItem {
     private final User user;
-    private final Runnable updateMainStatus; // 상태바 갱신용 Runnable
+    private final Runnable updateMainStatus; 
 
     public OwnItem(User user, Runnable updateMainStatus) {
         this.user = user;
@@ -13,7 +13,6 @@ public class OwnItem {
         return user.getUserItem_List(); 
     }
 
-    // ⭐ 유물 이름으로 ItemInfo 템플릿을 가져옵니다.
     public ItemInfo getItemInfoByName(String itemName) {
         return ItemInfo.getArtifactTemplateByName(itemName);
     }
@@ -29,18 +28,12 @@ public class OwnItem {
             return false;
         }
 
-        // 1. 유물 효과 제거 (⭐ 중요: 지속 효과 유물이라면 여기서 효과를 되돌려야 합니다.)
-        // 현재는 즉발 효과 유물만 있다고 가정하고 이 부분은 생략합니다.
-
-        // 2. 환급 금액 계산 (티켓 가격의 절반을 1티켓 = 100000 돈으로 가정하고 환급)
         int ticketCost = item.getTicketCost();
-        int refundTickets = ticketCost / 2; // 요청하신 절반 티켓 환급
-
-        // 3. User 데이터에서 유물 제거 및 돈 환급
+        int refundTickets = ticketCost / 2; //절반 티켓 환급
+        //유물제거
         if (user.removeUserItem_List(itemName)) {
-            user.addTicket(refundTickets);
+            user.addTicket(refundTickets);//판매티켓 추가
             
-            // 4. 상태바 갱신
             if (updateMainStatus != null) {
                 updateMainStatus.run();
                 System.out.println("OwnItem: 유물 판매 완료. " + refundTickets + " 티켓 환급.");
