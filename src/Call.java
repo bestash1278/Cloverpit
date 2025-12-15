@@ -31,6 +31,7 @@ public class Call {
     public void addCallOpportunity() {
         user.setCall_count(true);	//기회 1회 추가
         System.out.println("전화 기회 1회 추가. 총 기회: " + user.getCall_count());
+        System.out.println("Call Class User Hash: " + System.identityHashCode(this.user));
     }
 
     // ⭐ 3가지 능력을 랜덤으로 선택하여 currentSelections에 저장

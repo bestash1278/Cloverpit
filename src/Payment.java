@@ -103,7 +103,7 @@ public class Payment {
 	    if (new_total_deposit >= current_round_money) {
 	    	this.userInfo.getDeadline_money();
 	        this.itemShop.rerollItems();	//상점리롤
-	        this.call.addCallOpportunity();	//전화 기회 부여
+//	        this.call.addCallOpportunity();	//전화 기회 부여
 	        if (this.updateShopScreen != null) {
 	            this.updateShopScreen.run(); 
 	        }

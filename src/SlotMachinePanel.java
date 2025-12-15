@@ -513,6 +513,9 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 contentPanel = this.callScreen;
                 width = 800;
                 height = 600;
+                if(this.callScreen != null) {
+                	this.callScreen.updateUI();
+                }
                 break;
                 
             case "소지 유물 버튼 화면":
@@ -986,13 +989,14 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         roundStarted = false;
         leverButton.setEnabled(false);
         roundStartButton.setVisible(true);
-        roundManager.applyInterestAfterRound();	//이자 받기-------------------------------------
-        if (this.paymentScreen != null) {	//납입화면 업데이트------------------------------
+        roundManager.applyInterestAfterRound();	
+        if (this.paymentScreen != null) {	
             this.paymentScreen.updatePaymentUI(); 
        }
-
+        call.addCallOpportunity();
+        user.setCall_count(true);
+        updatePhoneButtonState();
         updateStatusBar();
-        
         // 기한 변경 시 저장
         if (saveManager != null && user != null) {
             saveManager.save(user);
