@@ -19,6 +19,7 @@ public class LoseScreen extends JPanel {
         this.cardLayout = cardLayout;
         this.cardPanel = cardPanel;
         setLayout(new BorderLayout());
+        setPreferredSize(new Dimension(1600, 900));
 
         // 배경 이미지 로드
         ImageIcon bgIcon = new ImageIcon("res/loose_background.png");

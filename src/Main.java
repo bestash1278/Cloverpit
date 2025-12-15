@@ -56,7 +56,7 @@ public class Main {
             cardPanel.add(startScreen, "START");
             mainFrame.pack(); 
             mainFrame.add(cardPanel, BorderLayout.CENTER);
-            mainFrame.setSize(1200, 650);
+            mainFrame.setSize(1600, 900);
             mainFrame.setLocationRelativeTo(null);
             mainFrame.setResizable(false);
             mainFrame.setVisible(true);
@@ -98,6 +98,27 @@ public class Main {
             LoseScreen loseScreen = new LoseScreen(mainFrame, cardLayout, cardPanel);
             cardPanel.add(loseScreen, "LOSE");
             cardLayout.show(cardPanel, "LOSE");
+            currentScreen = "LOSE";
+        } else {
+            System.exit(0);
+        }
+    }
+    
+    /**
+     * 승리 화면으로 전환 (기한 10 완료 시)
+     */
+    public static void exitGameWithWin() {
+        if (cardPanel != null && cardLayout != null) {
+            User user = (currentGamePanel != null) ? currentGamePanel.getUser() : null;
+            if (currentGamePanel != null) {
+                currentGamePanel.saveOnExit();
+            }
+            WinScreen winScreen = new WinScreen(mainFrame, cardLayout, cardPanel, user);
+            cardPanel.add(winScreen, "WIN");
+            cardLayout.show(cardPanel, "WIN");
+            currentScreen = "WIN";
+            mainFrame.revalidate();
+            mainFrame.repaint();
         } else {
             System.exit(0);
         }

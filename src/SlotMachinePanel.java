@@ -49,8 +49,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
     private static final int LEVER_HEAD_SIZE = 60; 
     private static final int LEVER_BAR_THICKNESS = 18; 
 
-    private static final int TARGET_WIDTH = 1200;
-    private static final int TARGET_HEIGHT = 650;
+    private static final int TARGET_WIDTH = 1600;
+    private static final int TARGET_HEIGHT = 900;
     
     private static final int SLOT_SIZE = 120;
     private static final int SLOT_SPACING = 15;
@@ -884,6 +884,14 @@ public class SlotMachinePanel extends JPanel implements Runnable {
      * 다음 기한으로 진행하는 메서드
      */
     private void goNextDeadline() {
+
+        int currentDeadline = user.getDeadline();
+        if (currentDeadline == 10) {
+            saveOnExit();
+            Main.exitGameWithWin();
+            return;
+        }
+        
         user.setDeadline(user.getDeadline() + 1);
         user.setRound(1);
         roundStarted = false;

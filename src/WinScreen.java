@@ -8,19 +8,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * 종료 화면
- * 게임 종료 시 표시되는 화면
+ * 승리 화면
+ * 기한 10을 완료했을 때 표시되는 화면
  */
-public class EndScreen extends JPanel {
+public class WinScreen extends JPanel {
     private User user;
     private BufferedImage backgroundImage;
     
-    public EndScreen(JFrame frame, CardLayout cl, JPanel cp, User user) {
+    public WinScreen(JFrame frame, CardLayout cl, JPanel cp, User user) {
         this.user = user;
         
-        // 배경 이미지 로드
+        // 배경 이미지 로드 (win_background.png 사용, 없으면 기본 배경)
         try {
-            backgroundImage = ImageIO.read(new File("res/end_background.png"));
+            backgroundImage = ImageIO.read(new File("res/win_background.png"));
         } catch (IOException e) {
             backgroundImage = null;
         }
@@ -33,13 +33,13 @@ public class EndScreen extends JPanel {
         titlePanel.setOpaque(false);
         titlePanel.setBorder(BorderFactory.createEmptyBorder(50, 0, 30, 0));
         
-        JLabel titleLabel = new JLabel("게임 종료");
+        JLabel titleLabel = new JLabel("승리!");
         Font titleFont = new Font("Malgun Gothic", Font.BOLD, 64);
         if (!titleFont.getFamily().equals("Malgun Gothic")) {
             titleFont = new Font("Dotum", Font.BOLD, 64);
         }
         titleLabel.setFont(titleFont);
-        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setForeground(new Color(255, 215, 0)); // 골드 색상
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         titlePanel.add(titleLabel);
         
@@ -56,11 +56,19 @@ public class EndScreen extends JPanel {
         }
         
         if (this.user != null && this.user.getUser_name() != null && !this.user.getUser_name().isEmpty()) {
-            JLabel saveLabel = new JLabel("게임 데이터가 저장되었습니다.");
+            JLabel saveLabel = new JLabel("축하합니다! 기한 10을 모두 완료하셨습니다!");
             saveLabel.setFont(infoFont);
-            saveLabel.setForeground(new Color(150, 255, 100));
+            saveLabel.setForeground(new Color(255, 255, 150));
             saveLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             infoPanel.add(saveLabel);
+            
+            infoPanel.add(Box.createVerticalStrut(20));
+            
+            JLabel gameLabel = new JLabel("게임 데이터가 저장되었습니다.");
+            gameLabel.setFont(infoFont);
+            gameLabel.setForeground(new Color(150, 255, 100));
+            gameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            infoPanel.add(gameLabel);
         }
         
         add(infoPanel, BorderLayout.CENTER);
