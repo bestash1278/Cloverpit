@@ -1,8 +1,6 @@
 
 import java.util.List;
-import java.util.ArrayList; 
-import java.util.Collections;
-import java.util.Random;
+import java.util.ArrayList;
 
 public class ItemShop {
     private final User userInfo; // 사용자 티켓/돈 정보를 위해 의존성 주입
@@ -10,6 +8,11 @@ public class ItemShop {
     private Runnable updateMainStatus; // 상태바 업데이트를 위한 Runnable 인터페이스
     private final Runnable updateOwnItemScreen;
     private List<ItemInfo> availableItems;//등장 가능한 유물 목록
+    private SaveManagerCsv saveManager;
+    
+    public void setSaveManager(SaveManagerCsv saveManager) {
+        this.saveManager = saveManager;
+    }
 
     public ItemShop(User userInfo,Runnable updateMainStatus, Runnable updateOwnItemScreen) {
         this.userInfo = userInfo;
@@ -40,11 +43,77 @@ public class ItemShop {
             new ItemInfo.symbol_repeat(),
             new ItemInfo.symbol_ticket(),
             new ItemInfo.symbol_token(),
-            new ItemInfo.LemonStackArtifact()
+            new ItemInfo.LemonStackArtifact(),
+            new ItemInfo.RefreshingCherryArtifact(),
+            new ItemInfo.CherryStackArtifact(),
+            new ItemInfo.RefreshingCloverArtifact(),
+            new ItemInfo.CloverStackArtifact(),
+            new ItemInfo.RefreshingBellArtifact(),
+            new ItemInfo.BellStackArtifact(),
+            new ItemInfo.RefreshingDiamondArtifact(),
+            new ItemInfo.DiamondStackArtifact(),
+            new ItemInfo.RefreshingTreasureArtifact(),
+            new ItemInfo.TreasureStackArtifact(),
+            new ItemInfo.RefreshingSevenArtifact(),
+            new ItemInfo.SevenStackArtifact(),
+            new ItemInfo.GoldenLemon(),
+            new ItemInfo.GoldenCherry(),
+            new ItemInfo.GoldenClover(),
+            new ItemInfo.GoldenBell(),
+            new ItemInfo.GoldenDiamond(),
+            new ItemInfo.GoldenTreasure(),
+            new ItemInfo.GoldenSeven(),
+            new ItemInfo.DoubleChanceArtifact(),
+            new ItemInfo.TicketSavingsBox(),
+            new ItemInfo.LuckyCoin(),
+            new ItemInfo.RerollCoupon(),
+            new ItemInfo.InventoryExpansion(),
+            new ItemInfo.SpinBonusArtifact(),
+            new ItemInfo.HighRiskArtifact(),
+            new ItemInfo.ModifierAmplifier(),
+            new ItemInfo.CompoundCalculator()
 
         );
     }
     
+    
+    // 가중치 기반 유물 선택 (rerollItems에서도 사용)
+    private ItemInfo selectByWeight(java.util.Random random, 
+                                     java.util.List<ItemInfo> common, 
+                                     java.util.List<ItemInfo> rare, 
+                                     java.util.List<ItemInfo> epic, 
+                                     java.util.List<ItemInfo> legendary) {
+        int totalWeight = WEIGHT_COMMON + WEIGHT_RARE + WEIGHT_EPIC + WEIGHT_LEGENDARY;
+        int randomValue = random.nextInt(totalWeight);
+        
+        int cumulativeWeight = 0;
+        
+        // 커먼
+        cumulativeWeight += WEIGHT_COMMON;
+        if (randomValue < cumulativeWeight && !common.isEmpty()) {
+            return common.get(random.nextInt(common.size()));
+        }
+        
+        // 레어
+        cumulativeWeight += WEIGHT_RARE;
+        if (randomValue < cumulativeWeight && !rare.isEmpty()) {
+            return rare.get(random.nextInt(rare.size()));
+        }
+        
+        // 에픽
+        cumulativeWeight += WEIGHT_EPIC;
+        if (randomValue < cumulativeWeight && !epic.isEmpty()) {
+            return epic.get(random.nextInt(epic.size()));
+        }
+        
+        // 레전더리
+        if (!legendary.isEmpty()) {
+            return legendary.get(random.nextInt(legendary.size()));
+        }
+        
+        // 선택 가능한 유물이 없으면 null 반환
+        return null;
+    }
     
     // 초기 상점 아이템을 설정하거나 리롤하는 함수
     private void initializeShop() {
@@ -54,12 +123,72 @@ public class ItemShop {
     	}
     }
     
-    // 무작위로 5개의 유물을 뽑아 반환하는 함수
+    // 레어리티별 가중치 (확률 조정용)
+    private static final int WEIGHT_COMMON = 50;    // 커먼 50%
+    private static final int WEIGHT_RARE = 30;      // 레어 30%
+    private static final int WEIGHT_EPIC = 15;      // 에픽 15%
+    private static final int WEIGHT_LEGENDARY = 5;  // 레전더리 5%
+    
+    // 무작위로 5개의 유물을 뽑아 반환하는 함수 (레어리티 가중치 적용)
     private java.util.List<ItemInfo> createRandomItems() {
-        java.util.List<ItemInfo> itemsToShuffle = new java.util.ArrayList<>(ALL_ARTIFACTS);
-        java.util.Collections.shuffle(itemsToShuffle);	//무작위로 섞기
-        int count = java.lang.Math.min(5, itemsToShuffle.size());	//섞인 유물에서 5개 뽑습니다.
-        return itemsToShuffle.subList(0, count);
+        List<String> ownedItemNames = userInfo.getOwnedItemNames();
+        java.util.List<ItemInfo> availableArtifacts = new java.util.ArrayList<>();
+        
+        // 구매 가능한 유물 목록 생성 (소유하지 않았거나 스택형 유물인 경우)
+        for (ItemInfo artifact : ALL_ARTIFACTS) {
+            String name = artifact.getName();
+            boolean isOwned = ownedItemNames.contains(name);
+            if (!isOwned) {
+                availableArtifacts.add(artifact);
+            } else if (artifact.getDurationType() == DurationType.STACKABLE) {
+                int currentStack = userInfo.getItemStackCount(name);
+                if (currentStack < artifact.getMaxStack()) {
+                    availableArtifacts.add(artifact);
+                }
+            }
+        }
+        
+        // 레어리티별로 분류
+        java.util.List<ItemInfo> commonItems = new java.util.ArrayList<>();
+        java.util.List<ItemInfo> rareItems = new java.util.ArrayList<>();
+        java.util.List<ItemInfo> epicItems = new java.util.ArrayList<>();
+        java.util.List<ItemInfo> legendaryItems = new java.util.ArrayList<>();
+        
+        for (ItemInfo artifact : availableArtifacts) {
+            switch (artifact.getRarity()) {
+                case COMMON:
+                    commonItems.add(artifact);
+                    break;
+                case RARE:
+                    rareItems.add(artifact);
+                    break;
+                case EPIC:
+                    epicItems.add(artifact);
+                    break;
+                case LEGENDARY:
+                    legendaryItems.add(artifact);
+                    break;
+            }
+        }
+        
+        // 가중치 기반으로 5개 선택
+        java.util.List<ItemInfo> selectedItems = new java.util.ArrayList<>();
+        java.util.Random random = new java.util.Random();
+        
+        for (int i = 0; i < 5; i++) {
+            ItemInfo selected = selectByWeight(random, commonItems, rareItems, epicItems, legendaryItems);
+            if (selected != null) {
+                selectedItems.add(selected);
+            } else if (!availableArtifacts.isEmpty()) {
+                // 가중치 선택 실패 시 랜덤으로 선택
+                selectedItems.add(availableArtifacts.get(random.nextInt(availableArtifacts.size())));
+            } else {
+                // 선택 가능한 유물이 없으면 SoldArtifact 추가
+                selectedItems.add(new ItemInfo.SoldArtifact());
+            }
+        }
+        
+        return selectedItems;
     }
     //리롤 비용 계산 함수
     private boolean tryRerollCost() {
@@ -110,12 +239,44 @@ public class ItemShop {
                     availableArtifacts.add(artifact);	//상점에 재등장
                 }
             }
-        
-            
         }
-        Collections.shuffle(availableArtifacts, new Random());
-        int itemsToSelect = Math.min(5, availableArtifacts.size());
-        List<ItemInfo> newItems = new ArrayList<>(availableArtifacts.subList(0, itemsToSelect));
+        
+        // 레어리티별로 분류
+        java.util.List<ItemInfo> commonItems = new ArrayList<>();
+        java.util.List<ItemInfo> rareItems = new ArrayList<>();
+        java.util.List<ItemInfo> epicItems = new ArrayList<>();
+        java.util.List<ItemInfo> legendaryItems = new ArrayList<>();
+        
+        for (ItemInfo artifact : availableArtifacts) {
+            switch (artifact.getRarity()) {
+                case COMMON:
+                    commonItems.add(artifact);
+                    break;
+                case RARE:
+                    rareItems.add(artifact);
+                    break;
+                case EPIC:
+                    epicItems.add(artifact);
+                    break;
+                case LEGENDARY:
+                    legendaryItems.add(artifact);
+                    break;
+            }
+        }
+        
+        // 가중치 기반으로 5개 선택
+        java.util.Random random = new java.util.Random();
+        List<ItemInfo> newItems = new ArrayList<>();
+        
+        for (int i = 0; i < 5; i++) {
+            ItemInfo selected = selectByWeight(random, commonItems, rareItems, epicItems, legendaryItems);
+            if (selected != null) {
+                newItems.add(selected);
+            } else if (!availableArtifacts.isEmpty()) {
+                // 가중치 선택 실패 시 랜덤으로 선택
+                newItems.add(availableArtifacts.get(random.nextInt(availableArtifacts.size())));
+            }
+        }
         //상점목록이 5개보다 적으면
         while (newItems.size() < 5) {
             newItems.add(new ItemInfo.SoldArtifact());
@@ -174,6 +335,10 @@ public class ItemShop {
                 //즉발형은 인벤토리 추가 안됨
         	}
         	else {
+                // 영구형 유물도 구매 시 applyEffect 호출 (인벤토리 확장 등)
+                if (item.getDurationType() == DurationType.PASSIVE) {
+                    item.applyEffect(userInfo);
+                }
 	            //해당 아이템 스택 +1
 	            userInfo.addItemStack(item.getName());
 	            
@@ -210,6 +375,12 @@ public class ItemShop {
             if (this.updateOwnItemScreen != null) {
                 this.updateOwnItemScreen.run(); 
                 System.out.println("ItemShop: 소유 유물 화면 갱신 요청 완료.");
+            }
+            
+            // 유물 구매 직후 자동 저장
+            if (saveManager != null) {
+                saveManager.save(userInfo);
+                System.out.println("[SAVE] 유물 구매 저장 완료: " + item.getName());
             }
             
             return PurchaseResult.SUCCESS; // 구매 성공

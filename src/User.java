@@ -81,6 +81,28 @@ public class User {
     //보너스 문양, 패턴 넣을 공간
     private double[] tempSymbolBonus; // SymbolOriginal의 길이만큼 (기본값 1)
     private double[] tempPatternBonus; // PatternOriginal의 길이만큼 (기본값 1.0)
+   
+    private double doubleChanceMultiplier = 1.0;
+    
+    // 하이 리스크 유물용: 다음 스핀에 적용할 배율
+    private boolean highRiskActive = false;
+    private int originalRoulatteCost = 2; // 원래 룰렛 비용 저장용
+    
+    public boolean isHighRiskActive() {
+        return highRiskActive;
+    }
+    
+    public void setHighRiskActive(boolean active) {
+        this.highRiskActive = active;
+        if (active) {
+            // 활성화 시 원래 비용 저장
+            originalRoulatteCost = roulatte_cost;
+        }
+    }
+    
+    public int getOriginalRoulatteCost() {
+        return originalRoulatteCost;
+    }
 
     public User() {
         // tempSymbolBonus와 tempPatternBonus 초기화
@@ -115,6 +137,12 @@ public class User {
         this.diamond_probability_multipBonus = 1.0;
         this.treasure_probability_multipBonus = 1.0;
         this.seven_probability_multipBonus = 1.0;
+        
+        // 더블 찬스 배율 초기화
+        this.doubleChanceMultiplier = 1.0;
+        
+        // 하이 리스크 플래그 초기화
+        this.highRiskActive = false;
         
         System.out.println("DEBUG: 단발성 스핀 보너스 초기화 완료.");
     }
@@ -285,6 +313,10 @@ public class User {
     
     public int getRoulatte_cost() {
         return roulatte_cost;
+    }
+    
+    public void setRoulatte_cost(int cost) {
+        this.roulatte_cost = cost;
     }
     
     public void increaseInterestRate(double rate) {
@@ -492,10 +524,27 @@ public class User {
     
     public int getPatternSum(int index) {
         if (index >= 0 && index < pattern_sum.length) {
-            double finalValue = (pattern_sum[index] * this.tempPatternBonus[index]);	//(기본 계산식 * 단발성 유물 배율) 계산식--------------------------
+            // 더블 찬스 체크 (한 번만 체크되도록 플래그 사용)
+            if (doubleChanceMultiplier == 1.0) {
+                checkDoubleChance();
+            }
+            double finalValue = (pattern_sum[index] * this.tempPatternBonus[index] * this.doubleChanceMultiplier);	
             return (int) finalValue;
         }
         return 0;
+    }
+    
+    /**
+     * 더블 찬스 유물 효과를 체크하고 배율을 설정합니다.
+     * 15% 확률로 패턴 가격이 2배가 됩니다.
+     */
+    private void checkDoubleChance() {
+        if (user_item != null && user_item.contains("더블 찬스(영구형)")) {
+            if (Math.random() < 0.15) { // 15% 확률
+                doubleChanceMultiplier = 2.0;
+                System.out.println("더블 찬스 발동! 패턴 가격이 2배가 되었습니다.");
+            }
+        }
     }
     
     public void setPatternSum(int[] patternSum) {

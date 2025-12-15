@@ -88,6 +88,7 @@ public class Roulette {
     private Random random;
     public User user;
     
+    
     // 문양별 확률 변수 (전체 합계 100)
 
     
@@ -1542,15 +1543,22 @@ public class Roulette {
             return;
         }
         
+        // 변형자 확대기 유물 체크
+        boolean hasModifierAmplifier = (user.getUserItem_List() != null 
+            && user.getUserItem_List().contains("변형자 확대기(영구형)"));
+        int modifierMultiplier = hasModifierAmplifier ? 2 : 1;
+        
         if (modifier.equals(MODIFIER_CHAIN)) {
             // 사슬: 해당 패턴의 가치 상승 (pattern_sum)
             int patternIndex = getPatternIndex(pattern);
             if (patternIndex >= 0) {
                 int currentValue = user.getPatternSum(patternIndex);
                 int originalValue = user.getPatternOriginal(patternIndex);
-                // 원래 가치만큼 증가
-                user.setPatternSum(patternIndex, currentValue + originalValue);
-                System.out.println("사슬 변형자 효과: " + pattern + " 패턴 가치가 " + originalValue + " 증가했습니다.");
+                // 원래 가치만큼 증가 (변형자 확대기가 있으면 2배)
+                int increaseAmount = originalValue * modifierMultiplier;
+                user.setPatternSum(patternIndex, currentValue + increaseAmount);
+                System.out.println("사슬 변형자 효과: " + pattern + " 패턴 가치가 " + increaseAmount + " 증가했습니다." 
+                    + (hasModifierAmplifier ? " (변형자 확대기 2배 적용)" : ""));
             }
             
         } else if (modifier.equals(MODIFIER_REPEAT)) {
@@ -1560,22 +1568,26 @@ public class Roulette {
                 // 패턴 위치에서 문양 인덱스 가져오기
                 int[] firstPos = patternPositions.get(0);
                 int symbolIndex = results[firstPos[0]][firstPos[1]];
-                // 패턴 보상을 한 번 더 지급
-                int additionalReward = user.getSymbolSum(symbolIndex) * what_pattern(pattern) * symbol_mul * pattern_mul;
+                // 패턴 보상을 한 번 더 지급 (변형자 확대기가 있으면 2배)
+                int additionalReward = user.getSymbolSum(symbolIndex) * what_pattern(pattern) * symbol_mul * pattern_mul * modifierMultiplier;
                 roulette_money += additionalReward;
-                System.out.println("반복 변형자 효과: " + pattern + " 패턴 보상을 한 번 더 받았습니다. (+" + additionalReward + "원)");
+                System.out.println("반복 변형자 효과: " + pattern + " 패턴 보상을 한 번 더 받았습니다. (+" + additionalReward + "원)" 
+                    + (hasModifierAmplifier ? " (변형자 확대기 2배 적용)" : ""));
             }
             
         } else if (modifier.equals(MODIFIER_TICKET)) {
-            // 티켓: 티켓 +1
-            user.addTicket(1);
-            System.out.println("티켓 변형자 효과: 티켓이 1개 증가했습니다.");
+            // 티켓: 티켓 +1 (변형자 확대기가 있으면 2배)
+            int ticketBonus = 1 * modifierMultiplier;
+            user.addTicket(ticketBonus);
+            System.out.println("티켓 변형자 효과: 티켓이 " + ticketBonus + "개 증가했습니다." 
+                + (hasModifierAmplifier ? " (변형자 확대기 2배 적용)" : ""));
             
         } else if (modifier.equals(MODIFIER_TOKEN)) {
-            // 토큰: 현재 이자만큼 돈 추가
-            int interestAmount = (int)(user.getTotal_money() * user.getInterest());
+            // 토큰: 현재 이자만큼 돈 추가 (변형자 확대기가 있으면 2배)
+            int interestAmount = (int)(user.getTotal_money() * user.getInterest()) * modifierMultiplier;
             roulette_money += interestAmount;
-            System.out.println("토큰 변형자 효과: 현재 이자(" + (user.getInterest() * 100) + "%)만큼 돈이 추가되었습니다. (+" + interestAmount + "원)");
+            System.out.println("토큰 변형자 효과: 현재 이자(" + (user.getInterest() * 100) + "%)만큼 돈이 추가되었습니다. (+" + interestAmount + "원)" 
+                + (hasModifierAmplifier ? " (변형자 확대기 2배 적용)" : ""));
         }
     }
     

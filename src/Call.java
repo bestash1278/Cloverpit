@@ -10,6 +10,11 @@ public class Call {
     
     private int callRerollTiket_count;
     private final Runnable updateCallScreen;
+    private SaveManagerCsv saveManager;
+    
+    public void setSaveManager(SaveManagerCsv saveManager) {
+        this.saveManager = saveManager;
+    }
 
     // 생성자 (필요한 로직 객체 주입)
     public Call(User user, RoundManager roundManager ,Runnable updateCallScreen) {
@@ -105,6 +110,13 @@ public class Call {
            }
             
             System.out.println("전화 사용 성공: [" + selectedAbility.getName() + "]");
+            
+            // 전화 능력 사용 직후 자동 저장
+            if (saveManager != null) {
+                saveManager.save(user);
+                System.out.println("[SAVE] 전화 사용 저장 완료: " + selectedAbility.getName());
+            }
+            
             return true;
         }
         System.out.println("전화 사용 실패: 남은 기회가 없거나 잘못된 선택입니다.");

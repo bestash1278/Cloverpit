@@ -146,6 +146,8 @@ public class SlotMachinePanel extends JPanel implements Runnable {
                 this::updateStatusBar, // 메인 상태바 갱신
                 this.ownItemScreen::updateOwnedItemsUI // ⭐ 구매 후 소유 유물 화면 갱신
             );
+        itemShop.setSaveManager(saveManager);
+        call.setSaveManager(saveManager);
         this.itemShopScreen = new ItemShop_Screen(this.itemShop);
         
         Payment paymentLogic = new Payment(this.user, this.roundManager, this.roulatte, 
@@ -645,6 +647,24 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         java.util.List<String> ownedArtifactNames = user.getUserItem_List();
         java.util.List<String> itemsToRemove = new java.util.ArrayList<>();
         
+        // 하이 리스크 유물 효과 적용 (스핀 전에 체크)
+        if (user.isHighRiskActive()) {
+            // 모든 문양과 패턴의 tempBonus를 2배로 설정
+            for (int i = 0; i < 7; i++) {
+                double currentBonus = user.getTempSymbolBonus(i);
+                user.setTempSymbolBonus(i, currentBonus * 2.0);
+            }
+            for (int i = 0; i < 11; i++) {
+                double currentBonus = user.getTempPatternBonus(i);
+                user.setTempPatternBonus(i, currentBonus * 2.0);
+            }
+            // 룰렛 비용 2배
+            int originalCost = user.getOriginalRoulatteCost();
+            user.setRoulatte_cost(originalCost * 2);
+            System.out.println("하이 리스크 발동! 무늬 가격 2배, 패턴 가격 2배, 룰렛 비용 2배가 적용되었습니다.");
+            // 스핀 후 초기화를 위해 플래그는 유지
+        }
+        
         for (String itemName : ownedArtifactNames) {
             ItemInfo item = ItemInfo.getArtifactTemplateByName(itemName); 
             
@@ -771,6 +791,15 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         
         // 스핀 완료 후 TEMPORARY 타입 효과 리셋
         user.resetTemporarySpinBonuses();
+        
+        // 하이 리스크 효과 초기화
+        if (user.isHighRiskActive()) {
+            // 룰렛 비용 원래대로 복구
+            int originalCost = user.getOriginalRoulatteCost();
+            user.setRoulatte_cost(originalCost);
+            user.setHighRiskActive(false);
+            System.out.println("하이 리스크 효과 종료되었습니다.");
+        }
         
         // 총 스핀 횟수 증가
         user.setTotal_spin(user.getTotal_spin() + 1);
@@ -903,6 +932,11 @@ public class SlotMachinePanel extends JPanel implements Runnable {
        }
 
         updateStatusBar();
+        
+        // 기한 변경 시 저장
+        if (saveManager != null && user != null) {
+            saveManager.save(user);
+        }
     }
     
     /**
@@ -913,10 +947,29 @@ public class SlotMachinePanel extends JPanel implements Runnable {
         if (user.getRound() < ROUNDS_PER_DEADLINE) {
             user.setRound(user.getRound() + 1);
         }
+        
+        // 저축 상자(티켓) 효과 적용 - 라운드 종료 시 티켓의 20%를 받음
+        if (user != null && user.getUserItem_List() != null) {
+            boolean hasTicketSavingsBox = user.getUserItem_List().contains("저축 상자(티켓)(영구형)");
+            if (hasTicketSavingsBox) {
+                int currentTickets = user.getTicket();
+                int bonusTickets = (int) Math.floor(currentTickets * 0.2);
+                if (bonusTickets > 0) {
+                    user.addTicket(bonusTickets);
+                    System.out.println("저축 상자(티켓) 효과: 티켓 " + bonusTickets + "개를 추가로 받았습니다.");
+                }
+            }
+        }
+        
         roundStarted = false;
         leverButton.setEnabled(false);
         roundStartButton.setVisible(true);
         updateStatusBar();
+        
+        // 라운드 종료 시 저장
+        if (saveManager != null && user != null) {
+            saveManager.save(user);
+        }
     }
     
     /**
