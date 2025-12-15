@@ -4,7 +4,6 @@ import java.util.List;
 public class CallInfo {
     private final String name;	//전화능력 이름
     private final String description;	//전화 설명
-    // 이 능력의 효과를 적용할 Runnable 또는 Consumer 등의 함수형 인터페이스
     private final Runnable effect; //전화 효과
 
     // 생성자
@@ -14,7 +13,7 @@ public class CallInfo {
         this.effect = effect;
     }
 
-    // ⭐ 능력 적용 함수 (핵심)
+    //능력 적용 함수 (핵심)
     public void applyEffect() {
         if (effect != null) {
             effect.run();
@@ -34,7 +33,6 @@ public class CallInfo {
     public static List<CallInfo> getAllAbilities(User user, RoundManager roundManager) {
         List<CallInfo> abilities = new ArrayList<>();
         
-        // --- 💡 능력 정의 예시 ---
         abilities.add(new CallInfo("골든 찬스", "현재 소지 금액을 두 배로 만듭니다.", () -> {
             int currentMoney = user.getRoulatte_money();
             user.setRoulatte_money(currentMoney * 2);
@@ -49,6 +47,22 @@ public class CallInfo {
         abilities.add(new CallInfo("행운 가득", "티켓을 4개 획득합니다.", () -> {
             user.addTicket(4);
             System.out.println("티켓 4개를 획득합니다.");
+        }));
+        abilities.add(new CallInfo("소길", "티켓을 2개 획득합니다.", () -> {
+            user.addTicket(4);
+            System.out.println("티켓 4개를 획득합니다.");
+        }));
+        abilities.add(new CallInfo("중길", "티켓을 4개와 소지액의 1/4의 금액을 획득합니다.", () -> {
+            user.addTicket(4);
+            int money = user.getRoulatte_money();
+            user.setRoulatte_money(money / 4);
+            System.out.println("중길 : 티켓을 4개와 소지액의 1/4의 금액을 획득합니다.");
+        }));
+        abilities.add(new CallInfo("대길", "티켓을 8개와 소지액의 절반의 금액을 획득합니다.", () -> {
+            user.addTicket(8);
+            int money = user.getRoulatte_money();
+            user.setRoulatte_money(money);
+            System.out.println("티켓 8개 + 소지금의 절반금액 획득");
         }));
         abilities.add(new CallInfo("정체모를 신호", "... . . . ...", () -> {
             user.addRoulatte_money(1000000);
@@ -111,6 +125,76 @@ public class CallInfo {
             user.setDiamondProbability(save * 2);
             System.out.println("다이아 등장확률을 2배 업, 클로버 등장확률을 2배 다운.");
         }));
+        abilities.add(new CallInfo("과제", "산더미 처럼 쌓여버린 과제로 인해 모아둔 돈과 티켓을 잃지만 해결하면서 보물의 등장 확률이 2배 증가합니다.", () -> {
+        	user.setTicket(0);
+        	user.setRoulatte_money(0);
+            double TreasureProbability = user.getTreasureProbability();
+            user.setTreasureProbability(TreasureProbability * 2);
+            System.out.println("기간내에 끝내기에는 무리였다.");
+        }));
+        abilities.add(new CallInfo("절 반", "50%확률로 현재 소지액의 50%가 증가하거나, 50%확률로 현재 소지액의 50%를 잃습니다.", () -> {
+        	int roulatte_money = user.getRoulatte_money();
+        	user.setRoulatte_money(roulatte_money * 2 );
+            System.out.println("절반 : 소지액의 절반 추가.");
+        }));
+        abilities.add(new CallInfo("절 반", "50%확률로 소지할수 있는 유물의 갯수가 2개 증가하거나, 50%확률로 현재 소지액의 50%를 잃습니다.", () -> {
+        	int roulatte_money = user.getRoulatte_money();
+        	user.setRoulatte_money(roulatte_money / 2 );
+            System.out.println("절반 : 소지액의 절반 삭제");
+        }));
+        abilities.add(new CallInfo("시험", "고생끝엔 낙원이 있기를 바랍니다. 모든 금액을 지불하고 7의 확률의 등장 확률이 2배 증가합니다.", () -> {
+        	user.setRoulatte_money(0);
+            double sevenProbability = user.getSevenProbability();
+            user.setLemonProbability(sevenProbability * 2);
+            System.out.println("시험 : 아쉽게도 시험이 끝나도 프로젝트가 남아있습니다.");
+        }));
+        abilities.add(new CallInfo("도박사", "25% 확률로 랜덤한 기능이 동작됩니다. --인생은 한방이야--", () -> {
+        	int item_max = user.getItem_max();
+        	user.setItem_max(item_max + 2);
+            System.out.println("소유 유물 + 2");
+        }));
+        abilities.add(new CallInfo("도박사", "25% 확률로 랜덤한 기능이 동작됩니다. --인생은 한방이야--", () -> {
+        	user.setRoulatte_money(0);
+            System.out.println("도박사 : 소지금액 전체 증발");
+        }));
+        abilities.add(new CallInfo("도박사", "25% 확률로 랜덤한 기능이 동작됩니다. --인생은 한방이야--", () -> {
+        	user.setTicket(0);
+            System.out.println("도박사 : 소지 티켓 전체 증발");
+        }));
+        abilities.add(new CallInfo("도박사", "25% 확률로 랜덤한 기능이 동작됩니다. --인생은 한방이야--", () -> {
+        	int item_max = user.getItem_max();
+        	user.setItem_max(item_max - 1);
+            System.out.println("도박사 : 소유 유물 -1");
+        }));
+        abilities.add(new CallInfo("한방", "잭팟 배수가  3배 증가합니다.", () -> {
+        	int save[] = user.getPatternSum();
+        	int index = 10;
+            System.out.println("잭팟 배수가  3배, 현재 잭팟 배수 : " + user.getPatternSum(index));
+        	save[index] = save[index] * 3;
+        	user.setPatternSum(index, save[index]);
+            System.out.println("잭팟 배수가  3배, 현재 잭팟 배수 : " + user.getPatternSum(index));
+        }));
+        abilities.add(new CallInfo("345", " 연속으로 3개, 4개, 5개 이어진 패턴들의 배수가  3배 증가합니다.", () -> {
+        	int save[] = user.getPatternSum();
+        	int index_tr = 1;
+            System.out.println("트리플 배수가  3배, 현재 잭팟 배수 : " + user.getPatternSum(index_tr));
+        	save[index_tr] = save[index_tr] * 3;
+        	user.setPatternSum(index_tr, save[index_tr]);
+            System.out.println("쿼드라 배수가  3배, 현재 잭팟 배수 : " + user.getPatternSum(index_tr));
+        	int index_q = 2;
+            System.out.println("트리플 배수가  3배, 현재 잭팟 배수 : " + user.getPatternSum(index_q));
+        	save[index_q] = save[index_q] * 3;
+        	user.setPatternSum(index_q, save[index_q]);
+            System.out.println("쿼드라 배수가  3배, 현재 잭팟 배수 : " + user.getPatternSum(index_q));
+        	int index_p = 3;
+            System.out.println("트리플 배수가  3배, 현재 잭팟 배수 : " + user.getPatternSum(index_p));
+        	save[index_p] = save[index_p] * 3;
+        	user.setPatternSum(index_p, save[index_p]);
+            System.out.println("쿼드라 배수가  3배, 현재 잭팟 배수 : " + user.getPatternSum(index_p));
+        }));
+        
+ 
+        
         
         // ... 다른 능력들을 여기에 추가 ...
         

@@ -936,6 +936,25 @@ public abstract class ItemInfo {
             userInfo.setSymbolSum(6, newPrice);
         }
     }
+    
+    //즉발형 유물
+    public static class bag extends ItemInfo {
+        //imageURL = https://unsplash.com/ko/%EC%82%AC%EC%A7%84/%ED%9D%B0%EC%83%89-%EB%B0%94%ED%83%95%EC%97%90-%EA%B0%88%EC%83%89-%EA%B0%80%EC%A3%BD-%EC%8A%AC%EB%A7%81-%EA%B0%80%EB%B0%A9-xzrJCS4grC4
+        public bag() {
+            super("가방(즉발형)", 3, "res/aurelia-dubois.png", "소지할 수 있는 유물칸을 한칸 늘립니다.", null, 1,Rarity.EPIC);
+        }
+
+        @Override
+        public void applyEffect(User userInfo) {
+        	int itemMax = userInfo.getItem_max();
+        	if(itemMax > 10 ) {	//현재 소지가능한 유물의 수 가 10개 이상이라면
+        		userInfo.addTicket(3);	//티켓값 다시 돌려주기
+        		System.out.println("소지 가능한 유물칸이 한계를 넘었습니다.");
+        	}
+        	userInfo.setItem_max(itemMax + 1);	//인벤토리 증가
+        	System.out.println(getName() + " 유물 효과 적용: 소지 유물의 갯수가 증가했습니다. [현재 소지가능 유물의 갯수] : " + userInfo.getItem_max()/11);
+        }
+    }
 
 }
 

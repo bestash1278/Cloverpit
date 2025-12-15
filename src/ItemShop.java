@@ -71,7 +71,8 @@ public class ItemShop {
             new ItemInfo.SpinBonusArtifact(),
             new ItemInfo.HighRiskArtifact(),
             new ItemInfo.ModifierAmplifier(),
-            new ItemInfo.CompoundCalculator()
+            new ItemInfo.CompoundCalculator(),
+            new ItemInfo.bag()
 
         );
     }
