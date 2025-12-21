@@ -29,8 +29,8 @@ public class GameOverScreen extends JPanel {
         
         // 배경 이미지 로드
         try {
-            backgroundImage = ImageIO.read(new File("res/gameover_background.png"));
-        } catch (IOException e) {
+        	backgroundImage = ImageIO.read(getClass().getResource("/gameover_background.png"));
+        	} catch (IOException e) {
             backgroundImage = null;
         }
         
@@ -163,14 +163,14 @@ public class GameOverScreen extends JPanel {
         
         // 이미지 로드 시도
         try {
-            File imageFile = new File(artifact.getImagePath());
-            if (imageFile.exists()) {
-                BufferedImage img = ImageIO.read(imageFile);
-                if (img != null) {
-                    ImageIcon icon = new ImageIcon(img.getScaledInstance(80, 80, Image.SCALE_SMOOTH));
-                    imageLabel.setIcon(icon);
+        	String path = artifact.getImagePath(); 
+        	// 만약 getImagePath()가 "res/image.png"를 반환한다면, 
+        	// JAR 내부용으로 바꾸기 위해 "res/"를 제거하거나 앞에 "/"를 붙여야 합니다.
+        	String resourcePath = "/" + path.replace("res/", ""); 
+        	java.net.URL imgUrl = getClass().getResource(resourcePath);
+        	if (imgUrl != null) {
+        	    BufferedImage img = ImageIO.read(imgUrl);
                 }
-            }
         } catch (IOException e) {
             // 이미지 로드 실패 시 기본 배경색 유지
         }

@@ -37,8 +37,10 @@ public class Payment_Screen extends JPanel implements ActionListener {
     
     
     private Image loadImage(String path) {
-        try {
-            return ImageIO.read(new File(path));
+    	try {
+            String resPath = path.startsWith("/") ? path : "/" + path.replace("res/", "");
+            java.net.URL imgUrl = getClass().getResource(resPath);
+            return (imgUrl != null) ? ImageIO.read(imgUrl) : null;
         } catch (IOException e) {
             System.err.println("이미지 불러오기 실패: " + path);
             return null;
@@ -101,7 +103,7 @@ public class Payment_Screen extends JPanel implements ActionListener {
         this.paymentLogic = paymentLogic;	//의존성 주입용
         setOpaque(false);
         
-        loadBackgroundImage("res/back_ground.png");     
+        loadBackgroundImage("back_ground.png");     
         loadScreenImages();
         setLayout(null);
         
@@ -166,11 +168,11 @@ public class Payment_Screen extends JPanel implements ActionListener {
     
     /**------------배경 이미지 그리기 (JPanel의 paintComponent 오버라이드)---------*/
     private void loadBackgroundImage(String path) {
-        try {
-            backgroundImage = ImageIO.read(new File(path));
-        } catch (IOException e) {
-            System.err.println("배경 이미지 로드 실패: " + path);
-            e.printStackTrace();
+    	try {
+            String resPath = path.startsWith("/") ? path : "/" + path;
+            backgroundImage = ImageIO.read(getClass().getResource(resPath));
+        } catch (Exception e) {
+            System.err.println("납입 화면 배경 로드 실패: " + path);
         }
     }
     

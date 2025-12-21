@@ -11,7 +11,7 @@ public class User {
     private Map<String, Integer> itemStacks = new HashMap<>();	//스택형 아이템을 위한 같은 아이템 몇번 구매했는지/Key: 아이템이름, Value: 현재스택
     private Map<String, Integer> itemDurations = new HashMap<>(); //단발형 유물을 얼마나 사용했는지 기록용
     
-    private int roulatte_money = 30;  
+    private int roulatte_money = 30;
     private double interest = 0.1;  
     private int ticket = 3;
     private int deadline = 1;

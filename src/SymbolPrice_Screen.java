@@ -94,9 +94,11 @@ public class SymbolPrice_Screen extends JPanel {
             
             // 무늬 이미지 라벨
             try {
-                File imageFile = new File(SYMBOL_IMAGE_PATHS[i]);
-                if (imageFile.exists()) {
-                    Image symbolImage = ImageIO.read(imageFile);
+                String resPath = "/" + SYMBOL_IMAGE_PATHS[i].replace("res/", "");
+                java.net.URL imgUrl = getClass().getResource(resPath);
+                if (imgUrl != null) {
+                    // 2. URL을 사용하여 이미지 로드 (File.exists()는 이제 필요 없음)
+                    Image symbolImage = ImageIO.read(imgUrl);
                     if (symbolImage != null) {
                         Image scaledImage = symbolImage.getScaledInstance(imageSize, imageSize, Image.SCALE_SMOOTH);
                         symbolImageLabels[i] = new JLabel(new ImageIcon(scaledImage));
@@ -105,27 +107,26 @@ public class SymbolPrice_Screen extends JPanel {
                         symbolImageLabels[i].setVerticalAlignment(SwingConstants.CENTER);
                         add(symbolImageLabels[i]);
                     } else {
-                        // 이미지가 null인 경우
+                        // 이미지 데이터가 깨졌거나 읽을 수 없는 경우
                         symbolImageLabels[i] = createPlaceholderLabel(imageSize);
                         symbolImageLabels[i].setBounds(leftMargin, y, imageSize, imageSize);
                         add(symbolImageLabels[i]);
                     }
                 } else {
-                    // 파일이 없는 경우
-                    System.err.println("무늬 이미지 파일을 찾을 수 없습니다: " + SYMBOL_IMAGE_PATHS[i]);
+                    // 3. 리소스 URL을 찾지 못한 경우 (경로 문제 또는 파일 누락)
+                    System.err.println("무늬 리소스를 찾을 수 없습니다: " + resPath);
                     symbolImageLabels[i] = createPlaceholderLabel(imageSize);
                     symbolImageLabels[i].setBounds(leftMargin, y, imageSize, imageSize);
                     add(symbolImageLabels[i]);
                 }
             } catch (IOException e) {
-                System.err.println("무늬 이미지 로드 실패: " + SYMBOL_IMAGE_PATHS[i] + " - " + e.getMessage());
-                // 이미지 로드 실패 시 플레이스홀더 라벨 생성
+                System.err.println("무늬 이미지 로드 에러: " + SYMBOL_IMAGE_PATHS[i]);
                 symbolImageLabels[i] = createPlaceholderLabel(imageSize);
                 symbolImageLabels[i].setBounds(leftMargin, y, imageSize, imageSize);
                 add(symbolImageLabels[i]);
             }
             
-            // 무늬 이름 라벨 (수직 가운데 정렬)
+            // 무늬 이름 라벨 (이하 동일)
             symbolNameLabels[i] = new JLabel(SYMBOL_NAMES[i], SwingConstants.LEFT);
             symbolNameLabels[i].setBounds(leftMargin + imageSize + gap1, y + (imageSize - 30) / 2, nameWidth, 30);
             symbolNameLabels[i].setForeground(Color.CYAN);
@@ -133,7 +134,7 @@ public class SymbolPrice_Screen extends JPanel {
             symbolNameLabels[i].setVerticalAlignment(SwingConstants.CENTER);
             add(symbolNameLabels[i]);
             
-            // 현재 가격 라벨 (수직 가운데 정렬)
+            // 현재 가격 라벨 (이하 동일)
             currentPriceLabels[i] = new JLabel("", SwingConstants.CENTER);
             currentPriceLabels[i].setBounds(leftMargin + imageSize + gap1 + nameWidth + gap2, y + (imageSize - 30) / 2, priceWidth, 30);
             currentPriceLabels[i].setForeground(Color.GREEN);
@@ -189,10 +190,13 @@ public class SymbolPrice_Screen extends JPanel {
      * 배경 이미지를 로드합니다.
      */
     private void loadBackgroundImage(String path) {
-        try {
-            backgroundImage = ImageIO.read(new File(path));
+    	try {
+            String resPath = path.startsWith("/") ? path : "/" + path.replace("res/", "");
+            java.net.URL imgUrl = getClass().getResource(resPath);
+            if (imgUrl != null) {
+                backgroundImage = ImageIO.read(imgUrl);
+            }
         } catch (IOException e) {
-            System.err.println("배경 이미지 로드 실패: " + path);
             e.printStackTrace();
         }
     }

@@ -14,17 +14,14 @@ public class Call_Screen extends JPanel {
         this.callLogic = callLogic;
         
         try {
-        	java.io.File imageFile = new java.io.File("res/background_call.png");
-        	
-        	if (imageFile.exists()) {
-                backgroundImage = javax.imageio.ImageIO.read(imageFile);
-                System.out.println("이미지 로드 성공: " + imageFile.getAbsolutePath());
-                
+
+            java.net.URL imgUrl = getClass().getResource("/background_call.png");
+            if (imgUrl != null) {
+                backgroundImage = javax.imageio.ImageIO.read(imgUrl);
             } else {
-                System.err.println("이미지 경로를 찾을 수 없습니다.");
+                System.err.println("이미지를 찾을 수 없습니다.");
             }
         } catch (Exception e) {
-            System.err.println("이미지 로드 중 에러 발생!");
             e.printStackTrace();
         }
         

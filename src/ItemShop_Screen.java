@@ -84,8 +84,11 @@ public class ItemShop_Screen extends JPanel {
                 ItemInfo item = (ItemInfo) displayedItems.get(i); 
                 java.awt.Image realItemImage = null;
                 try {
-                    java.io.File imageFile = new java.io.File(item.getImagePath());
-                    realItemImage = javax.imageio.ImageIO.read(imageFile);
+                	String resPath = "/" + item.getImagePath().replace("res/", "");
+                	java.net.URL imgUrl = getClass().getResource(resPath);
+                	if (imgUrl != null) {
+                	    realItemImage = javax.imageio.ImageIO.read(imgUrl);
+                	}
                 } catch (java.io.IOException e) {
                     System.err.println("유물 이미지 로드 실패: " + item.getImagePath());
                 }
@@ -297,10 +300,10 @@ public class ItemShop_Screen extends JPanel {
     /**------------배경 이미지 그리기 (JPanel의 paintComponent 오버라이드)---------*/
     // PNG 이미지 로드 함수
     private void loadBackgroundImage(String path) {
-        try {
-            backgroundImage = ImageIO.read(new File(path));
-        } catch (IOException e) {
-            System.err.println("배경 이미지 로드 실패: " + path);
+    	try {
+            String resPath = "/" + path.replace("res/", "");
+            backgroundImage = ImageIO.read(getClass().getResource(resPath));
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

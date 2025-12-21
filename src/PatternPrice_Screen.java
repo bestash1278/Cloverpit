@@ -41,7 +41,7 @@ public class PatternPrice_Screen extends JPanel {
     public PatternPrice_Screen(User user) {
         this.user = user;
         
-        loadBackgroundImage("res/back_ground.png");
+        loadBackgroundImage("/back_ground.png");
         setLayout(null);
         
         setupPriceLabels();
@@ -101,16 +101,18 @@ public class PatternPrice_Screen extends JPanel {
             
             // 패턴 이미지 라벨
             try {
-                File imageFile = new File(PATTERN_IMAGE_PATHS[i]);
-                if (imageFile.exists()) {
-                    Image patternImage = ImageIO.read(imageFile);
-                    if (patternImage != null) {
-                        Image scaledImage = patternImage.getScaledInstance(imageSize, imageSize, Image.SCALE_SMOOTH);
-                        patternImageLabels[i] = new JLabel(new ImageIcon(scaledImage));
-                        patternImageLabels[i].setBounds(leftMargin, y, imageSize, imageSize);
-                        patternImageLabels[i].setHorizontalAlignment(SwingConstants.CENTER);
-                        patternImageLabels[i].setVerticalAlignment(SwingConstants.CENTER);
-                        add(patternImageLabels[i]);
+            	String resPath = "/" + PATTERN_IMAGE_PATHS[i].replace("res/", "");
+            	java.net.URL imgUrl = getClass().getResource(resPath);
+            	if (imgUrl != null) {
+                    // 2. URL을 통해 이미지를 직접 읽음 (File 객체 사용 안 함)
+                    Image patternImage = javax.imageio.ImageIO.read(imgUrl);
+                if (patternImage != null) {
+                	Image scaledImage = patternImage.getScaledInstance(imageSize, imageSize, Image.SCALE_SMOOTH);
+                    patternImageLabels[i] = new JLabel(new ImageIcon(scaledImage));
+                    patternImageLabels[i].setBounds(leftMargin, y, imageSize, imageSize);
+                    patternImageLabels[i].setHorizontalAlignment(SwingConstants.CENTER);
+                    patternImageLabels[i].setVerticalAlignment(SwingConstants.CENTER);
+                    add(patternImageLabels[i]);
                     } else {
                         // 이미지가 null인 경우
                         patternImageLabels[i] = createPlaceholderLabel(imageSize);
@@ -196,10 +198,16 @@ public class PatternPrice_Screen extends JPanel {
      * 배경 이미지를 로드합니다.
      */
     private void loadBackgroundImage(String path) {
-        try {
-            backgroundImage = ImageIO.read(new File(path));
+    	try {
+            String resPath = path.startsWith("/") ? path : "/" + path.replace("res/", "");
+            java.net.URL imgUrl = getClass().getResource(resPath);
+            
+            if (imgUrl != null) {
+                backgroundImage = ImageIO.read(imgUrl);
+            } else {
+                System.err.println("배경 리소스를 찾을 수 없음: " + resPath);
+            }
         } catch (IOException e) {
-            System.err.println("배경 이미지 로드 실패: " + path);
             e.printStackTrace();
         }
     }

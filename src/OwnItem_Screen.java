@@ -31,8 +31,8 @@ public class OwnItem_Screen extends JPanel {
     private static final Rectangle[] ITEM_AREAS = new Rectangle[TOTAL_SLOTS];
     
     private Image centralBackgroundImage;
-    private static final String BACKGROUND_PATH = "res/back_ground.png"; 
-    private static final String CENTRAL_BG_PATH = "res/shop_bg.png"; // 유물 전체 뒤 배경 경로
+    private static final String BACKGROUND_PATH = "back_ground.png"; 
+    private static final String CENTRAL_BG_PATH = "shop_bg.png"; // 유물 전체 뒤 배경 경로
     private Image backgroundImage;
     
     private static final Rectangle CENTRAL_ARTIFACT_AREA;	//유물 전체 뒷 배경
@@ -87,9 +87,18 @@ public class OwnItem_Screen extends JPanel {
     }
     //유물 관물대 이미지 불러오기
     private void loadCentralBackgroundImage(String path) {
-        try {
-            centralBackgroundImage = ImageIO.read(new File(path));
+    	try {
+            String resPath = path.startsWith("/") ? path : "/" + path.replace("res/", "");
+            
+            java.net.URL imgUrl = getClass().getResource(resPath);
+            
+            if (imgUrl != null) {
+                centralBackgroundImage = ImageIO.read(imgUrl);
+            } else {
+                System.err.println("매대 이미지를 찾을 수 없습니다: " + resPath);
+            }
         } catch (IOException e) {
+            e.printStackTrace();
             centralBackgroundImage = null;
         }
     }
@@ -310,16 +319,18 @@ public class OwnItem_Screen extends JPanel {
     //이미지 불러오기 함수
     private Image loadImage(String path) {
         try {
-            return ImageIO.read(new File(path));
-        } catch (IOException e) {
+            String resPath = path.startsWith("/") ? path : "/" + path.replace("res/", "");
+            return ImageIO.read(getClass().getResource(resPath));
+        } catch (Exception e) {
             return null;
         }
     }
     //배경 이미지 불러오기 함수
     private void loadBackgroundImage(String path) {
         try {
-            backgroundImage = ImageIO.read(new File(path));
-        } catch (IOException e) {
+            String resPath = path.startsWith("/") ? path : "/" + path.replace("res/", "");
+            backgroundImage = ImageIO.read(getClass().getResource(resPath));
+        } catch (Exception e) {
             backgroundImage = null;
         }
     }

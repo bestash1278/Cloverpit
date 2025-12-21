@@ -44,13 +44,13 @@ public class SoundManager {
     public void playBackgroundMusic() {
         try {
             stopBackgroundMusic();
-            File soundFile = new File("sound/background_music.wav");
-            if (!soundFile.exists()) {
-                System.err.println("백그라운드 음악 파일을 찾을 수 없습니다: " + soundFile.getAbsolutePath());
+            java.net.URL soundUrl = getClass().getResource("/background_music.wav");
+            if (soundUrl == null) {
+                System.err.println("백그라운드 음악 리소스를 찾을 수 없습니다: /background_music.wav");
                 return;
             }
             
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundFile);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundUrl);
             audioStream = convertToSupportedFormat(audioStream);
             
             backgroundMusic = AudioSystem.getClip();
@@ -107,9 +107,9 @@ public class SoundManager {
         
         try {
             stopLeverSound();
-            File soundFile = new File("sound/lever_sound.wav");
-            if (soundFile.exists()) {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundFile);
+            java.net.URL soundUrl = getClass().getResource("/lever_sound.wav");
+            if (soundUrl != null) {
+            	AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundUrl);
                 audioStream = convertToSupportedFormat(audioStream);
                 leverSound = AudioSystem.getClip();
                 leverSound.open(audioStream);

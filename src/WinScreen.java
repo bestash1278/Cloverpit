@@ -20,7 +20,10 @@ public class WinScreen extends JPanel {
         
         // 배경 이미지 로드 (win_background.png 사용, 없으면 기본 배경)
         try {
-            backgroundImage = ImageIO.read(new File("res/win_background.png"));
+            java.net.URL imgUrl = getClass().getResource("/win_background.png");
+            if (imgUrl != null) {
+                backgroundImage = ImageIO.read(imgUrl);
+            }
         } catch (IOException e) {
             backgroundImage = null;
         }

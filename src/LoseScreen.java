@@ -22,8 +22,11 @@ public class LoseScreen extends JPanel {
         setPreferredSize(new Dimension(1600, 900));
 
         // 배경 이미지 로드
-        ImageIcon bgIcon = new ImageIcon("res/loose_background.png");
-        background = bgIcon.getImage();
+        java.net.URL bgUrl = getClass().getResource("/loose_background.png");
+        if (bgUrl != null) {
+            ImageIcon bgIcon = new ImageIcon(bgUrl);
+            background = bgIcon.getImage();
+        }
 
         // 내용 표시용 패널 (투명)
         JPanel contentPanel = new JPanel(null);

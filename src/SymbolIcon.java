@@ -83,22 +83,25 @@ public class SymbolIcon implements Icon {
             String modifierEnglish = MODIFIER_NAME_MAP.getOrDefault(modifier, modifier.toLowerCase());
             
             // 변형자 이미지 파일 경로 생성 (예: res/sybols_lemon_ticket.png)
-            String imagePath = "res/sybols_" + SYMBOL_NAMES[symbolType] + "_" + modifierEnglish + ".png";
+            String resourcePath = "/sybols_" + SYMBOL_NAMES[symbolType] + "_" + modifierEnglish + ".png";
             try {
-                File imageFile = new File(imagePath);
-                if (imageFile.exists()) {
-                    BufferedImage image = ImageIO.read(imageFile);
+            	String path = SYMBOL_IMAGE_PATHS[symbolType];
+            	String resPath = path.startsWith("/") ? path : "/" + path.replace("res/", "");
+            	
+            	java.net.URL imgUrl = getClass().getResource(resPath);
+            	if (imgUrl != null) {
+                    BufferedImage image = ImageIO.read(imgUrl);
                     if (image != null) {
                         modifierImageCache.put(cacheKey, image);
                         return image;
                     }
                 } else {
                     // 변형자 이미지가 없으면 일반 문양 이미지로 대체
-                    System.err.println("경고: 변형자 이미지 파일을 찾을 수 없습니다. 경로: " + imagePath + " - 일반 문양 이미지 사용");
-                }
+                	System.err.println("경고: 변형자 리소스를 찾을 수 없습니다. 경로: " + resourcePath);
+                	}
             } catch (IOException e) {
-                System.err.println("변형자 이미지 로드 중 오류 발생: " + imagePath + " - " + e.getMessage());
-            }
+            	System.err.println("변형자 이미지 로드 중 오류: " + resourcePath);
+            	}
         }
         
         // 일반 문양 이미지 로드 (변형자가 없거나 변형자 이미지를 찾을 수 없는 경우)
@@ -109,20 +112,22 @@ public class SymbolIcon implements Icon {
         // 파일에서 로드
         if (symbolType >= 0 && symbolType < SYMBOL_IMAGE_PATHS.length) {
             try {
-                File imageFile = new File(SYMBOL_IMAGE_PATHS[symbolType]);
-                if (imageFile.exists()) {
-                    BufferedImage image = ImageIO.read(imageFile);
+            	String path = SYMBOL_IMAGE_PATHS[symbolType];
+                String resPath = "/" + path.replace("res/", "");
+                java.net.URL imgUrl = getClass().getResource(resPath);
+                
+                if (imgUrl != null) {
+                    BufferedImage image = ImageIO.read(imgUrl);
                     if (image != null) {
-                        // 캐시에 저장
                         imageCache.put(symbolType, image);
                         return image;
                     }
                 } else {
-                    System.err.println("경고: 이미지 파일을 찾을 수 없습니다. 경로: " + SYMBOL_IMAGE_PATHS[symbolType]);
-                }
+                	System.err.println("리소스를 찾을 수 없습니다: " + resPath);
+                	}
             } catch (IOException e) {
-                System.err.println("이미지 로드 중 오류 발생: " + SYMBOL_IMAGE_PATHS[symbolType] + " - " + e.getMessage());
-            }
+            	System.err.println("이미지 로드 오류: " + e.getMessage());
+            	}
         }
         
         return null;

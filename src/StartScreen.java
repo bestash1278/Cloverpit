@@ -28,7 +28,10 @@ public class StartScreen extends JPanel {
         
         // 배경 이미지 로드
         try {
-            backgroundImage = ImageIO.read(new File("res/start_background.png"));
+            java.net.URL imgUrl = getClass().getResource("/start_background.png");
+            if (imgUrl != null) {
+                backgroundImage = ImageIO.read(imgUrl);
+            }
         } catch (IOException e) {
             backgroundImage = null;
         }

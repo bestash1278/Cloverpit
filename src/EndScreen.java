@@ -20,7 +20,10 @@ public class EndScreen extends JPanel {
         
         // 배경 이미지 로드
         try {
-            backgroundImage = ImageIO.read(new File("res/end_background.png"));
+            java.net.URL imgUrl = getClass().getResource("/end_background.png");
+            if (imgUrl != null) {
+                backgroundImage = ImageIO.read(imgUrl);
+            }
         } catch (IOException e) {
             backgroundImage = null;
         }
